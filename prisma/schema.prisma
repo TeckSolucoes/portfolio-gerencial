@@ -1,0 +1,179 @@
+// Schema do Portfólio Teck — ver plano em
+// C:\Users\pflen\.claude\plans\validated-dreaming-steele.md (§1)
+//
+// Prisma 7: sem `url` no bloco datasource (removido nesta major — a URL de
+// conexão agora vive em prisma.config.ts, e o PrismaClient em runtime recebe
+// um driver adapter explícito). Generator `prisma-client` (não mais
+// `prisma-client-js`) gera um client TS para src/generated/prisma.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum Tone {
+  violet
+  ember
+  teal
+  rose
+  sky
+}
+
+enum FrontStatus {
+  ok
+  attention
+  blocked
+}
+
+enum ItemStatus {
+  done
+  doing
+  todo
+  blocked
+}
+
+enum DerivationMode {
+  auto
+  manual
+}
+
+enum SyncStatus {
+  running
+  success
+  error
+}
+
+enum Role {
+  superadmin
+  gerente
+  visualizador
+}
+
+model Company {
+  id        String   @id @default(uuid())
+  slug      String   @unique
+  name      String
+  tag       String
+  tone      Tone
+  tagline   String
+  sortOrder Int      @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  fronts Front[]
+
+  @@map("companies")
+}
+
+model Front {
+  id        String  @id @default(uuid())
+  companyId String  @map("company_id")
+  slug      String
+  title     String
+  summaryHtml String @map("summary_html")
+
+  statusMode   DerivationMode @default(manual) @map("status_mode")
+  statusManual FrontStatus?   @map("status_manual")
+
+  progressMode   DerivationMode @default(manual) @map("progress_mode")
+  progressManual Int?           @map("progress_manual")
+
+  ownerName     String @map("owner_name")
+  ownerInitials String @map("owner_initials")
+
+  nextMilestone String?   @map("next_milestone")
+  nextDate      DateTime? @map("next_date")
+
+  prioritized Boolean @default(false)
+
+  jql      String?  @map("jql")
+  // SQLite via Prisma não suporta colunas de array escalar nativas — armazenamos
+  // como JSON serializado (String) e convertemos para string[] na borda da app
+  // (ver src/app/admin/companies/[companySlug]/fronts/actions.ts).
+  epicKeys String   @default("[]") @map("epic_keys")
+
+  sortOrder  Int       @map("sort_order")
+  archivedAt DateTime? @map("archived_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  company Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  items   FrontItem[]
+
+  @@unique([companyId, slug])
+  @@map("fronts")
+}
+
+model FrontItem {
+  id           String      @id @default(uuid())
+  frontId      String      @map("front_id")
+  jiraIssueKey String?     @map("jira_issue_key")
+  titleOverride  String?   @map("title_override")
+  statusOverride ItemStatus? @map("status_override")
+  note   String?
+  hidden Boolean @default(false)
+
+  sortOrder Int @map("sort_order")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  front Front @relation(fields: [frontId], references: [id], onDelete: Cascade)
+
+  @@unique([frontId, jiraIssueKey])
+  @@map("front_items")
+}
+
+model JiraStatusMapping {
+  id             String     @id @default(uuid())
+  jiraStatusName String     @unique @map("jira_status_name")
+  mappedStatus   ItemStatus @map("mapped_status")
+  updatedAt      DateTime   @updatedAt @map("updated_at")
+
+  @@map("jira_status_mappings")
+}
+
+model JiraSyncSnapshot {
+  id           String     @id @default(uuid())
+  startedAt    DateTime   @default(now()) @map("started_at")
+  finishedAt   DateTime?  @map("finished_at")
+  status       SyncStatus
+  errorMessage String?    @map("error_message")
+  triggeredBy  String?    @map("triggered_by")
+
+  @@map("jira_sync_snapshots")
+}
+
+model JiraIssueCache {
+  id             String    @id @default(uuid())
+  jiraIssueKey   String    @unique @map("jira_issue_key")
+  jiraIssueType  String?   @map("jira_issue_type")
+  parentEpicKey  String?   @map("parent_epic_key")
+  summary        String?
+  jiraStatusName String?   @map("jira_status_name")
+  dueDate        DateTime? @map("due_date")
+  updatedAtJira  DateTime? @map("updated_at_jira")
+  rawJson        Json      @map("raw_json")
+  lastSyncedAt   DateTime  @default(now()) @map("last_synced_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  @@map("jira_issue_cache")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  role         Role     @default(visualizador)
+  displayName  String   @map("display_name")
+  displayTitle String?  @map("display_title")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@map("users")
+}
