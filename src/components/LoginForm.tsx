@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { signIn } from 'next-auth/react';
+import { PasswordField } from './PasswordField';
 
 export function LoginForm() {
   const router = useRouter();
@@ -52,10 +53,9 @@ export function LoginForm() {
       </div>
       <div className="field">
         <label htmlFor="password">Senha</label>
-        <input
+        <PasswordField
           id="password"
           name="password"
-          type="password"
           placeholder="••••••••"
           autoComplete="current-password"
           required

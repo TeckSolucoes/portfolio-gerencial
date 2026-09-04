@@ -2,6 +2,7 @@
 
 import { useActionState } from 'react';
 import { createUser, updateUser, deleteUser } from './actions';
+import { PasswordField } from '@/components/PasswordField';
 import type { UserModel } from '@/generated/prisma/models';
 
 const ROLE_OPTIONS = [
@@ -22,7 +23,7 @@ export function NewUserForm() {
         </div>
         <div className="admin-field">
           <label htmlFor="password">Senha inicial</label>
-          <input id="password" name="password" type="password" required minLength={8} />
+          <PasswordField id="password" name="password" required minLength={8} />
         </div>
       </div>
       <div className="admin-field-row">
@@ -82,7 +83,7 @@ export function UserRow({ user }: { user: UserModel }) {
           </select>
         </div>
         <div className="admin-field admin-field-narrow">
-          <input name="newPassword" type="password" placeholder="Nova senha (opcional)" minLength={8} />
+          <PasswordField name="newPassword" placeholder="Nova senha (opcional)" minLength={8} />
         </div>
         <button type="submit" className="btn btn-secondary" disabled={pending}>
           {pending ? 'Salvando…' : 'Salvar'}
