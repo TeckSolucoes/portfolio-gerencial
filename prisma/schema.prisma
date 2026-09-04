@@ -185,6 +185,12 @@ model User {
   role         Role     @default(visualizador)
   displayName  String   @map("display_name")
   displayTitle String?  @map("display_title")
+
+  // Rate limit de login (força bruta) — contador zera no sucesso, bloqueia
+  // por LOCK_DURATION_MINUTES (src/lib/auth.ts) ao chegar em MAX_ATTEMPTS.
+  failedLoginAttempts Int       @default(0) @map("failed_login_attempts")
+  lockedUntil         DateTime? @map("locked_until")
+
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
