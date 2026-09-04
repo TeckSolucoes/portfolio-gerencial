@@ -10,17 +10,20 @@ export function FrontCard({
   companySlug,
   front,
   index = 0,
+  linkable = true,
 }: {
   companySlug: string;
   front: Front;
   index?: number;
+  // false no link de compartilhamento externo — mostra só o resumo da
+  // empresa, sem dar acesso ao detalhe/itens de cada frente.
+  linkable?: boolean;
 }) {
-  return (
-    <Link
-      href={`/${companySlug}/${front.id}`}
-      className={`front-card status-${front.status} stagger-in`}
-      style={{ '--i': index } as CSSProperties}
-    >
+  const className = `front-card status-${front.status} stagger-in`;
+  const style = { '--i': index } as CSSProperties;
+
+  const content = (
+    <>
       <div className="fc-main">
         <div className="fc-head">
           <h3>{front.title}</h3>
@@ -39,7 +42,21 @@ export function FrontCard({
         <ProgressBar percent={front.progress} />
         <span className="fc-progress-value">{front.progress}%</span>
       </div>
-      <span className="fc-arrow">→</span>
+      {linkable && <span className="fc-arrow">→</span>}
+    </>
+  );
+
+  if (!linkable) {
+    return (
+      <div className={className} style={style}>
+        {content}
+      </div>
+    );
+  }
+
+  return (
+    <Link href={`/${companySlug}/${front.id}`} className={className} style={style}>
+      {content}
     </Link>
   );
 }

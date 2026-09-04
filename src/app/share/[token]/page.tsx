@@ -26,10 +26,6 @@ export default async function ShareCompanyPage({ params }: { params: Promise<{ t
   if (!companyRow) notFound();
 
   const view = mapCompany(companyRow);
-  // FrontCard/FrontsSection só usam este prop como prefixo de URL (não validam
-  // slug de empresa de verdade), então passar "share/token" aqui faz os links
-  // internos apontarem pra /share/[token]/[frontSlug] sem tocar nesses componentes.
-  const linkPrefix = `share/${token}`;
 
   return (
     <>
@@ -52,7 +48,7 @@ export default async function ShareCompanyPage({ params }: { params: Promise<{ t
       {view.fronts.length === 0 ? (
         <p className="admin-empty">Nenhuma frente cadastrada ainda.</p>
       ) : (
-        <FrontsSection companySlug={linkPrefix} fronts={view.fronts} />
+        <FrontsSection companySlug={view.slug} fronts={view.fronts} linkable={false} />
       )}
     </>
   );

@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { auth } from '@/lib/auth';
+import { auth, signOut } from '@/lib/auth';
 import { BrandMark } from './BrandMark';
 
 function initialsFrom(name: string): string {
@@ -40,6 +40,18 @@ export async function Header() {
               <span>{user.displayTitle ?? user.role}</span>
             </div>
           </div>
+        )}
+        {user && (
+          <form
+            action={async () => {
+              'use server';
+              await signOut({ redirectTo: '/login' });
+            }}
+          >
+            <button type="submit" className="btn-ghost" title="Sair">
+              Sair
+            </button>
+          </form>
         )}
       </div>
     </header>

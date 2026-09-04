@@ -7,7 +7,15 @@ import type { Front } from '@/lib/types';
 
 // Owns the filter-chip interaction (client boundary) so the company page itself
 // stays a server component. Output DOM/classes match the mockup's fronts-grid exactly.
-export function FrontsSection({ companySlug, fronts }: { companySlug: string; fronts: Front[] }) {
+export function FrontsSection({
+  companySlug,
+  fronts,
+  linkable = true,
+}: {
+  companySlug: string;
+  fronts: Front[];
+  linkable?: boolean;
+}) {
   const [active, setActive] = useState('all');
   const list = active === 'all' ? fronts : fronts.filter((f) => f.status === active);
 
@@ -26,7 +34,9 @@ export function FrontsSection({ companySlug, fronts }: { companySlug: string; fr
             Nenhuma frente nesse status no momento.
           </p>
         ) : (
-          list.map((f, i) => <FrontCard key={f.id} companySlug={companySlug} front={f} index={i} />)
+          list.map((f, i) => (
+            <FrontCard key={f.id} companySlug={companySlug} front={f} index={i} linkable={linkable} />
+          ))
         )}
       </div>
     </>
