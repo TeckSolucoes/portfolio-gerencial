@@ -14,6 +14,12 @@ export default auth((req) => {
     return NextResponse.next();
   }
 
+  // Link de compartilhamento externo — sem login de propósito, o token na URL
+  // é a própria credencial (validado dentro da rota, checando expiração).
+  if (pathname.startsWith('/share/')) {
+    return NextResponse.next();
+  }
+
   if (!req.auth?.user) {
     return NextResponse.redirect(new URL('/login', req.nextUrl));
   }

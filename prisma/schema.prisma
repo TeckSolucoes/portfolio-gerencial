@@ -64,6 +64,14 @@ model Company {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  // Link público de compartilhamento (sem login) — token é a própria chave de
+  // busca em /share/[token], não o slug, pra não depender de "segredo por
+  // obscuridade" sobre uma URL previsível. Nulo até o superadmin gerar o
+  // primeiro link. "Renovar" reaproveita o mesmo token só empurrando
+  // shareExpiresAt; gerar de novo troca o token (revoga o link antigo).
+  shareToken     String?   @unique @map("share_token")
+  shareExpiresAt DateTime? @map("share_expires_at")
+
   fronts Front[]
 
   @@map("companies")

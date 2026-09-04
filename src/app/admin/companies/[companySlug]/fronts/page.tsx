@@ -1,10 +1,12 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { StatusPill } from '@/components/StatusPill';
 import { toggleFrontPriority } from './actions';
+import { generateCompanyShareLink, renewCompanyShareLink, revokeCompanyShareLink } from '../shareActions';
 import type { FrontStatus } from '@/generated/prisma/enums';
-import type { Front as PrismaFront } from '@/generated/prisma/client';
+import type { Company as PrismaCompany, Front as PrismaFront } from '@/generated/prisma/client';
 
 type FrontWithCount = PrismaFront & { _count: { items: number } };
 
@@ -18,6 +20,57 @@ function AdminStatusBadge({ status }: { status: FrontStatus | null }) {
     );
   }
   return <StatusPill status={status} />;
+}
+
+function formatExpiry(date: Date): string {
+  return date.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
+// Só superadmin vê este painel (checado antes de renderizar, em AdminFrontsPage)
+// — o link dá acesso público (sem login) aos dados desta empresa, então quem
+// pode gerá-lo/revogá-lo é a mesma decisão de negócio de "quem pode priorizar".
+function ShareLinkPanel({ companySlug, company }: { companySlug: string; company: PrismaCompany }) {
+  const origin = (process.env.NEXTAUTH_URL ?? '').replace(/\/$/, '');
+  const expired = company.shareExpiresAt ? company.shareExpiresAt.getTime() < Date.now() : true;
+
+  return (
+    <div className="admin-notice" style={{ marginBottom: 26 }}>
+      <strong>Link externo (sem login)</strong>
+      <p style={{ margin: '6px 0 12px' }}>
+        {company.shareToken && !expired
+          ? `Válido até ${formatExpiry(company.shareExpiresAt!)}.`
+          : company.shareToken && expired
+            ? 'O link anterior expirou — gere um novo para compartilhar de novo.'
+            : 'Nenhum link ativo. Gere um para compartilhar esta empresa com alguém de fora, sem exigir login.'}
+      </p>
+      {company.shareToken && !expired && (
+        <p className="admin-hint" style={{ margin: '0 0 12px', wordBreak: 'break-all' }}>
+          <code>{`${origin}/share/${company.shareToken}`}</code>
+        </p>
+      )}
+      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+        <form action={generateCompanyShareLink.bind(null, companySlug)}>
+          <button type="submit" className="btn btn-secondary">
+            {company.shareToken ? 'Gerar novo link' : 'Gerar link'}
+          </button>
+        </form>
+        {company.shareToken && !expired && (
+          <>
+            <form action={renewCompanyShareLink.bind(null, companySlug)}>
+              <button type="submit" className="btn btn-secondary">
+                Renovar (+5 dias)
+              </button>
+            </form>
+            <form action={revokeCompanyShareLink.bind(null, companySlug)}>
+              <button type="submit" className="btn btn-danger">
+                Revogar
+              </button>
+            </form>
+          </>
+        )}
+      </div>
+    </div>
+  );
 }
 
 function FrontRow({ companySlug, front }: { companySlug: string; front: FrontWithCount }) {
@@ -56,6 +109,7 @@ function FrontRow({ companySlug, front }: { companySlug: string; front: FrontWit
 
 export default async function AdminFrontsPage({ params }: { params: Promise<{ companySlug: string }> }) {
   const { companySlug } = await params;
+  const session = await auth();
 
   const company = await prisma.company.findUnique({
     where: { slug: companySlug },
@@ -80,6 +134,8 @@ export default async function AdminFrontsPage({ params }: { params: Promise<{ co
         Toda frente nasce em modo manual — status, progresso e priorização são definidos na tela de edição de cada
         uma. Clique na estrela para priorizar ou despriorizar direto na lista.
       </p>
+
+      {session?.user.role === 'superadmin' && <ShareLinkPanel companySlug={companySlug} company={company} />}
 
       <Link href={`/admin/fronts/new?company=${companySlug}`} className="btn btn-primary" style={{ marginBottom: 22 }}>
         Nova frente completa
