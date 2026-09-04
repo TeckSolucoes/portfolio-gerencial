@@ -32,6 +32,15 @@ COPY package.json package-lock.json ./
 RUN npm ci
 
 COPY . .
+
+# NEXT_PUBLIC_* precisa existir no momento do build (não é lido em runtime —
+# o Next grava o valor direto no JS enviado ao navegador), diferente das
+# outras env vars do app. EasyPanel repassa as variáveis configuradas como
+# --build-arg (confirmado num deploy anterior), mas sem essa declaração
+# explícita de ARG o Docker simplesmente ignora o valor.
+ARG NEXT_PUBLIC_RECAPTCHA_SITE_KEY
+ENV NEXT_PUBLIC_RECAPTCHA_SITE_KEY=$NEXT_PUBLIC_RECAPTCHA_SITE_KEY
+
 RUN npx prisma generate
 RUN npm run build
 
