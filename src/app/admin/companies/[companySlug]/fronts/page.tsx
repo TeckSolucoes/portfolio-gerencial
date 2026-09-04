@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { StatusPill } from '@/components/StatusPill';
 import { toggleFrontPriority } from './actions';
 import { generateCompanyShareLink, renewCompanyShareLink, revokeCompanyShareLink } from '../shareActions';
+import { ReseedAbcButton } from '@/components/ReseedAbcButton';
 import type { FrontStatus } from '@/generated/prisma/enums';
 import type { Company as PrismaCompany, Front as PrismaFront } from '@/generated/prisma/client';
 
@@ -136,6 +137,18 @@ export default async function AdminFrontsPage({ params }: { params: Promise<{ co
       </p>
 
       {session?.user.role === 'superadmin' && <ShareLinkPanel companySlug={companySlug} company={company} />}
+
+      {session?.user.role === 'superadmin' && companySlug === 'abccard' && (
+        <div className="admin-notice admin-notice-warn" style={{ marginBottom: 26 }}>
+          <strong>Migração única — dados do Entregas.md</strong>
+          <p style={{ margin: '6px 0 12px' }}>
+            Substitui as 6 frentes atuais da ABC Card pelas 8 frentes reagrupadas do arquivo Entregas.md (Máscara,
+            Função, Único, Portal ABC, FrontConsig, Portal Único, Regulatório, Mérito). As frentes atuais são
+            arquivadas, não apagadas.
+          </p>
+          <ReseedAbcButton companySlug={companySlug} />
+        </div>
+      )}
 
       <Link href={`/admin/fronts/new?company=${companySlug}`} className="btn btn-primary" style={{ marginBottom: 22 }}>
         Nova frente completa
