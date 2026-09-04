@@ -28,6 +28,7 @@ export async function createFrontWithItems(
   const ownerInitials = String(formData.get('ownerInitials') ?? '')
     .trim()
     .toUpperCase();
+  const requesterNameRaw = String(formData.get('requesterName') ?? '').trim();
   const nextMilestone = String(formData.get('nextMilestone') ?? '').trim();
   const nextDateRaw = String(formData.get('nextDate') ?? '');
   const statusManualRaw = String(formData.get('statusManual') ?? '');
@@ -88,6 +89,7 @@ export async function createFrontWithItems(
         summaryHtml: sanitizeSummaryHtml(summaryRaw),
         ownerName,
         ownerInitials,
+        requesterName: requesterNameRaw || 'A definir',
         nextMilestone: nextMilestone || null,
         nextDate: nextDateRaw ? new Date(nextDateRaw) : null,
         statusManual: statusManualRaw ? (statusManualRaw as FrontStatus) : null,

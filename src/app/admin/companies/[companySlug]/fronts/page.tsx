@@ -6,6 +6,7 @@ import { StatusPill } from '@/components/StatusPill';
 import { toggleFrontPriority } from './actions';
 import { generateCompanyShareLink, renewCompanyShareLink, revokeCompanyShareLink } from '../shareActions';
 import { ReseedAbcButton } from '@/components/ReseedAbcButton';
+import { ShareLinkAutoCopy } from '@/components/ShareLinkAutoCopy';
 import type { FrontStatus } from '@/generated/prisma/enums';
 import type { Company as PrismaCompany, Front as PrismaFront } from '@/generated/prisma/client';
 
@@ -44,11 +45,7 @@ function ShareLinkPanel({ companySlug, company }: { companySlug: string; company
             ? 'O link anterior expirou — gere um novo para compartilhar de novo.'
             : 'Nenhum link ativo. Gere um para compartilhar esta empresa com alguém de fora, sem exigir login.'}
       </p>
-      {company.shareToken && !expired && (
-        <p className="admin-hint" style={{ margin: '0 0 12px', wordBreak: 'break-all' }}>
-          <code>{`${origin}/share/${company.shareToken}`}</code>
-        </p>
-      )}
+      {company.shareToken && !expired && <ShareLinkAutoCopy shareUrl={`${origin}/share/${company.shareToken}`} />}
       <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
         <form action={generateCompanyShareLink.bind(null, companySlug)}>
           <button type="submit" className="btn btn-secondary">

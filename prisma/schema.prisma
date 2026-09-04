@@ -93,6 +93,11 @@ model Front {
   ownerName     String @map("owner_name")
   ownerInitials String @map("owner_initials")
 
+  // Quem pediu a frente (negócio) vs. ownerName, quem executa — distinção
+  // real pedida pelo usuário. Default "A definir" na coluna (não só no app)
+  // pra backfillar as fronts existentes sem exigir migração de dado à parte.
+  requesterName String @default("A definir") @map("requester_name")
+
   nextMilestone String?   @map("next_milestone")
   nextDate      DateTime? @map("next_date")
 

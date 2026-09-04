@@ -31,6 +31,7 @@ export function FrontDetailHead({ front, company }: { front: Front; company: Com
       </div>
       <div className="fd-meta">
         <MetaItem label="Responsável" value={front.owner} />
+        <MetaItem label="Solicitante" value={front.requester ?? '—'} />
         <MetaItem label="Próximo marco" value={front.nextMilestone} />
         <MetaItem label="Data prevista" value={front.nextDate} />
         <MetaItem label="Empresa" value={company.name} />

@@ -18,6 +18,8 @@ export interface Front {
   status: FrontStatus;
   owner: string;
   ownerInit: string;
+  /** Ausente no mockData.ts (conceito só existe a partir do banco) — sempre presente vindo do Prisma via mapFront. */
+  requester?: string;
   prioritized: boolean;
   progress: number;
   nextMilestone: string;

@@ -36,6 +36,7 @@ export function mapFront(front: FrontWithItems): Front {
     status,
     owner: front.ownerName,
     ownerInit: front.ownerInitials,
+    requester: front.requesterName,
     prioritized: front.prioritized,
     progress,
     nextMilestone: front.nextMilestone ?? '—',

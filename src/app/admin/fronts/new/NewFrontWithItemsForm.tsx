@@ -89,6 +89,10 @@ export function NewFrontWithItemsForm({
           <label htmlFor="ownerInitials">Iniciais</label>
           <input id="ownerInitials" name="ownerInitials" type="text" required maxLength={3} placeholder="Ex.: RN" />
         </div>
+        <div className="admin-field">
+          <label htmlFor="requesterName">Solicitante</label>
+          <input id="requesterName" name="requesterName" type="text" defaultValue="A definir" placeholder="Quem pediu" />
+        </div>
       </div>
 
       <div className="admin-field-row">

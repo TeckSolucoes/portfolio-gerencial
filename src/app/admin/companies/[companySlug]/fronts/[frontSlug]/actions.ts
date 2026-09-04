@@ -40,6 +40,7 @@ export async function updateFront(
   const ownerInitials = String(formData.get('ownerInitials') ?? '')
     .trim()
     .toUpperCase();
+  const requesterNameRaw = String(formData.get('requesterName') ?? '').trim();
   const nextMilestone = String(formData.get('nextMilestone') ?? '').trim();
   const nextDateRaw = String(formData.get('nextDate') ?? '');
   const statusMode = String(formData.get('statusMode') ?? 'manual') as DerivationMode;
@@ -67,6 +68,7 @@ export async function updateFront(
       summaryHtml: sanitizeSummaryHtml(summaryRaw),
       ownerName,
       ownerInitials,
+      requesterName: requesterNameRaw || 'A definir',
       nextMilestone: nextMilestone || null,
       nextDate: nextDateRaw ? new Date(nextDateRaw) : null,
       statusMode,

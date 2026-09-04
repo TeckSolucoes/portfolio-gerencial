@@ -47,6 +47,10 @@ export function EditFrontForm({
             required
           />
         </div>
+        <div className="admin-field">
+          <label htmlFor="requesterName">Solicitante</label>
+          <input id="requesterName" name="requesterName" type="text" defaultValue={front.requesterName} />
+        </div>
       </div>
 
       <div className="admin-field-row">
