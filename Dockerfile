@@ -67,6 +67,8 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
   CMD node -e "fetch('http://127.0.0.1:'+(process.env.PORT||3000)+'/login').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"
 
-# prisma migrate deploy é idempotente — seguro rodar a cada boot, inclusive
-# no primeiro (cria o banco do zero se o volume estiver vazio).
-CMD ["sh", "-c", "npx prisma migrate deploy && npm run start"]
+# prisma migrate deploy e o seed são idempotentes (ver guards de count() em
+# prisma/seed.ts) — seguros rodar a cada boot. Sem isso, o primeiro acesso à
+# tela de login não teria nenhum usuário pra entrar, e criar o admin exigiria
+# alguém abrir o terminal do container manualmente.
+CMD ["sh", "-c", "npx prisma migrate deploy && npm run seed && npm run start"]
