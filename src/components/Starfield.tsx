@@ -35,6 +35,11 @@ export function Starfield() {
     let stars: Star[] = [];
     let mx = 0;
     let my = 0;
+    // smx/smy amortecem mx/my (lerp por frame) — sem isso o fundo grudava 1:1 no
+    // cursor a cada mousemove, o que parecia "arrastar a imagem" em vez de um
+    // parallax. Com atraso, o fundo passa a seguir com inércia.
+    let smx = 0;
+    let smy = 0;
     let rafId = 0;
 
     function seedStars() {
@@ -77,10 +82,12 @@ export function Starfield() {
     }
 
     function applyDrift(t: number) {
+      smx += (mx - smx) * 0.05;
+      smy += (my - smy) * 0.05;
       const idleX = Math.sin(t * 0.00035) * 1.4 + Math.sin(t * 0.0009) * 0.6;
       const idleY = Math.cos(t * 0.00045) * 1.3 + Math.cos(t * 0.0008) * 0.5;
-      const px = idleX + mx * 0.8;
-      const py = idleY + my * 0.8;
+      const px = idleX + smx * 0.8;
+      const py = idleY + smy * 0.8;
       document.querySelectorAll<HTMLElement>('[data-depth]').forEach((el) => {
         const depth = parseFloat(el.getAttribute('data-depth') || '10') || 10;
         el.style.transform = `translate(${-px * depth}px,${-py * depth * 0.6}px)`;
