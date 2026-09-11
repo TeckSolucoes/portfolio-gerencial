@@ -25,7 +25,12 @@ WORKDIR /app
 # de compilação C++. Sem isso o build falha em "Could not find any Python
 # installation to use" (erro real já visto num deploy). Só no builder — o runner
 # não recompila nada, só copia o node_modules já compilado.
-RUN apt-get update && apt-get install -y --no-install-recommends python3 make g++ \
+# openssl (a CLI, não só a lib) é como o Prisma detecta a versão do
+# libssl/OpenSSL do sistema pra escolher o engine binário certo — sem ela,
+# "node:20-bookworm-slim" emite "failed to detect the libssl/openssl version"
+# e cai num binário default que pode não carregar. Suspeita real de causa
+# de boot quebrado em produção (prisma migrate deploy falhando silenciosamente).
+RUN apt-get update && apt-get install -y --no-install-recommends python3 make g++ openssl \
   && rm -rf /var/lib/apt/lists/*
 
 COPY package.json package-lock.json ./
