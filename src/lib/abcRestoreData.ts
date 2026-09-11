@@ -8,6 +8,11 @@ import type { FrontStatus } from '@/generated/prisma/enums';
 // ali, mas o CONTEÚDO de cada item (título/status/nota) não — por isso as
 // frentes abaixo nascem sem itens, com progresso em modo manual preservando
 // o valor exato que existia. Curadoria precisa recriar os itens à mão depois.
+//
+// Vive em src/lib (não src/app) de propósito: prisma/seed.ts importa isso, e
+// o Dockerfile do runner só copia src/generated e src/lib pro container final
+// (não src/app inteiro) — colocar em src/app quebrava o boot em produção com
+// "module not found" (mesmo tipo de bug já visto antes com src/lib faltando).
 export interface RestoredFront {
   slug: string;
   title: string;

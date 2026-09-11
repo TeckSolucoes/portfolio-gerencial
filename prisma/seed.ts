@@ -10,7 +10,7 @@ import bcrypt from 'bcryptjs';
 import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
 import { PrismaClient } from '../src/generated/prisma/client';
 import { DATA } from '../src/lib/mockData';
-import { ABC_RESTORED_FRONTS } from '../src/app/admin/companies/[companySlug]/restoreAbcData';
+import { ABC_RESTORED_FRONTS } from '../src/lib/abcRestoreData';
 
 // Carrega no SQLite local o mesmo conteúdo hoje hardcoded em src/lib/mockData.ts —
 // mesmas 3 empresas, mesmas 18 frentes, mesmos itens, cópia idêntica (inclusive
