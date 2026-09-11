@@ -114,6 +114,7 @@ export function NewFrontWithItemsForm({
             <option value="ok">Em dia</option>
             <option value="attention">Atenção</option>
             <option value="blocked">Bloqueada</option>
+            <option value="concluido">Concluído</option>
           </select>
         </div>
         <div className="admin-field admin-field-narrow">

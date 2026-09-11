@@ -18,7 +18,7 @@ export default async function ShareCompanyPage({ params }: { params: Promise<{ t
     include: {
       fronts: {
         where: { archivedAt: null },
-        orderBy: { sortOrder: 'asc' },
+        orderBy: [{ prioritized: 'desc' }, { sortOrder: 'asc' }],
         include: { items: { orderBy: { sortOrder: 'asc' } } },
       },
     },

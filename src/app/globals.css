@@ -116,6 +116,8 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(24px,3vw,32px);lin
 .pill-status.attention .d{background:var(--warn);}
 .pill-status.blocked{background:var(--bad-soft);color:var(--bad);}
 .pill-status.blocked .d{background:var(--bad);}
+.pill-status.concluido{background:var(--teal-soft);color:var(--teal-strong);}
+.pill-status.concluido .d{background:var(--teal-strong);}
 
 .priority-tag{
   display:inline-flex;align-items:center;font-family:var(--mono);font-size:10px;letter-spacing:.4px;

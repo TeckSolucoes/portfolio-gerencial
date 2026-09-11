@@ -16,7 +16,7 @@ export default async function CompanyPage({ params }: { params: Promise<{ compan
       include: {
         fronts: {
           where: { archivedAt: null },
-          orderBy: { sortOrder: 'asc' },
+          orderBy: [{ prioritized: 'desc' }, { sortOrder: 'asc' }],
           include: { items: { orderBy: { sortOrder: 'asc' } } },
         },
       },

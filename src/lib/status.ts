@@ -4,6 +4,7 @@ export const STATUS_LABEL: Record<FrontStatus, string> = {
   ok: 'Em dia',
   attention: 'Atenção',
   blocked: 'Bloqueada',
+  concluido: 'Concluído',
 };
 
 export const ITEM_STATUS_LABEL: Record<ItemStatus, string> = {

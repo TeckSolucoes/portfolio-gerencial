@@ -2,7 +2,7 @@
 // Temporary/hardcoded stage: this file stays stable across the future Prisma swap.
 
 export type Tone = 'violet' | 'ember' | 'teal' | 'rose' | 'sky';
-export type FrontStatus = 'ok' | 'attention' | 'blocked';
+export type FrontStatus = 'ok' | 'attention' | 'blocked' | 'concluido';
 export type ItemStatus = 'done' | 'doing' | 'todo' | 'blocked';
 
 export interface FrontItem {

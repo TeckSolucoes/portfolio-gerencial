@@ -27,6 +27,7 @@ enum FrontStatus {
   ok
   attention
   blocked
+  concluido
 }
 
 enum ItemStatus {
