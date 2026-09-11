@@ -10,6 +10,7 @@ import bcrypt from 'bcryptjs';
 import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
 import { PrismaClient } from '../src/generated/prisma/client';
 import { DATA } from '../src/lib/mockData';
+import { ABC_RESTORED_FRONTS } from '../src/app/admin/companies/[companySlug]/restoreAbcData';
 
 // Carrega no SQLite local o mesmo conteúdo hoje hardcoded em src/lib/mockData.ts —
 // mesmas 3 empresas, mesmas 18 frentes, mesmos itens, cópia idêntica (inclusive
@@ -134,6 +135,52 @@ async function seedCompaniesAndFronts() {
   }
 }
 
+/** Inverso de RestoredFront.nextDate ("DD/MM", ano 2026 fixo — ver restoreAbcData.ts). */
+function parseRestoredDate(ddmm: string | null): Date | null {
+  if (!ddmm) return null;
+  const [day, month] = ddmm.split('/').map(Number);
+  return new Date(Date.UTC(2026, month - 1, day, 12, 0, 0));
+}
+
+// Recuperação automática pós-incidente (2026-09): o volume /app/data não
+// estava configurado no EasyPanel, então um redeploy zerou o banco de
+// produção e apagou as frentes reais da ABC Card. Usuário conseguiu copiar o
+// texto da tela pública antes de perder o link, e eu reconstruí a partir
+// dali (ver restoreAbcData.ts). Roda em todo boot (upsert por slug, nunca
+// cria duplicata nem quebra se a frente já existir de outra forma — seja
+// porque esse próprio boot já rodou antes, seja porque o usuário recriou
+// manualmente com o mesmo slug) e NUNCA arquiva nada: só garante que essas
+// 21 frentes específicas existam com os valores certos, sem mexer em
+// qualquer outra frente que já esteja lá.
+async function restoreAbcCardIfNeeded() {
+  const company = await prisma.company.findUnique({ where: { slug: 'abccard' } });
+  if (!company) return;
+
+  for (let i = 0; i < ABC_RESTORED_FRONTS.length; i++) {
+    const f = ABC_RESTORED_FRONTS[i];
+    await prisma.front.upsert({
+      where: { companyId_slug: { companyId: company.id, slug: f.slug } },
+      update: {},
+      create: {
+        companyId: company.id,
+        slug: f.slug,
+        title: f.title,
+        summaryHtml: '',
+        statusMode: 'manual',
+        statusManual: f.status,
+        progressMode: 'manual',
+        progressManual: f.progress,
+        ownerName: f.ownerName,
+        ownerInitials: f.ownerInitials,
+        nextMilestone: f.nextMilestone,
+        nextDate: parseRestoredDate(f.nextDate),
+        prioritized: f.prioritized,
+        sortOrder: 100 + i,
+      },
+    });
+  }
+}
+
 async function seedStatusMapping() {
   for (const mapping of STATUS_MAPPING) {
     await prisma.jiraStatusMapping.upsert({
@@ -183,6 +230,7 @@ async function seedUsers() {
 
 async function main() {
   await seedCompaniesAndFronts();
+  await restoreAbcCardIfNeeded();
   await seedStatusMapping();
   await seedUsers();
 }
