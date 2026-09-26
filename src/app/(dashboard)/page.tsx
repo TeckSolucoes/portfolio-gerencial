@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 import Link from 'next/link';
 import { auth } from '@/lib/auth';
 import { dataExtenso } from '@/lib/tempo';
-import { BLOCOS, Bolsa, BolsaSkeleton, BlocoNoticias, Indicadores, IndicadoresSkeleton, NoticiasSkeleton } from './secoes';
+import { BLOCOS, Bolsa, BolsaSkeleton, BlocoNoticias, DiarioHome, DiarioHomeSkeleton, Indicadores, IndicadoresSkeleton, NoticiasSkeleton } from './secoes';
 import './home.css';
 
 export const dynamic = 'force-dynamic';
@@ -54,6 +54,12 @@ export default function HomePage() {
           </Link>
         </div>
       </section>
+
+      <div className="sec-diario">
+        <Suspense fallback={<DiarioHomeSkeleton />}>
+          <DiarioHome />
+        </Suspense>
+      </div>
 
       <h2 className="sec-titulo sec-noticias">Notícias</h2>
       <div className="blocos">

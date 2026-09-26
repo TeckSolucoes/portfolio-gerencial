@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { auth, signOut } from '@/lib/auth';
+import { carregarAcesso } from '@/lib/acesso';
 import { BrandMark } from './BrandMark';
 import { NOME_PRODUTO } from '@/lib/marca';
 
@@ -14,6 +15,7 @@ export async function Header() {
   const session = await auth();
   const user = session?.user;
   const canEdit = user && user.role !== 'visualizador';
+  const temEmpresa = user ? ((await carregarAcesso())?.empresas.length ?? 0) > 0 : false;
 
   return (
     <header>
@@ -25,14 +27,19 @@ export async function Header() {
         </div>
       </Link>
       <div className="header-right">
-        {user && (
+        {temEmpresa && (
           <Link href="/relatorio" className="admin-link">
             Relatório Gerencial
           </Link>
         )}
-        {user && (
+        {temEmpresa && (
           <Link href="/monitoramento" className="admin-link">
             Monitoramento
+          </Link>
+        )}
+        {user && (
+          <Link href="/diario-oficial" className="admin-link">
+            Diário Oficial
           </Link>
         )}
         {canEdit && (

@@ -589,6 +589,18 @@ h1.headline .line-2{
 .admin-toggle-compact{font-size:11.5px;font-family:var(--mono);color:var(--text-faint);}
 
 .admin-actions{display:flex;gap:10px;}
+.admin-access-checks{display:flex;gap:18px;padding:8px 0;}
+.admin-access-full{flex-basis:100%;order:5;}
+.admin-access-full .admin-access-row{margin:0;}
+.admin-table{width:100%;border-collapse:collapse;font-size:13px;}
+.admin-table th{font-family:var(--mono);font-size:10.5px;letter-spacing:1px;text-transform:uppercase;color:var(--text-faint);text-align:left;padding:10px 14px;border-bottom:1px solid var(--hair);}
+.admin-table td{padding:10px 14px;border-bottom:1px solid var(--hair);color:var(--text-dim);font-variant-numeric:tabular-nums;}
+.admin-table td.num,.admin-table th.num{text-align:right;}
+.admin-table tr.atual td{background:var(--violet-soft);}
+.admin-table .sem-meta{color:var(--warn);font-family:var(--mono);font-size:11.5px;}
+.admin-month-nav{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px;}
+.admin-month-nav .mes-atual{font-family:var(--display);font-size:18px;font-weight:700;text-transform:capitalize;}
+.admin-table-wrap{overflow-x:auto;background:var(--panel);border:1px solid var(--hair);border-radius:14px;margin-bottom:28px;}
 
 .admin-danger-zone{margin-top:36px;padding-top:22px;border-top:1px solid var(--hair);}
 

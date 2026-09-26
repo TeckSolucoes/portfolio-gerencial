@@ -50,3 +50,6 @@ data/*.db
 data/*.db-journal
 data/*.db-wal
 data/*.db-shm
+
+# Dados baixados dos portais de transparencia (nomes de servidores): nunca versionar
+data/transparencia/

@@ -187,6 +187,12 @@ model User {
   displayName  String   @map("display_name")
   displayTitle String?  @map("display_title")
 
+  // Empresas (códigos de src/lib/empresas.ts, separados por vírgula) que o usuário pode ver.
+  // Vazio = nenhuma; superadmin ignora e vê todas. Lido do banco a cada request, não do token.
+  empresas       String  @default("")
+  // Gerente que só pode ver a própria turma no relatório (primeiro nome, ex.: "Luana").
+  escopoGerente  String? @map("escopo_gerente")
+
   // Rate limit de login (força bruta) — contador zera no sucesso, bloqueia
   // por LOCK_DURATION_MINUTES (src/lib/auth.ts) ao chegar em MAX_ATTEMPTS.
   failedLoginAttempts Int       @default(0) @map("failed_login_attempts")
@@ -196,4 +202,18 @@ model User {
   updatedAt    DateTime @updatedAt @map("updated_at")
 
   @@map("users")
+}
+
+// Meta mensal por empresa, informada pelo ADM. Sem registro, o relatório mostra a meta de MODELO.
+model MetaMensal {
+  id          String   @id @default(uuid())
+  empresa     String
+  mes         String // YYYY-MM
+  valor       Float
+  atualizadoPor String?  @map("atualizado_por")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@unique([empresa, mes])
+  @@map("metas_mensais")
 }
