@@ -644,22 +644,3 @@ h1.headline .line-2{
   .skeleton{opacity:.75;}
   .priority-tag.yes{animation:none;}
 }
-
-.home-topo { display: grid; grid-template-columns: 1fr 1.4fr; gap: 16px; margin: 24px 0 16px; }
-.home-grade { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
-@media (max-width: 900px) { .home-topo, .home-grade { grid-template-columns: 1fr; } }
-.home-card { background: var(--panel); border: 1px solid var(--hair); border-radius: 14px; padding: 18px 20px; }
-.home-card h2 { font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 12px; font-weight: 600; }
-.home-valor { font-size: 32px; font-weight: 700; letter-spacing: -0.02em; }
-.home-var { margin-top: 6px; font-weight: 600; }
-.home-var.alta { color: var(--good); }
-.home-var.baixa { color: var(--bad); }
-.home-fonte { display: block; margin-top: 8px; font-size: 11px; color: var(--text-faint); }
-.home-vazio { color: var(--text-faint); font-size: 13px; }
-.home-indicadores { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-.home-rot { display: block; font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.06em; }
-.home-num { display: block; font-size: 24px; font-weight: 700; margin-top: 4px; }
-.home-noticias { list-style: none; display: flex; flex-direction: column; gap: 12px; }
-.home-noticias a { color: var(--text); text-decoration: none; font-size: 14px; line-height: 1.35; }
-.home-noticias a:hover { color: var(--violet-strong); text-decoration: underline; }
-.home-noticias span { display: block; margin-top: 3px; font-size: 11px; color: var(--text-faint); }
