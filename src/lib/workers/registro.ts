@@ -91,9 +91,11 @@ const transparenciaWorkers: Worker[] = [
     id: 'transparencia-federal',
     nome: 'Transparência · Servidores federais (por órgão)',
     grupo: 'Transparência',
-    descricao: 'Contagem agregada de servidores por órgão (Portal da Transparência federal). Só números, sem nome nem CPF.',
+    descricao:
+      'Contagem agregada de servidores por órgão (Portal da Transparência federal). Só números, sem nome nem CPF. A chave da API foi enviada para pflendesjr@hotmail.com.',
     intervaloMin: 24 * 60,
-    pendencia: () => (chaveConfigurada() ? null : 'Falta a chave da API (variável PORTAL_TRANSPARENCIA_CHAVE no EasyPanel).'),
+    pendencia: () =>
+      chaveConfigurada() ? null : 'Falta a chave da API: está no e-mail pflendesjr@hotmail.com. Coloque em PORTAL_TRANSPARENCIA_CHAVE no EasyPanel.',
     executar: async () => {
       const agregado = await coletarAgregadoFederal();
       return { itens: agregado.linhas, mensagem: `${agregado.totalPessoas.toLocaleString('pt-BR')} pessoas em ${agregado.porOrgao.length} órgãos`, dados: agregado };
