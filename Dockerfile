@@ -57,6 +57,11 @@ ENV PORT=3000
 
 RUN groupadd -r app && useradd -r -g app -m app
 
+# O "prisma migrate deploy" do CMD roda aqui, nao no builder: sem o openssl nesta
+# imagem o Prisma nao detecta a versao da libssl (o do builder nao vem pra ca).
+RUN apt-get update && apt-get install -y --no-install-recommends openssl \
+  && rm -rf /var/lib/apt/lists/*
+
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/public ./public
