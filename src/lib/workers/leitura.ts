@@ -5,7 +5,9 @@ import type { Consolidado, StatusFonte } from '../diarios';
 import type { AtoOficial } from '../diarioOficial';
 import { ibovespa, indicadores, noticias } from '../mercado';
 import type { Cotacao, Indicador, Noticia } from '../mercado';
+import type { AgregadoFederal } from '../transparencia/federal-agregar';
 import { lerCache } from './cache';
+import type { EntradaCache } from './cache';
 import { TOPICOS_NOTICIAS } from './registro';
 
 // As telas leem o que os workers coletaram. Sem cache ainda (1º boot, ou arquivo apagado), caem na
@@ -41,9 +43,18 @@ export async function atosDoCache(periodo: 'semana' | 'mes' | 'ano'): Promise<Co
   const status: StatusFonte[] = fontes.map((f, i) => {
     const c = caches[i];
     const doPeriodo = (c?.dados ?? []).filter((a) => a.data >= desde);
-    for (const a of doPeriodo) if (!vistos.has(a.id)) (vistos.add(a.id), atos.push(a));
+    for (const a of doPeriodo) {
+      if (vistos.has(a.id)) continue;
+      vistos.add(a.id);
+      atos.push(a);
+    }
     return { id: f.id, nome: f.nome, situacao: c ? 'ok' : 'indisponivel', qtd: doPeriodo.length, cobertura: COBERTURA[f.id] ?? '' };
   });
   atos.sort((a, b) => Number(b.prioritario) - Number(a.prioritario) || b.data.localeCompare(a.data));
   return { atos, fontes: status };
+}
+
+// Sem fallback ao vivo: a coleta federal percorre centenas de páginas e leva minutos.
+export async function agregadoFederal(): Promise<EntradaCache<AgregadoFederal> | null> {
+  return lerCache<AgregadoFederal>('transparencia-federal');
 }

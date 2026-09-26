@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
-import { estadoDosWorkers } from '@/lib/workers/motor';
+import { agendaPadrao, estadoDosWorkers } from '@/lib/workers/motor';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,5 +9,6 @@ export async function GET() {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ erro: 'Não autenticado.' }, { status: 401 });
   if (session.user.role !== 'superadmin') return NextResponse.json({ erro: 'Restrito a superadmin.' }, { status: 403 });
-  return NextResponse.json({ agora: new Date().toISOString(), workers: await estadoDosWorkers() }, { headers: { 'Cache-Control': 'no-store' } });
+  const [workers, padrao] = await Promise.all([estadoDosWorkers(), agendaPadrao()]);
+  return NextResponse.json({ agora: new Date().toISOString(), workers, padrao }, { headers: { 'Cache-Control': 'no-store' } });
 }

@@ -221,9 +221,11 @@ model MetaMensal {
 // Workers: tarefas agendadas (sem IA, só código) que atualizam notícias, mercado, diários e
 // transparência. WorkerConfig guarda o que o ADM muda em tela; WorkerExecucao é o histórico.
 model WorkerConfig {
-  id           String   @id // id do worker no registro (src/lib/workers/registro.ts)
+  // id do worker no registro (src/lib/workers/registro.ts), ou "__padrao__" para a agenda padrão
+  id           String   @id
   ativo        Boolean  @default(true)
-  intervaloMin Int? @map("intervalo_min") // null = usa o padrão do worker
+  intervaloMin Int? @map("intervalo_min") // legado (agenda por intervalo); não é mais lido
+  horarios     String? // "08:00,13:00,19:00" em Brasília; null = segue a agenda padrão
   updatedAt    DateTime @updatedAt @map("updated_at")
 
   @@map("worker_configs")

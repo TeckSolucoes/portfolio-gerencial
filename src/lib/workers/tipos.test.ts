@@ -1,27 +1,69 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { estaVencido, intervaloValido, proximaExecucao } from './tipos';
+import { estaVencido, lerHorarios, normalizarHorarios, proximaExecucao, proximoHorario, ultimoHorario } from './tipos';
 
+// Horários em Brasília (UTC-3): 08:00 BRT = 11:00Z, 13:00 BRT = 16:00Z, 19:00 BRT = 22:00Z.
 const t = (s: string) => new Date(s);
+const PADRAO = ['08:00', '13:00', '19:00'];
 
 test('nunca rodou: vence já', () => {
   const agora = t('2026-09-26T12:00:00Z');
-  assert.equal(estaVencido(null, 30, agora), true);
-  assert.equal(proximaExecucao(null, 30, agora).getTime(), agora.getTime());
+  assert.equal(estaVencido(null, PADRAO, agora), true);
+  assert.equal(proximaExecucao(null, PADRAO, agora).getTime(), agora.getTime());
 });
 
-test('vence exatamente no início da última execução + intervalo', () => {
-  const inicio = t('2026-09-26T12:00:00Z');
-  assert.equal(estaVencido(inicio, 30, t('2026-09-26T12:29:59Z')), false);
-  assert.equal(estaVencido(inicio, 30, t('2026-09-26T12:30:00Z')), true);
-  assert.equal(proximaExecucao(inicio, 30).toISOString(), '2026-09-26T12:30:00.000Z');
+test('manhã, tarde e noite no horário de Brasília (servidor em UTC)', () => {
+  assert.equal(proximoHorario(PADRAO, t('2026-09-26T10:59:00Z')).toISOString(), '2026-09-26T11:00:00.000Z');
+  assert.equal(proximoHorario(PADRAO, t('2026-09-26T11:00:00Z')).toISOString(), '2026-09-26T16:00:00.000Z');
+  assert.equal(proximoHorario(PADRAO, t('2026-09-26T16:30:00Z')).toISOString(), '2026-09-26T22:00:00.000Z');
 });
 
-test('intervalo: inteiro entre 5 minutos e 7 dias', () => {
-  assert.equal(intervaloValido(5), true);
-  assert.equal(intervaloValido(4), false);
-  assert.equal(intervaloValido(7 * 24 * 60), true);
-  assert.equal(intervaloValido(7 * 24 * 60 + 1), false);
-  assert.equal(intervaloValido(30.5), false);
-  assert.equal(intervaloValido(Number.NaN), false);
+test('depois das 19:00 o próximo é 08:00 do dia seguinte, inclusive após a meia-noite UTC', () => {
+  // 21:30 BRT de 26/09 = 00:30Z de 27/09: o dia em Brasília ainda é 26.
+  assert.equal(proximoHorario(PADRAO, t('2026-09-27T00:30:00Z')).toISOString(), '2026-09-27T11:00:00.000Z');
+  assert.equal(ultimoHorario(PADRAO, t('2026-09-27T00:30:00Z')).toISOString(), '2026-09-26T22:00:00.000Z');
+});
+
+test('antes das 08:00 o último horário foi 19:00 de ontem', () => {
+  assert.equal(ultimoHorario(PADRAO, t('2026-09-26T09:00:00Z')).toISOString(), '2026-09-25T22:00:00.000Z');
+});
+
+test('vence quando o horário passa depois da última execução, uma vez só', () => {
+  const ontemNoite = t('2026-09-25T22:00:05Z');
+  assert.equal(estaVencido(ontemNoite, PADRAO, t('2026-09-26T10:59:59Z')), false);
+  assert.equal(estaVencido(ontemNoite, PADRAO, t('2026-09-26T11:00:00Z')), true);
+  // Rodou às 08:00:20: não repete até 13:00.
+  assert.equal(estaVencido(t('2026-09-26T11:00:20Z'), PADRAO, t('2026-09-26T15:59:00Z')), false);
+  assert.equal(proximaExecucao(t('2026-09-26T11:00:20Z'), PADRAO, t('2026-09-26T12:00:00Z')).toISOString(), '2026-09-26T16:00:00.000Z');
+});
+
+test('servidor fora do ar no horário: roda assim que voltar', () => {
+  // Última às 19:00 de ontem; servidor voltou às 10:00 BRT (perdeu as 08:00).
+  assert.equal(estaVencido(t('2026-09-25T22:00:05Z'), PADRAO, t('2026-09-26T13:00:00Z')), true);
+});
+
+test('execução manual entre horários não impede o próximo horário', () => {
+  const manual = t('2026-09-26T14:00:00Z'); // 11:00 BRT
+  assert.equal(estaVencido(manual, PADRAO, t('2026-09-26T15:59:59Z')), false);
+  assert.equal(estaVencido(manual, PADRAO, t('2026-09-26T16:00:00Z')), true);
+});
+
+test('um horário só por dia', () => {
+  assert.equal(proximoHorario(['06:30'], t('2026-09-26T10:00:00Z')).toISOString(), '2026-09-27T09:30:00.000Z');
+  assert.equal(ultimoHorario(['06:30'], t('2026-09-26T10:00:00Z')).toISOString(), '2026-09-26T09:30:00.000Z');
+});
+
+test('normalizar: ordena, tira repetidos e valida', () => {
+  assert.deepEqual(normalizarHorarios(['19:00', '08:00', '13:00', '08:00']), ['08:00', '13:00', '19:00']);
+  assert.throws(() => normalizarHorarios([]), /pelo menos um/);
+  assert.throws(() => normalizarHorarios(['24:00']), /inválido/);
+  assert.throws(() => normalizarHorarios(['8:00']), /inválido/);
+  assert.throws(() => normalizarHorarios(Array.from({ length: 25 }, (_, i) => `${String(i % 24).padStart(2, '0')}:${i < 24 ? '00' : '30'}`)), /No máximo/);
+});
+
+test('ler do banco: vazio ou corrompido cai no padrão (null)', () => {
+  assert.deepEqual(lerHorarios('13:00,08:00'), ['08:00', '13:00']);
+  assert.equal(lerHorarios(null), null);
+  assert.equal(lerHorarios(''), null);
+  assert.equal(lerHorarios('lixo'), null);
 });

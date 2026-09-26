@@ -6,7 +6,7 @@ import { ROTULO_EMPRESA } from '@/lib/empresas';
 import type { Empresa } from '@/lib/empresas';
 import { metaDoMes } from '@/lib/metas';
 import { escolherEmpresa, podeVerAba } from '@/lib/permissoes';
-import type { Relatorio, Soma, Tipo } from '@/lib/relatorio/types';
+import type { Relatorio, Tipo } from '@/lib/relatorio/types';
 import { RelatorioLista } from './RelatorioLista';
 import { RelatorioLote } from './RelatorioLote';
 import { RelatorioNav } from './RelatorioNav';

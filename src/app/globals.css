@@ -294,9 +294,15 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(24px,3vw,32px);lin
 .item-row .it-note{font-size:12px;color:var(--text-faint);margin-top:4px;}
 .item-row .it-updated{font-family:var(--mono);font-size:10.5px;color:var(--text-faint);white-space:nowrap;}
 
+/* Menu com muitos links: quebra em linhas em vez de estourar a largura da tela. */
+@media (max-width:1180px){
+  header{flex-wrap:wrap;row-gap:12px;}
+  .header-right{flex-wrap:wrap;justify-content:flex-end;gap:8px;}
+}
 @media (max-width:640px){
   header{padding:18px 20px;}
   .user-name{display:none;}
+  .header-right{width:100%;justify-content:flex-start;}
   main{padding:30px 20px 70px;}
   .grouprow{gap:18px;padding:18px;}
 }

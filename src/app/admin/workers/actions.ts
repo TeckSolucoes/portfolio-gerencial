@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { requireSuperadminForAction } from '@/lib/authz';
-import { definirAtivo, definirIntervalo, executarWorker } from '@/lib/workers/motor';
+import { definirAgendaPadrao, definirAtivo, definirHorarios, executarWorker } from '@/lib/workers/motor';
 
 export type ResultadoAcao = { ok: true; aviso?: string } | { ok: false; erro: string };
 
@@ -37,10 +37,18 @@ export async function alternarAtivo(id: string, ativo: boolean): Promise<Resulta
   });
 }
 
-// minutos = null volta ao intervalo padrão do worker.
-export async function mudarIntervalo(id: string, minutos: number | null): Promise<ResultadoAcao> {
+// horarios = null: o worker volta a seguir a agenda padrão.
+export async function mudarHorarios(id: string, horarios: string[] | null): Promise<ResultadoAcao> {
   return protegida(async () => {
-    await definirIntervalo(id, minutos);
+    await definirHorarios(id, horarios);
+    revalidatePath('/admin/workers');
+    return { ok: true };
+  });
+}
+
+export async function mudarAgendaPadrao(horarios: string[]): Promise<ResultadoAcao> {
+  return protegida(async () => {
+    await definirAgendaPadrao(horarios);
     revalidatePath('/admin/workers');
     return { ok: true };
   });

@@ -2,7 +2,7 @@ import 'server-only';
 import { prisma } from '../prisma';
 import { gravarCache } from './cache';
 import { WORKERS, workerPorId } from './registro';
-import { estaVencido, intervaloValido, proximaExecucao } from './tipos';
+import { estaVencido, HORARIOS_PADRAO, lerHorarios, normalizarHorarios, proximaExecucao } from './tipos';
 import type { EstadoWorker, StatusExecucao, Worker } from './tipos';
 
 const TICK_MS = 30_000;
@@ -60,9 +60,22 @@ async function podarHistorico(workerId: string) {
   if (antigas.length > 0) await prisma.workerExecucao.deleteMany({ where: { id: { in: antigas.map((a) => a.id) } } });
 }
 
+// Linha especial de worker_configs com a agenda que vale para quem não tem horários próprios.
+const ID_PADRAO = '__padrao__';
+
 async function configs() {
   const linhas = await prisma.workerConfig.findMany();
-  return new Map(linhas.map((c) => [c.id, c]));
+  const porId = new Map(linhas.map((c) => [c.id, c]));
+  const padrao = lerHorarios(porId.get(ID_PADRAO)?.horarios) ?? [...HORARIOS_PADRAO];
+  const agendaDe = (id: string) => {
+    const proprios = lerHorarios(porId.get(id)?.horarios);
+    return { horarios: proprios ?? padrao, proprios: proprios !== null };
+  };
+  return { porId, padrao, agendaDe };
+}
+
+export async function agendaPadrao(): Promise<string[]> {
+  return (await configs()).padrao;
 }
 
 // Última execução de cada worker numa consulta só (mais rápido que uma por worker).
@@ -81,9 +94,8 @@ export async function estadoDosWorkers(): Promise<EstadoWorker[]> {
   const [cfg, { porWorker, sucesso }] = await Promise.all([configs(), ultimas()]);
   const agora = new Date();
   return WORKERS.map((w) => {
-    const c = cfg.get(w.id);
-    const ativo = c?.ativo ?? true;
-    const intervaloMin = c?.intervaloMin ?? w.intervaloMin;
+    const ativo = cfg.porId.get(w.id)?.ativo ?? true;
+    const agenda = cfg.agendaDe(w.id);
     const u = porWorker.get(w.id) ?? null;
     const pendencia = w.pendencia?.() ?? null;
     const rodandoAgora = rodando().has(w.id) || u?.status === 'rodando';
@@ -93,8 +105,8 @@ export async function estadoDosWorkers(): Promise<EstadoWorker[]> {
       grupo: w.grupo,
       descricao: w.descricao,
       ativo,
-      intervaloMin,
-      intervaloPadraoMin: w.intervaloMin,
+      horarios: agenda.horarios,
+      horariosProprios: agenda.proprios,
       pendencia,
       rodando: rodandoAgora,
       ultima: u && {
@@ -107,7 +119,7 @@ export async function estadoDosWorkers(): Promise<EstadoWorker[]> {
         origem: u.origem,
       },
       ultimoSucessoEm: sucesso.get(w.id)?.toISOString() ?? null,
-      proximaEm: !ativo || pendencia || rodandoAgora ? null : proximaExecucao(u?.iniciadoEm ?? null, intervaloMin, agora).toISOString(),
+      proximaEm: !ativo || pendencia || rodandoAgora ? null : proximaExecucao(u?.iniciadoEm ?? null, agenda.horarios, agora).toISOString(),
     };
   });
 }
@@ -117,20 +129,25 @@ export async function definirAtivo(id: string, ativo: boolean) {
   await prisma.workerConfig.upsert({ where: { id }, create: { id, ativo }, update: { ativo } });
 }
 
-// null volta ao intervalo padrão do worker.
-export async function definirIntervalo(id: string, intervaloMin: number | null) {
+// null = o worker volta a seguir a agenda padrão.
+export async function definirHorarios(id: string, horarios: string[] | null) {
   if (!workerPorId(id)) throw new Error('Worker inexistente.');
-  if (intervaloMin !== null && !intervaloValido(intervaloMin)) throw new Error('Intervalo deve ser um número inteiro de minutos entre 5 e 10080.');
-  await prisma.workerConfig.upsert({ where: { id }, create: { id, intervaloMin }, update: { intervaloMin } });
+  const valor = horarios === null ? null : normalizarHorarios(horarios).join(',');
+  await prisma.workerConfig.upsert({ where: { id }, create: { id, horarios: valor }, update: { horarios: valor } });
+}
+
+// Muda a agenda de todos os workers que não têm horários próprios.
+export async function definirAgendaPadrao(horarios: string[]) {
+  const valor = normalizarHorarios(horarios).join(',');
+  await prisma.workerConfig.upsert({ where: { id: ID_PADRAO }, create: { id: ID_PADRAO, horarios: valor }, update: { horarios: valor } });
 }
 
 async function rodada() {
   const [cfg, { porWorker }] = await Promise.all([configs(), ultimas()]);
   const agora = new Date();
   const vencidos: Worker[] = WORKERS.filter((w) => {
-    const c = cfg.get(w.id);
-    if (!(c?.ativo ?? true) || w.pendencia?.() || rodando().has(w.id)) return false;
-    return estaVencido(porWorker.get(w.id)?.iniciadoEm ?? null, c?.intervaloMin ?? w.intervaloMin, agora);
+    if (!(cfg.porId.get(w.id)?.ativo ?? true) || w.pendencia?.() || rodando().has(w.id)) return false;
+    return estaVencido(porWorker.get(w.id)?.iniciadoEm ?? null, cfg.agendaDe(w.id).horarios, agora);
   });
   const fila = [...vencidos];
   const trabalhar = async () => {
