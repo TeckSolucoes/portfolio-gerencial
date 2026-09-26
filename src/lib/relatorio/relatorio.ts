@@ -19,9 +19,10 @@ export const GERENTES = ['Luana Cosme', 'Adriano Monteiro', 'Daniel Mansur', 'Ma
 
 const semAcento = (s: string) => s.normalize('NFD').replace(/\p{Diacritic}/gu, '').toUpperCase().trim();
 
-// O Front grava o nome completo do gerente; a turma é achada pelo começo do nome.
+// O Front grava o nome completo (e às vezes com sobrenomes a mais); o gerente é casado pelo primeiro nome.
 export function escopoGerente(nome: string): Escopo {
-  return { nome, corresponde: (gerente) => semAcento(gerente).startsWith(semAcento(nome)) };
+  const primeiro = semAcento(nome).split(/\s+/)[0];
+  return { nome, corresponde: (gerente) => semAcento(gerente).startsWith(primeiro) };
 }
 
 const centavos = (n: number) => Math.round(n * 100) / 100;

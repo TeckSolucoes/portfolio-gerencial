@@ -28,6 +28,11 @@ export async function Header() {
           <span className="sdot"></span>Sincronizado com o Jira · hoje às 08:14
         </div>
         {user && (
+          <Link href="/relatorio" className="admin-link">
+            Relatório Gerencial
+          </Link>
+        )}
+        {user && (
           <Link href="/monitoramento" className="admin-link">
             Monitoramento
           </Link>
