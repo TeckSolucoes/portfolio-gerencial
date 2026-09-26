@@ -1,7 +1,6 @@
-import { ibovespa, indicadores, noticias } from '@/lib/mercado';
 import type { Noticia } from '@/lib/mercado';
 import { tempoRelativo } from '@/lib/tempo';
-import { atosConsolidados } from '@/lib/diarios';
+import { atosDoCache, bolsaAtual, indicadoresAtuais, noticiasDoTopico } from '@/lib/workers/leitura';
 import Link from 'next/link';
 
 const numero = (n: number, casas = 2) => n.toLocaleString('pt-BR', { minimumFractionDigits: casas, maximumFractionDigits: casas });
@@ -19,7 +18,7 @@ export const BLOCOS = [
 ] as const;
 
 export async function Bolsa() {
-  const bolsa = await ibovespa();
+  const bolsa = await bolsaAtual();
   const sobe = bolsa?.variacaoPct != null && bolsa.variacaoPct >= 0;
   const tom = bolsa?.variacaoPct == null ? 't-azul' : sobe ? 't-verde' : 't-vermelho';
   return (
@@ -46,7 +45,7 @@ export async function Bolsa() {
 }
 
 export async function Indicadores() {
-  const taxas = await indicadores();
+  const taxas = await indicadoresAtuais();
   return (
     <section className="taxas" aria-labelledby="h-taxas">
       <h2 id="h-taxas" className="sec-titulo">Indicadores · Banco Central</h2>
@@ -96,7 +95,7 @@ function Lista({ itens, agora }: { itens: Noticia[]; agora: Date }) {
 }
 
 export async function BlocoNoticias({ id, titulo, consulta, tom }: { id: string; titulo: string; consulta: string; tom: string }) {
-  const itens = await noticias(consulta);
+  const itens = await noticiasDoTopico(consulta);
   return (
     <section className={`bloco ${tom}`} aria-labelledby={id}>
       <h2 id={id} className="bloco-titulo">
@@ -165,7 +164,7 @@ export function NoticiasSkeleton({ id, titulo, tom }: { id: string; titulo: stri
 const dataCurta = (ymd: string) => ymd.split('-').reverse().join('/');
 
 export async function DiarioHome() {
-  const consolidado = await atosConsolidados('mes');
+  const consolidado = await atosDoCache('mes');
   const atos = consolidado.fontes.every((f) => f.situacao === 'indisponivel') ? null : consolidado.atos;
   const destaque = atos?.slice(0, 4) ?? [];
   return (

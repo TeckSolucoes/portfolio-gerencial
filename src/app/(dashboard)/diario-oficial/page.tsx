@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
-import { atosConsolidados } from '@/lib/diarios';
+import { atosDoCache } from '@/lib/workers/leitura';
 import { Lista } from './lista';
 import './diario-oficial.css';
 
@@ -19,7 +19,7 @@ const periodoValido = (v: string | string[] | undefined): Periodo =>
 const dataBr = (ymd: string) => ymd.split('-').reverse().join('/');
 
 async function Conteudo({ periodo }: { periodo: Periodo }) {
-  const { atos, fontes } = await atosConsolidados(periodo);
+  const { atos, fontes } = await atosDoCache(periodo);
   const fontesNoAr = fontes.filter((f) => f.situacao === 'ok').length;
   if (fontesNoAr === 0) {
     return (

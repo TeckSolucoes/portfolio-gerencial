@@ -13,7 +13,11 @@ export function PasswordField({
   required,
   minLength,
   defaultValue,
+  describedBy,
+  invalid,
 }: {
+  describedBy?: string;
+  invalid?: boolean;
   id?: string;
   name: string;
   placeholder?: string;
@@ -35,6 +39,8 @@ export function PasswordField({
         required={required}
         minLength={minLength}
         defaultValue={defaultValue}
+        aria-describedby={describedBy}
+        aria-invalid={invalid || undefined}
       />
       <button
         type="button"
