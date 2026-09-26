@@ -16,8 +16,7 @@ type FrontWithItems = FrontRow & { items: FrontItemRow[] };
 type CompanyWithFronts = CompanyRow & { fronts: FrontWithItems[] };
 
 function mapFrontItem(item: FrontItemRow): FrontItem {
-  // titleOverride é nulo apenas para um item futuro ainda não editado pela curadoria
-  // (título viria do cache do Jira) — não acontece hoje, sem sync implementado.
+  // titleOverride é nulo apenas para um item ainda não editado pela curadoria.
   return {
     title: item.titleOverride ?? '',
     status: resolveItemStatus(item.statusOverride),

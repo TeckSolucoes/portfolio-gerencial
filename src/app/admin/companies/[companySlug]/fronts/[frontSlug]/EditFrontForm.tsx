@@ -74,7 +74,7 @@ export function EditFrontForm({
           <label htmlFor="statusMode">Modo de status</label>
           <select id="statusMode" name="statusMode" defaultValue={front.statusMode}>
             <option value="manual">Manual</option>
-            <option value="auto">Automático (requer sync com Jira, ainda não disponível)</option>
+            <option value="auto">Automático (ainda não disponível)</option>
           </select>
         </div>
         <div className="admin-field">
@@ -94,7 +94,7 @@ export function EditFrontForm({
           <label htmlFor="progressMode">Modo de progresso</label>
           <select id="progressMode" name="progressMode" defaultValue={front.progressMode}>
             <option value="manual">Manual</option>
-            <option value="auto">Automático (requer sync com Jira, ainda não disponível)</option>
+            <option value="auto">Automático (ainda não disponível)</option>
           </select>
         </div>
         <div className="admin-field admin-field-narrow">

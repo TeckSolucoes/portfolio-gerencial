@@ -1,224 +1,423 @@
 import Link from 'next/link';
 import evidencia from '@/lib/relatorio/evidencia.json';
-import type { LinhaDesfecho, LinhaSoma, Relatorio, Soma } from '@/lib/relatorio/types';
+import type { Relatorio, Soma, Tipo } from '@/lib/relatorio/types';
+import { RelatorioLista } from './RelatorioLista';
+import { RelatorioLote } from './RelatorioLote';
+import { RelatorioNav } from './RelatorioNav';
+import './relatorio.css';
 
-const ABAS = ['Geral', 'Luana Cosme', 'Adriano Monteiro', 'Daniel Mansur', 'Marcos Mota'];
+const ABAS = [
+  { escopo: 'Geral', rotulo: 'Geral' },
+  { escopo: 'Luana Cosme', rotulo: 'Luana' },
+  { escopo: 'Adriano Monteiro', rotulo: 'Adriano' },
+  { escopo: 'Daniel Mansur', rotulo: 'Daniel' },
+  { escopo: 'Marcos Mota', rotulo: 'Marcos' },
+];
 
-const moeda = (n: number) => n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-const dataBr = (ymd: string) => ymd.split('-').reverse().join('/');
-const pct = (n: number | null) => (n === null ? '—' : `${(n * 100).toLocaleString('pt-BR', { maximumFractionDigits: 1 })}%`);
+const MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+const NAO = '—';
 
-function Cartao({ titulo, s, nota }: { titulo: string; s: Soma; nota?: string }) {
+const brl = (n: number | null | undefined) => (n == null ? NAO : 'R$ ' + n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+const num = (n: number | null | undefined) => (n == null ? NAO : n.toLocaleString('pt-BR'));
+const pct = (f: number | null | undefined, casas = 1) => (f == null ? NAO : `${(f * 100).toLocaleString('pt-BR', { minimumFractionDigits: casas, maximumFractionDigits: casas })}%`);
+const dm = (ymd: string) => ymd.split('-').reverse().slice(0, 2).join('/');
+const razao = (parte: number | undefined, todo: number | undefined) => (parte == null || !todo ? null : parte / todo);
+const larg = (parte: number, todo: number) => (todo > 0 ? Math.max(0, Math.min(100, (100 * parte) / todo)) : 0);
+
+function Kpi({ cls, tom, rotulo, valor, meta, tag, children }: { cls: string; tom: string; rotulo: string; valor: string; meta?: string; tag?: string; children?: React.ReactNode }) {
   return (
-    <div className="admin-stat">
-      <span className="asv">{s.qtd.toLocaleString('pt-BR')}</span>
-      <span className="asl">{titulo}</span>
-      <span className="asl">{moeda(s.valor)}</span>
-      {nota && <span className="asl">{nota}</span>}
+    <div className={`kpi ${cls}`}>
+      <div className={`lab t-${tom}`}>
+        {rotulo}
+        {tag && <span className="tag">{tag}</span>}
+      </div>
+      <div className={`val t-${tom}`}>{valor}</div>
+      {meta !== undefined && <div className="meta">{meta}</div>}
+      {children}
     </div>
-  );
-}
-
-function TabelaSoma({ titulo, linhas, chave }: { titulo: string; linhas: LinhaSoma[]; chave: string }) {
-  return (
-    <>
-      <h2 className="admin-section-title">{titulo}</h2>
-      <table className="monit-tabela">
-        <thead>
-          <tr>
-            <th>{chave}</th>
-            <th>Qtd</th>
-            <th>Valor</th>
-          </tr>
-        </thead>
-        <tbody>
-          {linhas.length === 0 && (
-            <tr>
-              <td colSpan={3}>Sem propostas.</td>
-            </tr>
-          )}
-          {linhas.map((l) => (
-            <tr key={l.chave}>
-              <td>{l.chave}</td>
-              <td>{l.qtd}</td>
-              <td>{moeda(l.valor)}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </>
-  );
-}
-
-function TabelaCasos({ titulo, linhas, chave }: { titulo: string; linhas: LinhaDesfecho[]; chave: string }) {
-  return (
-    <>
-      <h2 className="admin-section-title">{titulo}</h2>
-      <table className="monit-tabela">
-        <thead>
-          <tr>
-            <th>{chave}</th>
-            <th>Pagou</th>
-            <th>Sem pagar ainda</th>
-          </tr>
-        </thead>
-        <tbody>
-          {linhas.map((l) => (
-            <tr key={l.chave}>
-              <td>{l.chave}</td>
-              <td>{l.pagou}</td>
-              <td>{l.morreu + l.jornada}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </>
   );
 }
 
 export default async function RelatorioPage({ searchParams }: { searchParams: Promise<{ escopo?: string }> }) {
   const { escopo: pedido } = await searchParams;
-  const escopo = ABAS.includes(pedido ?? '') ? (pedido as string) : 'Geral';
-  const r = (evidencia.escopos as Record<string, unknown>)[escopo] as Relatorio;
+  const escopo = ABAS.some((a) => a.escopo === pedido) ? (pedido as string) : 'Geral';
+  const aba = ABAS.find((a) => a.escopo === escopo)!;
+  // O JSON versionado ainda pode não ter as chaves novas do motor; tudo abaixo trata ausência.
+  const r = (evidencia.escopos as Record<string, unknown>)[escopo] as Partial<Relatorio> & Pick<Relatorio, 'kpis'>;
   const k = r.kpis;
 
-  return (
-    <div className="page">
-      <div className="kicker">Relatório Gerencial</div>
-      <h1>Vendas de {dataBr(evidencia.ref)}</h1>
-      <p className="lede">
-        Dados reais: {evidencia.fonte}. O relatório de 17/09 (Geral) foi conferido contra a prova: vendas do dia, novas e
-        reinseridas, Front e CCNET, cartões de proposta, casos do mês, pagou e canais batem exatamente. Onde o número
-        depende da esteira do CCNET, a tela avisa em vez de estimar.
-      </p>
+  const ref = evidencia.ref as string;
+  const [ano, mesRef, diaRef] = ref.split('-').map(Number);
+  const dRef = dm(ref);
+  const ontem = new Date(Date.UTC(ano, mesRef - 1, diaRef - 1));
+  const dOntem = `${String(ontem.getUTCDate()).padStart(2, '0')}/${String(ontem.getUTCMonth() + 1).padStart(2, '0')}`;
+  const fimExport = /a (\d{2}\/\d{2}\/\d{4})/.exec(evidencia.fonte as string)?.[1];
+  const fimMes = fimExport?.slice(0, 5);
+  const mesNome = MESES[mesRef - 1];
 
-      <nav className="admin-actions" style={{ marginBottom: 22 }}>
+  const meta = r.meta;
+  const clientes = r.clientes;
+  const rp = r.rankingPagos;
+  const nr = r.novaReinserida;
+  const diaNr = nr?.dia ?? { novas: k.novas, reinseridas: k.reinseridas };
+  const mesNr = nr?.mes ?? null;
+  const equipesExc = r.excecaoEquipes ?? [];
+  const churn = r.churn;
+  const lista = r.lista ?? [];
+  const loteDia = r.loteDia ?? [];
+  const canal = r.canalMes;
+
+  const faltando = [
+    !clientes && 'Clientes',
+    !meta && 'Meta',
+    !rp && 'Ranking dos pagos',
+    !nr && 'Nova ou reinserida (mês)',
+    !r.excecaoEquipes && 'Exceção por equipe',
+    !churn && 'Churn',
+    !r.lista && 'Lista de não reinseridos',
+    k.canceladosOntem == null && 'Cancelados ontem (depende do CCNET ao vivo)',
+  ].filter(Boolean) as string[];
+
+  const excDiaPct = razao(k.excecaoDia.valor, k.total.valor);
+  const pagosExcPct = meta?.pagosExcecaoPct ?? razao(k.pagosExcecaoMes.qtd, k.pagosMes.qtd);
+  const totalCanal = (t: Tipo) => canal?.[t];
+  const maxExc = Math.max(1, ...equipesExc.map((e) => e.vendeu.valor));
+  const totalNrDia = diaNr.novas.qtd + diaNr.reinseridas.qtd;
+  const totalNrMes = mesNr ? mesNr.novas.qtd + mesNr.reinseridas.qtd : 0;
+
+  return (
+    <div className="relatorio">
+      <div className="badge-prova" role="note">
+        PROVA {dRef} · números do export · não é ao vivo
+        <small>
+          Referência {dRef}/{ano} · ontem {dOntem}
+          {fimMes ? ` · mês 01–${fimMes}` : ''} · caso = CPF+tipo+produto · Meta = MODELO · Cliente da casa = grão CPF
+        </small>
+        <small>
+          Morreu, jornada, churn e a lista usam o status do Front no lugar da esteira do CCNET: podem diferir em poucos casos
+          do modelo do CEO até o CCNET entrar ao vivo.
+        </small>
+      </div>
+
+      <div className="rel-head">
+        <div>
+          <h1>Relatório diário — {aba.rotulo}</h1>
+          <div className="sub">
+            War room · {dRef}/{ano} · {escopo === 'Geral' ? 'Front × CCNET' : `equipe de ${aba.rotulo}`}
+          </div>
+        </div>
+        <div className="ref">REF: {dRef}/{ano}</div>
+      </div>
+
+      <nav className="tabs no-print" aria-label="Escopo do relatório">
         {ABAS.map((a) => (
-          <Link key={a} href={`/relatorio?escopo=${encodeURIComponent(a)}`} className={a === escopo ? 'btn btn-primary' : 'btn'}>
-            {a}
+          <Link key={a.escopo} href={`/relatorio?escopo=${encodeURIComponent(a.escopo)}`} className={`tab ${a.escopo === escopo ? 'active' : ''}`} aria-current={a.escopo === escopo ? 'page' : undefined}>
+            {a.rotulo}
           </Link>
         ))}
+        <span className="tab-note">Geral = todos · abas = filtro por gerente</span>
       </nav>
 
-      <h2 className="admin-section-title">Venda do dia</h2>
-      <div className="admin-stat-row">
-        <Cartao titulo="Total do dia" s={k.total} />
-        <Cartao titulo="Vendas novas" s={k.novas} />
-        <Cartao titulo="Reinseridas" s={k.reinseridas} />
-        <Cartao titulo="Front (sem código)" s={k.front} />
-        <Cartao titulo="CCNET (com código)" s={k.ccnet} />
-        <Cartao titulo="Exceção do dia" s={k.excecaoDia} />
-      </div>
+      <RelatorioNav />
 
-      <TabelaSoma titulo="Etapas no Front (status)" linhas={r.etapasFront} chave="Status" />
-      <TabelaSoma titulo="Etapas no CCNET (esteira)" linhas={r.etapasCcnet} chave="Esteira" />
+      {faltando.length > 0 && (
+        <p className="rel-aviso no-print" role="status">
+          <b>Sem dados neste export:</b> {faltando.join(' · ')}. Mostrados como {NAO}; nenhum número é estimado.
+        </p>
+      )}
 
-      <h2 className="admin-section-title">Propostas no mês</h2>
-      <div className="admin-stat-row">
-        <Cartao titulo="Vendas do mês" s={k.vendasMes} />
-        <Cartao titulo="Pagos do mês" s={k.pagosMes} />
-        <Cartao titulo="Pagos exceção" s={k.pagosExcecaoMes} />
-        <Cartao titulo="Exceção vendida no mês" s={k.excecaoMes} />
-        <Cartao titulo="Cancelados do mês" s={k.canceladosMes} nota={`${pct(k.canceladosMesPct)} das propostas do mês`} />
-        <Cartao titulo="Cancelados geral" s={k.canceladosGeral} />
-        <Cartao titulo="Vendas geral" s={k.vendasGeral} />
-      </div>
-
-      <h2 className="admin-section-title">Casos do mês (por lote)</h2>
-      <div className="admin-stat-row">
-        <div className="admin-stat">
-          <span className="asv">{r.resumoMes.inseriu.toLocaleString('pt-BR')}</span>
-          <span className="asl">Casos inseridos</span>
+      <section className="sec" id="sec-clientes">
+        <div className="sec-h">Clientes</div>
+        <div className="sec-s">Grão CPF · da casa = já teve qualquer contrato no grupo · novo = 1ª proposta do CPF · independente de nova/reinserida</div>
+        <div className="grid-cli">
+          <Kpi cls="bg-casa" tom="green" rotulo="Cliente da casa · dia" valor={brl(clientes?.casaDia.valor)} meta={clientes ? `${num(clientes.casaDia.qtd)} propostas · ${num(clientes.casaDia.cpfs)} CPF` : NAO} />
+          <Kpi cls="bg-novo" tom="blue" rotulo="Cliente novo · dia" valor={brl(clientes?.novoDia.valor)} meta={clientes ? `${num(clientes.novoDia.qtd)} propostas` : NAO} />
+          <Kpi cls="bg-casames" tom="purple" rotulo="Cliente da casa · mês" valor={brl(clientes?.casaMes.valor)} meta={clientes ? `${num(clientes.casaMes.qtd)} propostas · ${num(clientes.casaMes.cpfs)} CPF` : NAO} />
         </div>
-        <div className="admin-stat">
-          <span className="asv">{r.resumoMes.pagou.toLocaleString('pt-BR')}</span>
-          <span className="asl">Pagou</span>
+      </section>
+
+      <section className="sec" id="sec-vendas">
+        <div className="sec-h">Vendas</div>
+        <div className="sec-s">Nove cartões · propostas do dia {dRef} (exceto cancelados ontem/mês)</div>
+        <div className="grid9">
+          <Kpi cls="bg-total" tom="blue" rotulo="Total do dia" valor={brl(k.total.valor)} meta={`${num(k.total.qtd)} operações`} />
+          <Kpi cls="bg-novas" tom="green" rotulo="Vendas novas" valor={brl(k.novas.valor)} meta={`${num(k.novas.qtd)} · 1ª proposta do caso`} />
+          <Kpi cls="bg-reins" tom="purple" rotulo="Reinseridas" valor={brl(k.reinseridas.valor)} meta={`${num(k.reinseridas.qtd)} · mesmo caso, proposta nova`} />
+          <Kpi cls="bg-exc" tom="orange" rotulo="Exceção do dia" valor={brl(k.excecaoDia.valor)} meta={`${num(k.excecaoDia.qtd)} propostas · ${pct(excDiaPct)} do dia`} />
+          <Kpi cls="bg-front" tom="red" rotulo="Front" valor={brl(k.front.valor)} meta={`${num(k.front.qtd)} propostas`} />
+          <Kpi cls="bg-ccnet" tom="blue" rotulo="CCNET" valor={brl(k.ccnet.valor)} meta={`${num(k.ccnet.qtd)} propostas`} />
+          <Kpi cls="bg-canc" tom="red" rotulo="Cancelados ontem" valor={brl(k.canceladosOntem?.valor)} meta={k.canceladosOntem ? `${num(k.canceladosOntem.qtd)} · ${dOntem}` : 'indisponível · depende do CCNET ao vivo'} />
+          <Kpi cls="bg-cancm" tom="white" rotulo="Cancelados do mês" valor={brl(k.canceladosMes.valor)} meta={`${num(k.canceladosMes.qtd)} propostas`} />
+          <Kpi cls="bg-front" tom="white" rotulo="Cancelados %" valor={pct(k.canceladosMesPct)} meta={`${num(k.canceladosMes.qtd)} de ${num(k.vendasMes.qtd)} no mês`} />
         </div>
-        <div className="admin-stat">
-          <span className="asv">{(r.resumoMes.inseriu - r.resumoMes.pagou).toLocaleString('pt-BR')}</span>
-          <span className="asl">Ainda sem pagar</span>
+      </section>
+
+      <section className="sec" id="sec-mes">
+        <div className="sec-h">MÊS</div>
+        <div className="sec-s">
+          Propostas cadastradas em {mesNome}/{ano}
+          {fimMes ? ` até ${fimMes}` : ''} · cancelamento = Status Front “Cancelada”
         </div>
-      </div>
-      <p className="lede">
-        Morreu, Reprovado CCNET e taxa de morte ficam pendentes: dependem da esteira do CCNET, que o export do Front não
-        traz. Não estimamos esses números.
-      </p>
+        <div className="grid4">
+          <Kpi cls="bg-total" tom="blue" rotulo="Vendas do mês" valor={brl(k.vendasMes.valor)} meta={`${num(k.vendasMes.qtd)} propostas · ${mesNome}`} />
+          <Kpi cls="bg-cancm" tom="white" rotulo="Cancelados do mês" valor={brl(k.canceladosMes.valor)} meta={`${num(k.canceladosMes.qtd)} propostas canceladas`} />
+          <Kpi cls="bg-ccnet" tom="blue" rotulo="Vendas geral" valor={brl(k.vendasGeral.valor)} meta={`${num(k.vendasGeral.qtd)} propostas · tudo iniciado`} />
+          <Kpi cls="bg-front" tom="white" rotulo="Cancelados geral" valor={brl(k.canceladosGeral.valor)} meta={`${num(k.canceladosGeral.qtd)} propostas · base inteira`} />
+        </div>
+      </section>
 
-      <table className="monit-tabela">
-        <thead>
-          <tr>
-            <th>Canal</th>
-            <th>Casos</th>
-            <th>Pagou</th>
-          </tr>
-        </thead>
-        <tbody>
-          {(['Novo', 'Compra', 'Adiantamento'] as const).map((t) => (
-            <tr key={t}>
-              <td>{t}</td>
-              <td>{r.canalMes[t].casos}</td>
-              <td>{r.canalMes[t].pagou}</td>
-            </tr>
+      <section className="sec" id="sec-meta">
+        <div className="sec-h">
+          Meta <span className="tag">MODELO</span>
+        </div>
+        <div className="sec-s">Meta é número de modelo · pagos são reais do export</div>
+        <div className="grid4">
+          <Kpi cls="bg-total" tom="blue" rotulo="Meta" tag="MODELO" valor={brl(meta?.valor)} meta={meta ? 'trocar quando a meta oficial chegar' : 'meta ainda não informada'} />
+          <Kpi cls="bg-novas" tom="green" rotulo="Pagos" valor={brl(k.pagosMes.valor)} meta={`${num(k.pagosMes.qtd)} propostas · ${mesNome}`} />
+          <Kpi cls="bg-exc" tom="orange" rotulo="Pagos exceção" valor={brl(k.pagosExcecaoMes.valor)} meta={`${num(k.pagosExcecaoMes.qtd)} propostas · ${pct(pagosExcPct)} dos pagos`} />
+          <Kpi cls="bg-canc" tom="red" rotulo="Falta" valor={brl(meta?.falta)} meta={meta ? `${pct(meta.faltaPct)} para a meta` : NAO} />
+        </div>
+      </section>
+
+      <section className="sec" id="sec-ranking">
+        <div className="sec-h">Ranking dos pagos</div>
+        <div className="sec-s">Entre propostas Integradas do mês · 4º cartão = gerente</div>
+        <div className="grid4">
+          {(
+            [
+              ['bg-ccnet', 'blue', 'Ranking Convênio', rp?.convenio],
+              ['bg-reins', 'purple', 'Ranking Produto', rp?.produto],
+              ['bg-exc', 'orange', 'Ranking Equipe', rp?.equipe],
+              ['bg-novas', 'green', 'Ranking Gerente', rp?.gerente],
+            ] as const
+          ).map(([cls, tom, rotulo, item]) => (
+            <div key={rotulo} className={`kpi ${cls} rank`}>
+              <div className={`lab t-${tom}`}>{rotulo}</div>
+              <div className={`nome t-${tom}`}>{item?.nome ?? NAO}</div>
+              <div className="subv">{item ? `${brl(item.valor)} · ${pct(item.pct)} dos pagos` : NAO}</div>
+            </div>
           ))}
-        </tbody>
-      </table>
+        </div>
+      </section>
 
-      <TabelaCasos titulo="Por gerente" linhas={r.porGerente} chave="Gerente" />
-      <TabelaCasos titulo="Por equipe" linhas={r.porEquipe} chave="Equipe" />
-
-      <h2 className="admin-section-title">Lote por dia</h2>
-      <table className="monit-tabela">
-        <thead>
-          <tr>
-            <th>Dia</th>
-            <th>Casos novos</th>
-          </tr>
-        </thead>
-        <tbody>
-          {r.loteDia.map((l) => (
-            <tr key={l.data}>
-              <td>{dataBr(l.data)}</td>
-              <td>{l.casos}</td>
-            </tr>
+      <section className="sec">
+        <div className="sec-h">Nova ou reinserida</div>
+        <div className="sec-s">Verde = 1ª proposta do caso · Roxo = mesmo CPF+tipo+produto com proposta nova</div>
+        <div className="card bars">
+          {(
+            [
+              [`Dia ${dRef}`, diaNr, totalNrDia],
+              [mesNome.charAt(0).toUpperCase() + mesNome.slice(1), mesNr, totalNrMes],
+            ] as const
+          ).map(([titulo, par, total]) => (
+            <div key={titulo} className="bar-block">
+              <div className="lbl">
+                <b>{titulo}</b>
+                <span className="muted">{par ? `${num(total)} propostas` : NAO}</span>
+              </div>
+              <div className="bar-track" role="img" aria-label={par ? `${titulo}: ${par.novas.qtd} novas e ${par.reinseridas.qtd} reinseridas` : `${titulo}: indisponível`}>
+                {par && (
+                  <>
+                    <i className="nova" style={{ width: `${larg(par.novas.qtd, total)}%` }} />
+                    <i className="reins" style={{ width: `${larg(par.reinseridas.qtd, total)}%` }} />
+                  </>
+                )}
+              </div>
+              <div className="bar-leg">
+                <span>
+                  <b className="t-green">{par ? `${num(par.novas.qtd)} novas` : NAO}</b> · {brl(par?.novas.valor)}
+                </span>
+                <span>
+                  <b className="t-purple">{par ? `${num(par.reinseridas.qtd)} reinseridas` : NAO}</b> · {brl(par?.reinseridas.valor)}
+                </span>
+              </div>
+            </div>
           ))}
-        </tbody>
-      </table>
+        </div>
+      </section>
 
-      <TabelaSoma titulo="Ranking de equipes do dia" linhas={r.rankingEquipes} chave="Equipe" />
-      <TabelaSoma titulo="Ranking de operadores do dia" linhas={r.rankingOperadores.slice(0, 15)} chave="Operador" />
-      <TabelaSoma titulo="Por convênio" linhas={r.porConvenio} chave="Convênio" />
-      <TabelaSoma titulo="Por produto" linhas={r.porProduto} chave="Produto" />
-      <TabelaSoma titulo="Compra e Novo" linhas={r.porTipo} chave="Tipo" />
-
-      <h2 className="admin-section-title">Troca de equipe na reinserção</h2>
-      <table className="monit-tabela">
-        <thead>
-          <tr>
-            <th>Proposta</th>
-            <th>De</th>
-            <th>Para</th>
-          </tr>
-        </thead>
-        <tbody>
-          {r.trocasEquipe.length === 0 && (
-            <tr>
-              <td colSpan={3}>Nenhuma troca no dia.</td>
-            </tr>
-          )}
-          {r.trocasEquipe.map((t) => (
-            <tr key={t.numero}>
-              <td>{t.numero}</td>
-              <td>{t.de}</td>
-              <td>{t.para}</td>
-            </tr>
+      <section className="sec" id="sec-excecao">
+        <div className="sec-h">Exceção vendida</div>
+        <div className="sec-s">Política FRONT EXCEÇÃO · laranja = vendido · verde = já pagou</div>
+        <div className="card">
+          <div className="exc-sum">
+            <div className="box">
+              <div className="lab muted" style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.06em' }}>
+                DIA {dRef}
+              </div>
+              <div className="v t-orange">{brl(k.excecaoDia.valor)}</div>
+              <div className="muted" style={{ fontSize: 11 }}>
+                {num(k.excecaoDia.qtd)} propostas · {pct(excDiaPct)} do dia
+              </div>
+            </div>
+            <div className="box">
+              <div className="lab muted" style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.06em' }}>
+                VENDIDO NO MÊS
+              </div>
+              <div className="v t-orange">{brl(k.excecaoMes.valor)}</div>
+              <div className="muted" style={{ fontSize: 11 }}>
+                {num(k.excecaoMes.qtd)} propostas
+              </div>
+            </div>
+            <div className="box">
+              <div className="lab muted" style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.06em' }}>
+                PAGOS DO MÊS
+              </div>
+              <div className="v t-green">{brl(k.pagosExcecaoMes.valor)}</div>
+              <div className="muted" style={{ fontSize: 11 }}>
+                {num(k.pagosExcecaoMes.qtd)} de {num(k.pagosMes.qtd)} · {pct(pagosExcPct)}
+              </div>
+            </div>
+          </div>
+          {!r.excecaoEquipes && <div className="missing muted" style={{ fontSize: 12 }}>Detalhe por equipe indisponível neste export.</div>}
+          {equipesExc.map((e) => (
+            <div key={e.equipe} className="eq-row">
+              <div className="top">
+                <span>
+                  <b>{e.equipe}</b>
+                </span>
+                <span className="muted">
+                  {num(e.vendeu.qtd)} vendeu · {num(e.pagou.qtd)} pagou
+                </span>
+              </div>
+              <div className="eq-bars" role="img" aria-label={`${e.equipe}: vendeu ${brl(e.vendeu.valor)}, pagou ${brl(e.pagou.valor)}`}>
+                <div className="h">
+                  <i style={{ width: `${larg(e.vendeu.valor, maxExc)}%`, background: 'var(--orange)' }} />
+                </div>
+                <div className="h">
+                  <i style={{ width: `${larg(e.pagou.valor, maxExc)}%`, background: 'var(--green)' }} />
+                </div>
+                <div className="vals">
+                  <span className="t-orange">{brl(e.vendeu.valor)}</span>
+                  <span className="t-green">{e.pagou.valor > 0 ? brl(e.pagou.valor) : NAO}</span>
+                </div>
+              </div>
+            </div>
           ))}
-        </tbody>
-      </table>
+        </div>
+      </section>
 
-      <h2 className="admin-section-title">Ainda indisponível</h2>
-      <p className="lede">
-        Cancelados de ontem (precisa da data de cancelamento do CCNET), lista dos que morreram sem reinserir, padrão de erro
-        e taxa de morte. Todos dependem do acesso ao CCNET e ao Front ao vivo.
+      <section className="sec" id="sec-canal">
+        <div className="sec-h">Por canal · {mesNome}</div>
+        <div className="sec-s">A taxa é só de quem já fechou. Jornada ainda não entra.</div>
+        <div className="grid3 canal">
+          {(
+            [
+              ['Novo', 'canal-novo'],
+              ['Compra', 'canal-compra'],
+              ['Adiantamento', 'canal-adiant'],
+            ] as const
+          ).map(([t, cls]) => {
+            const c = totalCanal(t);
+            return (
+              <div key={t} className={`box ${cls}`}>
+                <div className="hd">
+                  <span className="name">{t}</span>
+                  <span className="rate">{pct(c?.taxaMorte)}</span>
+                </div>
+                <div className="hint">{num(c?.casos)} casos · % que morreu entre os que fecharam</div>
+                <div className="trio">
+                  <div>
+                    <div className="n t-green">{num(c?.pagou)}</div>
+                    <div className="l">Pagou</div>
+                  </div>
+                  <div>
+                    <div className="n t-red">{num(c?.morreu)}</div>
+                    <div className="l">Morreu</div>
+                  </div>
+                  <div>
+                    <div className="n t-blue">{num(c?.jornada)}</div>
+                    <div className="l">Jornada</div>
+                  </div>
+                </div>
+                <div className="ft">
+                  <span className="t-orange">Front {num(c?.mortesFront)}</span> · <span className="t-blue">CCNET {num(c?.mortesCcnet)}</span> <span className="muted">(morreu)</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      <section className="sec" id="sec-churn">
+        <div className="sec-h">Churn</div>
+        <div className="sec-s">Caso que morreu · CPF+tipo+produto · não é a pessoa</div>
+        <div className="churn-wrap">
+          <div className="churn-kpis">
+            <div className="box ch-nao">
+              <div className="lab">Não voltou</div>
+              <div className="v t-red">{num(churn?.naoVoltou)}</div>
+              <div className="s">{churn ? `${pct(churn.naoVoltouPct, 0)} dos casos do mês` : NAO}</div>
+            </div>
+            <div className="box ch-voltou">
+              <div className="lab">Voltou e morreu</div>
+              <div className="v t-orange">{num(churn?.voltouMorreu)}</div>
+              <div className="s">Reinseriu e a nova também morreu</div>
+            </div>
+            <div className="box ch-fechou">
+              <div className="lab">Dos que fecharam</div>
+              <div className="v t-red">{pct(churn?.taxa, 0)}</div>
+              <div className="s">{churn ? `${num(churn.morreram)} morreu de ${num(churn.fecharam)}` : NAO}</div>
+            </div>
+          </div>
+          <div className="muted" style={{ fontSize: 11, marginBottom: 6 }}>
+            Equipes com maior morreu / (pagou+morreu)
+          </div>
+          {(churn?.equipes ?? []).map((e) => (
+            <div key={e.equipe} className="churn-bar">
+              <span className="nm">{e.equipe}</span>
+              <div className="tr" role="img" aria-label={`${e.equipe}: ${pct(e.taxa, 0)}`}>
+                <i style={{ width: `${larg(e.taxa, 1)}%` }} />
+              </div>
+              <span className="pc">{pct(e.taxa, 0)}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <RelatorioLista linhas={lista} />
+
+      <RelatorioLote dias={loteDia} resumo={r.resumoMes ?? null} />
+
+      <section className="sec">
+        <div className="sec-h">Onde está a venda do dia</div>
+        <div className="sec-s">FRONT por Status Front (sem código) · CCNET por Esteira Função (com código)</div>
+        <div className="grid2">
+          <div className="board front">
+            <div className="bh">
+              <span>FRONT</span>
+              <span>{brl(k.front.valor)}</span>
+            </div>
+            <div className="bs">Ainda no Front · {num(k.front.qtd)} propostas</div>
+            {(r.etapasFront ?? []).map((e) => (
+              <div key={e.chave} className="row">
+                <span className="st">{e.chave}</span>
+                <span className="nv">
+                  {num(e.qtd)} · {brl(e.valor)}
+                </span>
+              </div>
+            ))}
+          </div>
+          <div className="board ccnet">
+            <div className="bh">
+              <span>CCNET</span>
+              <span>{brl(k.ccnet.valor)}</span>
+            </div>
+            <div className="bs">Auditoria aprovou · {num(k.ccnet.qtd)} propostas</div>
+            {(r.etapasCcnet ?? []).map((e) => (
+              <div key={e.chave} className="row">
+                <span className="st">{e.chave}</span>
+                <span className="nv">
+                  {num(e.qtd)} · {brl(e.valor)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <p className="footnote">
+        PROVA {dRef} · Fonte: {evidencia.fonte as string} · Meta MODELO (não é meta oficial) · Gerentes filtrados por texto LUANA/ADRIANO/DANIEL/MARCOS
       </p>
     </div>
   );

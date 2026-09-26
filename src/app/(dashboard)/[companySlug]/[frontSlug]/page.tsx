@@ -55,7 +55,7 @@ export default async function FrontPage({
 
       <div className="items-head">
         <h3>Itens da frente</h3>
-        <span className="src">Fonte: Jira · traduzido para linguagem de negócio</span>
+        <span className="src">Cadastro manual · linguagem de negócio</span>
       </div>
       <ItemsList items={front.items} />
     </>

@@ -7,6 +7,7 @@ import type {
   LinhaLista,
   LinhaSoma,
   Proposta,
+  Ranking,
   Relatorio,
   Soma,
   Tipo,
@@ -24,6 +25,23 @@ export function escopoGerente(nome: string): Escopo {
   const primeiro = semAcento(nome).split(/\s+/)[0];
   return { nome, corresponde: (gerente) => semAcento(gerente).startsWith(primeiro) };
 }
+
+const titulo = (s: string) =>
+  s.toLowerCase().replace(/(^|\s)(\S)/g, (_, esp, c) => esp + c.toUpperCase());
+
+// O Front chama a equipe de "AKRK - PRAIA DO FLAMENGO"; o relatório usa só "Flamengo".
+export const nomeEquipe = (equipe: string) =>
+  titulo(equipe.replace(/^AKRK\s*-\s*/i, '').replace(/^PRAIA\s+(DO|DA|DE)\s+/i, ''));
+
+// Meta é número de MODELO até a meta oficial chegar (o modelo do CEO usa R$ 8.000.000).
+const ROTULO_PRODUTO: Record<Proposta['produto'], string> = {
+  Crédito: 'Cartão crédito',
+  Benefício: 'Cartão benefício',
+  Empréstimo: 'Empréstimo',
+  Adiantamento: 'Adiantamento',
+};
+
+export const META_MODELO = 8_000_000;
 
 const centavos = (n: number) => Math.round(n * 100) / 100;
 
@@ -146,6 +164,54 @@ export function montarRelatorio(propostas: Proposta[], ref: string, escopo: Esco
   const lotes = new Map<string, number>();
   for (const c of casosMes) lotes.set(c.lote, (lotes.get(c.lote) ?? 0) + 1);
 
+  const topo = (itens: Proposta[], chave: (p: Proposta) => string): Ranking | null => {
+    const l = agrupar(itens, chave, (p) => p.valor)[0];
+    const total = itens.reduce((t, p) => t + p.valor, 0);
+    return l ? { nome: l.chave, valor: l.valor, pct: total ? l.valor / total : 0 } : null;
+  };
+
+  // Cliente da casa: o CPF já tinha proposta anterior no grupo (qualquer tipo ou produto).
+  // Aqui o desempate do mesmo dia é pelo número crescente, como no modelo do CEO; no
+  // "nova x reinserida" o desempate é decrescente (ver casos.ts). Os dois reproduzem a prova.
+  const primeiraDoCpf = new Map<string, Proposta>();
+  for (const c of casos) {
+    for (const p of c.propostas) {
+      const atual = primeiraDoCpf.get(c.cpf);
+      if (!atual || p.data < atual.data || (p.data === atual.data && Number(p.numero) < Number(atual.numero))) {
+        primeiraDoCpf.set(c.cpf, p);
+      }
+    }
+  }
+  const cpfDe = new Map<Proposta, string>();
+  for (const c of casos) for (const p of c.propostas) cpfDe.set(p, c.cpf);
+  const casa = (p: Proposta) => primeiraDoCpf.get(cpfDe.get(p)!) !== p;
+  const cpfsDistintos = (ps: Proposta[]) => new Set(ps.map((p) => cpfDe.get(p))).size;
+
+  const vendasDoDia = vendas.map((v) => v.p);
+  const casaDia = vendasDoDia.filter(casa);
+  const casaMesPs = vendasMes.filter(casa);
+
+  const mesNovaReins = casos
+    .filter((c) => doEscopo(c.gerente) || c.propostas.some((p) => doEscopo(p.gerente)))
+    .flatMap((c) => c.propostas.map((p, i) => ({ p, nova: i === 0 })))
+    .filter((x) => doMes(x.p) && doEscopo(x.p.gerente));
+
+  const fechados = contagemMes.pagou + contagemMes.morreu;
+  const equipesFechadas = desfechoPor(casosMes, (c) => nomeEquipe(c.equipe))
+    .map((l) => ({ equipe: l.chave, fechou: l.pagou + l.morreu, taxa: l.morreu / (l.pagou + l.morreu || 1) }))
+    .filter((e) => e.fechou >= 10)
+    .sort((a, b) => b.taxa - a.taxa)
+    .slice(0, 6)
+    .map(({ equipe, taxa }) => ({ equipe, taxa }));
+
+  const excecaoPs = vendasMes.filter((p) => p.excecao);
+  const excecaoEquipes = [...new Set(excecaoPs.map((p) => nomeEquipe(p.equipe)))]
+    .map((eq) => {
+      const doEq = excecaoPs.filter((p) => nomeEquipe(p.equipe) === eq);
+      return { equipe: eq, vendeu: somar(doEq), pagou: somar(doEq.filter((p) => p.integrada)) };
+    })
+    .sort((a, b) => b.vendeu.valor - a.vendeu.valor);
+
   if (vendas.length === 0) {
     alertas.push(`Nenhuma proposta em ${ref}: confira a extração antes de enviar.`);
   }
@@ -193,7 +259,7 @@ export function montarRelatorio(propostas: Proposta[], ref: string, escopo: Esco
     >,
     loteDia: [...lotes].map(([data, n]) => ({ data, casos: n })).sort((a, b) => a.data.localeCompare(b.data)),
     porGerente: desfechoPor(casosMes, (c) => c.gerente),
-    porEquipe: desfechoPor(casosMes, (c) => c.equipe),
+    porEquipe: desfechoPor(casosMes, (c) => nomeEquipe(c.equipe)),
     porOperador: desfechoPor(casosMes, (c) => c.operador),
     resumoMes: {
       inseriu: contagemMes.casos,
@@ -202,7 +268,7 @@ export function montarRelatorio(propostas: Proposta[], ref: string, escopo: Esco
       jornada: contagemMes.jornada,
     },
     lista,
-    rankingEquipes: agrupar(vendas, (v) => v.p.equipe, (v) => v.p.valor),
+    rankingEquipes: agrupar(vendas, (v) => nomeEquipe(v.p.equipe), (v) => v.p.valor),
     rankingOperadores: agrupar(vendas, (v) => v.p.operador, (v) => v.p.valor),
     porConvenio: agrupar(vendas, (v) => v.p.convenio, (v) => v.p.valor),
     porProduto: agrupar(vendas, (v) => v.p.produto, (v) => v.p.valor),
@@ -218,5 +284,47 @@ export function montarRelatorio(propostas: Proposta[], ref: string, escopo: Esco
             valor: p.valor,
           })),
     alertas,
+    clientes: {
+      casaDia: { ...somar(casaDia), cpfs: cpfsDistintos(casaDia) },
+      novoDia: somar(vendasDoDia.filter((p) => !casa(p))),
+      casaMes: { ...somar(casaMesPs), cpfs: cpfsDistintos(casaMesPs) },
+    },
+    meta: {
+      valor: META_MODELO,
+      modelo: true,
+      pagos: somar(pagosMes),
+      pagosExcecao: somar(pagosMes.filter((p) => p.excecao)),
+      pagosExcecaoPct: somar(pagosMes).valor === 0 ? null : somar(pagosMes.filter((p) => p.excecao)).valor / somar(pagosMes).valor,
+      falta: centavos(META_MODELO - somar(pagosMes).valor),
+      faltaPct: (META_MODELO - somar(pagosMes).valor) / META_MODELO,
+    },
+    rankingPagos: {
+      convenio: topo(pagosMes, (p) => titulo(p.convenio)),
+      produto: topo(pagosMes, (p) => ROTULO_PRODUTO[p.produto]),
+      equipe: topo(pagosMes, (p) => nomeEquipe(p.equipe)),
+      gerente: topo(pagosMes, (p) => titulo(p.gerente.split(/\s+/)[0])),
+    },
+    novaReinserida: {
+      dia: { novas: somar(vendas.filter((v) => v.nova).map((v) => v.p)), reinseridas: somar(vendas.filter((v) => !v.nova).map((v) => v.p)) },
+      mes: {
+        novas: somar(mesNovaReins.filter((x) => x.nova).map((x) => x.p)),
+        reinseridas: somar(mesNovaReins.filter((x) => !x.nova).map((x) => x.p)),
+      },
+    },
+    excecaoEquipes,
+    churn: {
+      naoVoltou: lista.length,
+      naoVoltouPct: casosMes.length === 0 ? null : lista.length / casosMes.length,
+      voltouMorreu: casosMes.filter((c) => c.desfecho === 'Morreu' && c.propostas.length > 1).length,
+      fecharam: fechados,
+      morreram: contagemMes.morreu,
+      taxa: contagemMes.taxaMorte,
+      equipes: equipesFechadas,
+      fimDaLista: {
+        'Reprovado Front': lista.filter((l) => l.fim === 'Reprovado Front').length,
+        'Reprovado CCNET': lista.filter((l) => l.fim === 'Reprovado CCNET').length,
+        Cancelado: lista.filter((l) => l.fim === 'Cancelado').length,
+      },
+    },
   };
 }

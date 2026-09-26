@@ -26,7 +26,7 @@ export function itemPillClass(status: ItemStatus): '' | 'ok' | 'attention' | 'bl
 
 type DerivationMode = 'manual' | 'auto';
 
-/** `statusOverride` nulo só ocorreria para um item ainda não tocado por um sync do Jira, que não existe hoje. */
+/** `statusOverride` nulo só ocorreria para um item ainda não editado. */
 export function resolveItemStatus(statusOverride: ItemStatus | null): ItemStatus {
   return statusOverride ?? 'todo';
 }
@@ -72,7 +72,7 @@ export function resolveFrontStatus(
   progress: number,
   now: Date = new Date(),
 ): FrontStatus {
-  // Sem sync do Jira ainda, statusMode é sempre 'manual' na prática — o ramo 'auto'
+  // Sem sincronização externa, statusMode é sempre 'manual' na prática — o ramo 'auto'
   // abaixo existe para não deixar a intenção do schema sem implementação.
   if (front.statusMode === 'manual') return front.statusManual ?? 'attention';
 
