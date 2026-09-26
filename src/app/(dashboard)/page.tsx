@@ -16,13 +16,13 @@ async function Saudacao() {
 export default function HomePage() {
   return (
     <div className="home">
-      <section className="hero" aria-label="Boas-vindas">
+      <section className="abertura" aria-label="Boas-vindas">
         <h1>
           <Suspense fallback="Bem-vindo">
             <Saudacao />
           </Suspense>
         </h1>
-        <p className="hero-data">{dataExtenso(new Date())}</p>
+        <p className="abertura-data">{dataExtenso(new Date())}</p>
         <p className="sub">Mercado, bancos, investimentos e consignado reunidos, com os relatórios da operação a um clique.</p>
       </section>
 
