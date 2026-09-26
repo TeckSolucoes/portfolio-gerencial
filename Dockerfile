@@ -90,4 +90,6 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
 # prisma/seed.ts) — seguros rodar a cada boot. Sem isso, o primeiro acesso à
 # tela de login não teria nenhum usuário pra entrar, e criar o admin exigiria
 # alguém abrir o terminal do container manualmente.
-CMD ["sh", "-c", "npx prisma migrate deploy && npm run seed && npm run start"]
+# O migrate deploy espera o banco liberar: num deploy o container antigo pode ainda estar
+# segurando o SQLite. A cada falha o ls mostra o que existe no volume (-wal/-shm/-journal).
+CMD ["sh", "-c", "n=0; until npx prisma migrate deploy; do n=$((n+1)); echo \"migrate falhou (tentativa $n de 8)\"; ls -la /app/data; if [ $n -ge 8 ]; then exit 1; fi; sleep 10; done; npm run seed && npm run start"]
