@@ -1,12 +1,35 @@
+import { redirect } from 'next/navigation';
 import evidencia from '@/lib/monitoramento/evidencia.json';
+import { carregarAcesso } from '@/lib/acesso';
+import { empresaDaEquipe } from '@/lib/empresas';
+import { filtrarPorEmpresa, statusMonitoramento } from '@/lib/permissoes';
 import type { Alerta } from '@/lib/monitoramento/detectar';
 import { nomeEquipe } from '@/lib/relatorio/relatorio';
 import { Painel } from './painel';
 import { ORDEM, TIPOS } from './tipos';
 import './monitoramento.css';
 
-export default function MonitoramentoPage() {
-  const alertas = evidencia.alertas as Alerta[];
+function Aviso({ titulo, texto }: { titulo: string; texto: string }) {
+  return (
+    <div className="monit">
+      <p className="sub">
+        <b>{titulo}</b> {texto}
+      </p>
+    </div>
+  );
+}
+
+export default async function MonitoramentoPage() {
+  const acesso = await carregarAcesso();
+  if (!acesso) redirect('/login');
+  const status = statusMonitoramento(acesso);
+  if (status === 'sem-empresa') return <Aviso titulo="Você ainda não tem empresa liberada." texto="Peça ao administrador." />;
+  if (status === 'so-empresa-inteira') return <Aviso titulo="Monitoramento" texto="Disponível apenas para quem vê a empresa inteira." />;
+
+  // Filtra antes de qualquer agregação ou prop de client component.
+  const alertas = filtrarPorEmpresa(acesso, evidencia.alertas as Alerta[], (a) => empresaDaEquipe(a.unidade));
+  // Os totais de propostas/equipes do JSON são da base inteira (todas as empresas): só o superadmin os vê.
+  const veTudo = acesso.perfil === 'superadmin';
   const nomes = Object.fromEntries([...new Set(alertas.map((a) => a.unidade))].map((u) => [u, nomeEquipe(u)]));
   const total = (t: (typeof ORDEM)[number]) => alertas.filter((a) => a.tipos.includes(t)).length;
 
@@ -21,8 +44,8 @@ export default function MonitoramentoPage() {
         <div className="fonte">
           <b>Dados reais do export do Front</b>
           <span>
-            {evidencia.fonte.replace(/^Export do Front, /, '')} · {evidencia.propostas.toLocaleString('pt-BR')} propostas ·{' '}
-            {evidencia.unidades} equipes
+            {evidencia.fonte.replace(/^Export do Front, /, '')}
+            {veTudo && ` · ${evidencia.propostas.toLocaleString('pt-BR')} propostas · ${evidencia.unidades} equipes`}
           </span>
           <small>Unidade = equipe. No Função será a promotora.</small>
         </div>

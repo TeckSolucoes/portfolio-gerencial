@@ -1,0 +1,85 @@
+.diario{--page:#0B1424;--card:#112036;--inner:#0D1A2C;--line:#1a2d45;--text:#F0F8FF;--muted:#8CA2BA;
+  --blue:#38BDF8;--green:#2DD4A3;--orange:#FBB034;--red:#F87171;--ink:#0B1424;
+  background:var(--page);color:var(--text);border-radius:16px;padding:clamp(16px,3vw,28px);line-height:1.4;
+  font-variant-numeric:tabular-nums;max-width:1100px;margin:0 auto;overflow-x:clip}
+.diario *{box-sizing:border-box}
+.diario :is(h1,h2,h3,p,ul,ol){margin:0;padding:0}
+.diario :is(ul,ol){list-style:none}
+.diario .t-azul{--c:var(--blue);--c-bg:#123048}
+.diario .t-verde{--c:var(--green);--c-bg:#0F3A3A}
+.diario .t-laranja{--c:var(--orange);--c-bg:#3A2A10}
+.diario .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+.diario .cab{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:16px}
+.diario .kicker{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--blue);margin-bottom:6px}
+.diario h1{font-size:clamp(22px,3.4vw,30px);font-weight:800;letter-spacing:-.02em}
+.diario .sub{color:var(--muted);font-size:14px;margin-top:6px;max-width:58ch}
+.diario .fonte{background:var(--inner);border:1px solid var(--line);border-left:3px solid var(--blue);border-radius:10px;padding:10px 14px;
+  font-size:12.5px;color:var(--muted);margin-bottom:18px;max-width:80ch}
+
+.diario .periodos{display:flex;gap:8px;flex-wrap:wrap}
+.diario .pill{display:inline-flex;align-items:center;gap:7px;background:var(--card);border:1px solid #1e3a5f;color:var(--muted);padding:8px 14px;
+  border-radius:999px;font:inherit;font-size:12px;font-weight:600;cursor:pointer;min-height:36px;text-decoration:none;
+  transition:border-color .15s,color .15s,background-color .15s}
+.diario .pill b{color:var(--text)}
+.diario .pill:hover{border-color:var(--blue);color:var(--text)}
+.diario .pill:is([aria-pressed="true"],[aria-current="page"]){background:var(--blue);border-color:var(--blue);color:var(--ink);font-weight:800}
+.diario .pill[aria-pressed="true"] b{color:var(--ink)}
+.diario .pill-reg[aria-pressed="true"]{background:var(--orange);border-color:var(--orange)}
+.diario :is(.pill,.limpar,.ato-link):focus-visible{outline:2px solid #fff;outline-offset:2px}
+
+.diario .kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:18px}
+.diario .kpi{position:relative;overflow:hidden;background:linear-gradient(180deg,var(--c-bg) 0%,var(--card) 75%);border:1px solid var(--line);
+  border-radius:14px;padding:14px 16px 14px 20px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.diario .kpi::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--c)}
+.diario .kpi-rot{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.diario .kpi-val{font-size:clamp(26px,3vw,34px);font-weight:800;letter-spacing:-.02em;line-height:1.1}
+.diario .kpi-meta{font-size:12px;color:var(--muted)}
+
+.diario .filtros{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+.diario .filtro{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.diario .filtro-rot{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);min-width:70px}
+.diario .limpar{background:none;border:0;color:var(--blue);font:inherit;font-size:12px;font-weight:700;text-decoration:underline;cursor:pointer;min-height:36px;padding:0 6px}
+.diario .contagem{font-size:12px;color:var(--muted);margin-bottom:12px}
+
+.diario .atos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.diario .ato{position:relative;overflow:hidden;background:linear-gradient(180deg,var(--c-bg) 0%,var(--card) 60%);border:1px solid var(--line);border-radius:14px;
+  padding:14px 16px 16px 20px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.diario .ato::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--c)}
+.diario .ato-topo{display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:20px}
+.diario .badge{background:var(--c);color:var(--ink);font-size:10.5px;font-weight:800;letter-spacing:.03em;padding:3px 9px;border-radius:999px}
+.diario .ato-data{font-size:12px;color:var(--muted);font-weight:600;margin-left:auto}
+.diario .ato-orgao{font-size:12px;color:var(--c);font-weight:700;overflow-wrap:anywhere}
+.diario .ato-titulo{font-size:15.5px;font-weight:800;line-height:1.3;letter-spacing:-.01em;overflow-wrap:anywhere}
+.diario .ato-trecho{font-size:13px;color:var(--muted);overflow-wrap:anywhere}
+.diario .chips{display:flex;flex-wrap:wrap;gap:6px}
+.diario .chip{font-size:11px;font-weight:600;color:var(--text);background:var(--inner);border:1px solid #1e3a5f;padding:2px 9px;border-radius:999px}
+.diario .chip-conv{background:var(--c);border-color:var(--c);color:var(--ink);font-weight:800}
+.diario .ato-link{margin-top:auto;align-self:flex-start;font-size:12.5px;font-weight:700;color:var(--c);text-decoration:none;padding:6px 0;min-height:32px;display:inline-flex;align-items:center;gap:4px}
+.diario .ato-link:hover{text-decoration:underline;text-underline-offset:3px}
+
+.diario .vazio-caixa,.diario .aviso-estado{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 20px;color:var(--muted);font-size:13px}
+.diario .aviso-estado{display:flex;flex-direction:column;gap:4px;border-left:4px solid var(--orange)}
+.diario .aviso-estado b{color:var(--text);font-size:15px}
+
+.diario .sk{background:var(--inner);border-radius:6px;position:relative;overflow:hidden}
+.diario .sk::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(240,248,255,.07),transparent);
+  transform:translateX(-100%);animation:diario-brilho 1.4s ease-in-out infinite}
+@keyframes diario-brilho{to{transform:translateX(100%)}}
+
+@media(max-width:900px){.diario .atos{grid-template-columns:1fr}}
+@media(max-width:560px){
+  .diario{border-radius:0;padding:14px}
+  .diario .kpis{grid-template-columns:1fr}
+  .diario .filtro-rot{width:100%}
+}
+@media(prefers-reduced-motion:reduce){
+  .diario *{transition:none!important}
+  .diario .sk::after{animation:none;content:none}
+}
+
+.diario .fontes{margin-top:22px;padding:14px 16px;border:1px solid var(--line);border-radius:12px;background:var(--card)}
+.diario .fontes h2{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.diario .fontes ul{list-style:none;display:grid;gap:8px}
+.diario .fontes li{font-size:13px;color:var(--text)}
+.diario .fontes li span{display:block;font-size:12px;color:var(--muted);margin-top:2px}

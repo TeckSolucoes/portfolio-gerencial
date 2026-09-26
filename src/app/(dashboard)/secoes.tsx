@@ -1,6 +1,8 @@
 import { ibovespa, indicadores, noticias } from '@/lib/mercado';
 import type { Noticia } from '@/lib/mercado';
 import { tempoRelativo } from '@/lib/tempo';
+import { atosConsolidados } from '@/lib/diarios';
+import Link from 'next/link';
 
 const numero = (n: number, casas = 2) => n.toLocaleString('pt-BR', { minimumFractionDigits: casas, maximumFractionDigits: casas });
 
@@ -156,6 +158,72 @@ export function NoticiasSkeleton({ id, titulo, tom }: { id: string; titulo: stri
         ))}
       </ol>
       <span className="sr" role="status">Carregando notícias</span>
+    </section>
+  );
+}
+
+const dataCurta = (ymd: string) => ymd.split('-').reverse().join('/');
+
+export async function DiarioHome() {
+  const consolidado = await atosConsolidados('mes');
+  const atos = consolidado.fontes.every((f) => f.situacao === 'indisponivel') ? null : consolidado.atos;
+  const destaque = atos?.slice(0, 4) ?? [];
+  return (
+    <section className="bloco bloco-diario t-vermelho" aria-labelledby="h-diario">
+      <div className="diario-cab">
+        <h2 id="h-diario" className="bloco-titulo">
+          <span className="dot" aria-hidden="true" />
+          Diário Oficial · consignado
+        </h2>
+        <Link href="/diario-oficial" className="diario-todos">
+          Ver todos <span aria-hidden="true">→</span>
+        </Link>
+      </div>
+      {atos === null ? (
+        <p className="vazio">Diário Oficial indisponível no momento.</p>
+      ) : destaque.length === 0 ? (
+        <p className="vazio">Nenhum ato relevante neste mês.</p>
+      ) : (
+        <ol className="atos-home">
+          {destaque.map((a) => (
+            <li key={a.id}>
+              <a href={a.link} target="_blank" rel="noopener noreferrer">
+                {a.titulo}
+                <span className="sr"> (abre em nova aba)</span>
+              </a>
+              <span className="noticia-meta">
+                <time dateTime={a.data}>{dataCurta(a.data)}</time>
+                <b>{a.orgao}</b>
+                {a.convenios.map((c) => (
+                  <span key={c} className="chip-home">{c}</span>
+                ))}
+              </span>
+            </li>
+          ))}
+        </ol>
+      )}
+    </section>
+  );
+}
+
+export function DiarioHomeSkeleton() {
+  return (
+    <section className="bloco bloco-diario t-vermelho" aria-labelledby="h-diario" aria-busy="true">
+      <div className="diario-cab">
+        <h2 id="h-diario" className="bloco-titulo">
+          <span className="dot" aria-hidden="true" />
+          Diário Oficial · consignado
+        </h2>
+      </div>
+      <ol className="atos-home">
+        {[0, 1, 2, 3].map((i) => (
+          <li key={i}>
+            <div className="sk" style={{ width: `${94 - i * 8}%`, height: 14 }} />
+            <div className="sk" style={{ width: '40%', height: 10, marginTop: 8 }} />
+          </li>
+        ))}
+      </ol>
+      <span className="sr" role="status">Carregando atos do Diário Oficial</span>
     </section>
   );
 }

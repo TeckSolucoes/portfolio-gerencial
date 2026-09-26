@@ -1,5 +1,11 @@
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import evidencia from '@/lib/relatorio/evidencia.json';
+import { carregarAcesso } from '@/lib/acesso';
+import { ROTULO_EMPRESA } from '@/lib/empresas';
+import type { Empresa } from '@/lib/empresas';
+import { metaDoMes } from '@/lib/metas';
+import { escolherEmpresa, podeVerAba } from '@/lib/permissoes';
 import type { Relatorio, Soma, Tipo } from '@/lib/relatorio/types';
 import { RelatorioLista } from './RelatorioLista';
 import { RelatorioLote } from './RelatorioLote';
@@ -38,12 +44,56 @@ function Kpi({ cls, tom, rotulo, valor, meta, tag, children }: { cls: string; to
   );
 }
 
-export default async function RelatorioPage({ searchParams }: { searchParams: Promise<{ escopo?: string }> }) {
-  const { escopo: pedido } = await searchParams;
-  const escopo = ABAS.some((a) => a.escopo === pedido) ? (pedido as string) : 'Geral';
-  const aba = ABAS.find((a) => a.escopo === escopo)!;
+function Aviso({ titulo, texto, seletor }: { titulo: string; texto: string; seletor?: React.ReactNode }) {
+  return (
+    <div className="relatorio">
+      {seletor}
+      <p className="rel-aviso" role="status">
+        <b>{titulo}</b> {texto}
+      </p>
+    </div>
+  );
+}
+
+function SeletorEmpresa({ empresas, atual }: { empresas: Empresa[]; atual: Empresa }) {
+  if (empresas.length < 2) return null;
+  return (
+    <nav className="tabs no-print" aria-label="Empresa do relatório">
+      {empresas.map((e) => (
+        <Link key={e} href={`/relatorio?empresa=${e}`} className={`tab ${e === atual ? 'active' : ''}`} aria-current={e === atual ? 'page' : undefined}>
+          {ROTULO_EMPRESA[e]}
+        </Link>
+      ))}
+      <span className="tab-note">Empresa</span>
+    </nav>
+  );
+}
+
+export default async function RelatorioPage({ searchParams }: { searchParams: Promise<{ escopo?: string; empresa?: string }> }) {
+  const acesso = await carregarAcesso();
+  if (!acesso) redirect('/login');
+  if (acesso.empresas.length === 0) {
+    return <Aviso titulo="Você ainda não tem empresa liberada." texto="Peça ao administrador." />;
+  }
+
+  const { escopo: pedido, empresa: empresaPedida } = await searchParams;
+  const empresa = escolherEmpresa(acesso, empresaPedida)!;
+  const seletor = <SeletorEmpresa empresas={acesso.empresas} atual={empresa} />;
+
+  // Só as abas permitidas existem daqui em diante: o gerente nunca recebe Geral nem a turma de outro.
+  const abasVisiveis = ABAS.filter((a) => podeVerAba(acesso, a.escopo));
+  const aba = abasVisiveis.find((a) => a.escopo === pedido) ?? abasVisiveis[0];
+  if (!aba) {
+    return <Aviso titulo="Nenhuma visão do relatório está liberada para você." texto="Peça ao administrador." seletor={seletor} />;
+  }
+  const escopo = aba.escopo;
+
+  const bruto = (evidencia.empresas as Record<string, { escopos: Record<string, unknown> }>)[empresa]?.escopos[escopo];
+  if (!bruto) {
+    return <Aviso titulo={`Ainda não há dados da ${ROTULO_EMPRESA[empresa]} neste relatório.`} texto="Nenhum número é estimado." seletor={seletor} />;
+  }
   // O JSON versionado ainda pode não ter as chaves novas do motor; tudo abaixo trata ausência.
-  const r = (evidencia.escopos as Record<string, unknown>)[escopo] as Partial<Relatorio> & Pick<Relatorio, 'kpis'>;
+  const r = bruto as Partial<Relatorio> & Pick<Relatorio, 'kpis'>;
   const k = r.kpis;
 
   const ref = evidencia.ref as string;
@@ -55,7 +105,16 @@ export default async function RelatorioPage({ searchParams }: { searchParams: Pr
   const fimMes = fimExport?.slice(0, 5);
   const mesNome = MESES[mesRef - 1];
 
-  const meta = r.meta;
+  const oficial = await metaDoMes([empresa], ref.slice(0, 7));
+  const pagosValor = k.pagosMes.valor;
+  const metaOficial = oficial && {
+    valor: oficial.valor,
+    falta: Math.max(0, Math.round((oficial.valor - pagosValor) * 100) / 100),
+    faltaPct: oficial.valor > 0 ? Math.max(0, (oficial.valor - pagosValor) / oficial.valor) : null,
+    parcial: oficial.faltando.length > 0,
+  };
+  const meta = metaOficial ?? r.meta;
+  const doGerente = escopo !== 'Geral';
   const clientes = r.clientes;
   const rp = r.rankingPagos;
   const nr = r.novaReinserida;
@@ -79,7 +138,7 @@ export default async function RelatorioPage({ searchParams }: { searchParams: Pr
   ].filter(Boolean) as string[];
 
   const excDiaPct = razao(k.excecaoDia.valor, k.total.valor);
-  const pagosExcPct = meta?.pagosExcecaoPct ?? razao(k.pagosExcecaoMes.qtd, k.pagosMes.qtd);
+  const pagosExcPct = r.meta?.pagosExcecaoPct ?? razao(k.pagosExcecaoMes.qtd, k.pagosMes.qtd);
   const totalCanal = (t: Tipo) => canal?.[t];
   const maxExc = Math.max(1, ...equipesExc.map((e) => e.vendeu.valor));
   const totalNrDia = diaNr.novas.qtd + diaNr.reinseridas.qtd;
@@ -91,7 +150,7 @@ export default async function RelatorioPage({ searchParams }: { searchParams: Pr
         PROVA {dRef} · números do export · não é ao vivo
         <small>
           Referência {dRef}/{ano} · ontem {dOntem}
-          {fimMes ? ` · mês 01–${fimMes}` : ''} · caso = CPF+tipo+produto · Meta = MODELO · Cliente da casa = grão CPF
+          {fimMes ? ` · mês 01–${fimMes}` : ''} · caso = CPF+tipo+produto · Meta = {metaOficial ? 'OFICIAL' : 'MODELO'} · Cliente da casa = grão CPF
         </small>
         <small>
           Morreu, jornada, churn e a lista usam o status do Front no lugar da esteira do CCNET: podem diferir em poucos casos
@@ -101,7 +160,9 @@ export default async function RelatorioPage({ searchParams }: { searchParams: Pr
 
       <div className="rel-head">
         <div>
-          <h1>Relatório diário — {aba.rotulo}</h1>
+          <h1>
+            Relatório diário — {ROTULO_EMPRESA[empresa]} · {aba.rotulo}
+          </h1>
           <div className="sub">
             War room · {dRef}/{ano} · {escopo === 'Geral' ? 'Front × CCNET' : `equipe de ${aba.rotulo}`}
           </div>
@@ -109,13 +170,15 @@ export default async function RelatorioPage({ searchParams }: { searchParams: Pr
         <div className="ref">REF: {dRef}/{ano}</div>
       </div>
 
+      {seletor}
+
       <nav className="tabs no-print" aria-label="Escopo do relatório">
-        {ABAS.map((a) => (
-          <Link key={a.escopo} href={`/relatorio?escopo=${encodeURIComponent(a.escopo)}`} className={`tab ${a.escopo === escopo ? 'active' : ''}`} aria-current={a.escopo === escopo ? 'page' : undefined}>
+        {abasVisiveis.map((a) => (
+          <Link key={a.escopo} href={`/relatorio?empresa=${empresa}&escopo=${encodeURIComponent(a.escopo)}`} className={`tab ${a.escopo === escopo ? 'active' : ''}`} aria-current={a.escopo === escopo ? 'page' : undefined}>
             {a.rotulo}
           </Link>
         ))}
-        <span className="tab-note">Geral = todos · abas = filtro por gerente</span>
+        {abasVisiveis.length > 1 && <span className="tab-note">Geral = todos · abas = filtro por gerente</span>}
       </nav>
 
       <RelatorioNav />
@@ -168,14 +231,29 @@ export default async function RelatorioPage({ searchParams }: { searchParams: Pr
 
       <section className="sec" id="sec-meta">
         <div className="sec-h">
-          Meta <span className="tag">MODELO</span>
+          Meta <span className="tag">{metaOficial ? 'OFICIAL' : 'MODELO'}</span>
         </div>
-        <div className="sec-s">Meta é número de modelo · pagos são reais do export</div>
+        <div className="sec-s">
+          {metaOficial ? `Meta oficial de ${ROTULO_EMPRESA[empresa]} em ${mesNome}` : 'Meta é número de modelo'} · pagos são reais do export
+          {doGerente && ` · a meta é a da empresa inteira (ainda não há meta por gerente); os pagos são só da equipe de ${aba.rotulo}`}
+          {metaOficial?.parcial && ` · parcial: sem meta cadastrada para: ${oficial!.faltando.join(', ')}`}
+        </div>
         <div className="grid4">
-          <Kpi cls="bg-total" tom="blue" rotulo="Meta" tag="MODELO" valor={brl(meta?.valor)} meta={meta ? 'trocar quando a meta oficial chegar' : 'meta ainda não informada'} />
+          <Kpi
+            cls="bg-total"
+            tom="blue"
+            rotulo="Meta"
+            tag={metaOficial ? (metaOficial.parcial ? 'OFICIAL · PARCIAL' : 'OFICIAL') : 'MODELO'}
+            valor={brl(meta?.valor)}
+            meta={metaOficial ? (metaOficial.parcial ? `sem meta cadastrada para: ${oficial!.faltando.join(', ')}` : `meta de ${ROTULO_EMPRESA[empresa]}`) : meta ? 'trocar quando a meta oficial chegar' : 'meta ainda não informada'}
+          />
           <Kpi cls="bg-novas" tom="green" rotulo="Pagos" valor={brl(k.pagosMes.valor)} meta={`${num(k.pagosMes.qtd)} propostas · ${mesNome}`} />
           <Kpi cls="bg-exc" tom="orange" rotulo="Pagos exceção" valor={brl(k.pagosExcecaoMes.valor)} meta={`${num(k.pagosExcecaoMes.qtd)} propostas · ${pct(pagosExcPct)} dos pagos`} />
-          <Kpi cls="bg-canc" tom="red" rotulo="Falta" valor={brl(meta?.falta)} meta={meta ? `${pct(meta.faltaPct)} para a meta` : NAO} />
+          {doGerente ? (
+            <Kpi cls="bg-canc" tom="red" rotulo="Falta" valor="—" meta="a meta é da empresa; o que falta só faz sentido no Geral" />
+          ) : (
+            <Kpi cls="bg-canc" tom="red" rotulo="Falta" valor={brl(meta?.falta)} meta={meta ? `${pct(meta.faltaPct)} para a meta` : NAO} />
+          )}
         </div>
       </section>
 
@@ -417,7 +495,7 @@ export default async function RelatorioPage({ searchParams }: { searchParams: Pr
       </section>
 
       <p className="footnote">
-        PROVA {dRef} · Fonte: {evidencia.fonte as string} · Meta MODELO (não é meta oficial) · Gerentes filtrados por texto LUANA/ADRIANO/DANIEL/MARCOS
+        PROVA {dRef} · Fonte: {evidencia.fonte as string} · {metaOficial ? 'Meta oficial' : 'Meta MODELO (não é meta oficial)'} · Gerentes filtrados por texto LUANA/ADRIANO/DANIEL/MARCOS
       </p>
     </div>
   );

@@ -17,6 +17,10 @@ export default async function UsersPage() {
         Gerencie quem acessa o portfólio. Visualizadores só enxergam a visão pública; gerentes e superadmins acessam
         esta área administrativa.
       </p>
+      <p className="admin-hint" style={{ marginBottom: 20 }}>
+        Regra de acesso: o usuário só vê dados das empresas marcadas; sem empresa marcada ele não vê relatórios.
+        &quot;Restringir à turma do gerente&quot; limita ainda mais; sem isso ele vê a empresa inteira.
+      </p>
 
       <h2 className="admin-section-title">Novo usuário</h2>
       <NewUserForm />
