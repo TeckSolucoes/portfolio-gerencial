@@ -217,3 +217,28 @@ model MetaMensal {
   @@unique([empresa, mes])
   @@map("metas_mensais")
 }
+
+// Workers: tarefas agendadas (sem IA, só código) que atualizam notícias, mercado, diários e
+// transparência. WorkerConfig guarda o que o ADM muda em tela; WorkerExecucao é o histórico.
+model WorkerConfig {
+  id           String   @id // id do worker no registro (src/lib/workers/registro.ts)
+  ativo        Boolean  @default(true)
+  intervaloMin Int? @map("intervalo_min") // null = usa o padrão do worker
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@map("worker_configs")
+}
+
+model WorkerExecucao {
+  id          String    @id @default(uuid())
+  workerId    String    @map("worker_id")
+  iniciadoEm  DateTime  @map("iniciado_em")
+  terminadoEm DateTime? @map("terminado_em")
+  status      String // rodando | ok | erro
+  itens       Int?
+  mensagem    String?
+  origem      String // agendado | manual
+
+  @@index([workerId, iniciadoEm])
+  @@map("worker_execucoes")
+}

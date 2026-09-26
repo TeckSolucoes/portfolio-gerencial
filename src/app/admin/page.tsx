@@ -1,60 +1,9 @@
-import Link from 'next/link';
-import { prisma } from '@/lib/prisma';
+import { redirect } from 'next/navigation';
+import { auth } from '@/lib/auth';
 
-export default async function AdminHomePage() {
-  const [companies, frontCount, itemCount] = await Promise.all([
-    prisma.company.findMany({
-      orderBy: { sortOrder: 'asc' },
-      include: { _count: { select: { fronts: true } } },
-    }),
-    prisma.front.count({ where: { archivedAt: null } }),
-    prisma.frontItem.count(),
-  ]);
-
-  return (
-    <>
-      <div className="kicker">Curadoria</div>
-      <h1>Painel administrativo</h1>
-      <p className="lede">
-        Visão geral do conteúdo cadastrado. Toda frente nasce em modo manual — os dados abaixo refletem o que foi
-        cadastrado aqui, não uma sincronização automática.
-      </p>
-
-      <div className="admin-actions" style={{ marginBottom: 22 }}>
-        <Link href="/admin/fronts/new" className="btn btn-primary">
-          Nova frente completa
-        </Link>
-      </div>
-
-      <div className="admin-stat-row">
-        <div className="admin-stat">
-          <span className="asv">{companies.length}</span>
-          <span className="asl">Empresas</span>
-        </div>
-        <div className="admin-stat">
-          <span className="asv">{frontCount}</span>
-          <span className="asl">Frentes ativas</span>
-        </div>
-        <div className="admin-stat">
-          <span className="asv">{itemCount}</span>
-          <span className="asl">Itens cadastrados</span>
-        </div>
-      </div>
-
-      <h2 className="admin-section-title">Empresas</h2>
-      <div className="admin-list">
-        {companies.map((c) => (
-          <Link key={c.id} href={`/admin/companies/${c.slug}/fronts`} className="admin-row">
-            <div className="admin-row-main">
-              <span className="admin-row-title">{c.name}</span>
-              <span className="admin-row-meta">{c.tag}</span>
-            </div>
-            <span className="admin-row-count">
-              {c._count.fronts} frente{c._count.fronts === 1 ? '' : 's'}
-            </span>
-          </Link>
-        ))}
-      </div>
-    </>
-  );
+// Sem tela de "Painel administrativo": quem administra cai direto na gestão de usuários.
+// (O layout já barra visitante e visualizador; quem não é superadmin volta ao início.)
+export default async function AdminIndex() {
+  const session = await auth();
+  redirect(session?.user?.role === 'superadmin' ? '/admin/settings/users' : '/');
 }

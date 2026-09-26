@@ -4,9 +4,6 @@ import type { Role } from '@/generated/prisma/enums';
 export function AdminNav({ role }: { role: Role }) {
   return (
     <nav className="admin-nav">
-      <Link href="/admin" className="btn-ghost">
-        Visão geral
-      </Link>
       {role === 'superadmin' && (
         <>
           <Link href="/admin/settings/users" className="btn-ghost">
@@ -14,6 +11,9 @@ export function AdminNav({ role }: { role: Role }) {
           </Link>
           <Link href="/admin/metas" className="btn-ghost">
             Metas
+          </Link>
+          <Link href="/admin/workers" className="btn-ghost">
+            Workers
           </Link>
         </>
       )}
