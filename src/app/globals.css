@@ -645,10 +645,6 @@ h1.headline .line-2{
   .priority-tag.yes{animation:none;}
 }
 
-.monit-tabela { width: 100%; border-collapse: collapse; margin: 8px 0 28px; font-size: 13px; }
-.monit-tabela th, .monit-tabela td { text-align: left; padding: 8px 10px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
-.monit-tabela th { color: var(--text-dim, #9a97ab); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; }
-
 .home-topo { display: grid; grid-template-columns: 1fr 1.4fr; gap: 16px; margin: 24px 0 16px; }
 .home-grade { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
 @media (max-width: 900px) { .home-topo, .home-grade { grid-template-columns: 1fr; } }
