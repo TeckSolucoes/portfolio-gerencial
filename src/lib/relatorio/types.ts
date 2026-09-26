@@ -115,6 +115,18 @@ export interface Escopo {
   corresponde: (gerente: string) => boolean;
 }
 
+export interface Ranking {
+  nome: string;
+  valor: number;
+  pct: number; // 0..1 dos pagos do mês
+}
+
+export interface LinhaExcecaoEquipe {
+  equipe: string;
+  vendeu: Soma;
+  pagou: Soma;
+}
+
 export interface Relatorio {
   ref: string;
   escopo: string;
@@ -153,4 +165,32 @@ export interface Relatorio {
   trocasEquipe: TrocaEquipe[];
   canceladasOntem: CanceladaOntem[] | null;
   alertas: string[];
+  // Seções do modelo do CEO (Relatorio_Diario_17-09_COMPLETO.html).
+  clientes: {
+    casaDia: Soma & { cpfs: number }; // já teve qualquer contrato no grupo antes da proposta
+    novoDia: Soma; // 1ª proposta do CPF
+    casaMes: Soma & { cpfs: number };
+  };
+  meta: {
+    valor: number; // MODELO até a meta oficial chegar
+    modelo: true;
+    pagos: Soma;
+    pagosExcecao: Soma;
+    pagosExcecaoPct: number | null;
+    falta: number;
+    faltaPct: number | null;
+  };
+  rankingPagos: { convenio: Ranking | null; produto: Ranking | null; equipe: Ranking | null; gerente: Ranking | null };
+  novaReinserida: { dia: { novas: Soma; reinseridas: Soma }; mes: { novas: Soma; reinseridas: Soma } };
+  excecaoEquipes: LinhaExcecaoEquipe[];
+  churn: {
+    naoVoltou: number;
+    naoVoltouPct: number | null; // dos casos do mês
+    voltouMorreu: number;
+    fecharam: number;
+    morreram: number;
+    taxa: number | null;
+    equipes: { equipe: string; taxa: number }[];
+    fimDaLista: Record<Fim, number>;
+  };
 }

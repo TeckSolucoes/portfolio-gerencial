@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Unbounded, Manrope, Fragment_Mono } from 'next/font/google';
+import { NOME_PRODUTO } from '@/lib/marca';
 import './globals.css';
 
 const unbounded = Unbounded({
@@ -21,7 +22,7 @@ const fragmentMono = Fragment_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Portfólio Teck',
+  title: `${NOME_PRODUTO} Teck`,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

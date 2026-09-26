@@ -3,8 +3,9 @@ import { HeroHeadline } from '@/components/HeroHeadline';
 import { LoginForm } from '@/components/LoginForm';
 import { LoginHeader } from '@/components/LoginHeader';
 import { Starfield } from '@/components/Starfield';
+import { NOME_PRODUTO } from '@/lib/marca';
 
-const EYEBROW = 'Portfólio executivo · Teck Soluções';
+const EYEBROW = `${NOME_PRODUTO} · Teck Soluções`;
 const HEADLINE_LINES = [
   ['Não', 'esperamos', 'o', 'futuro.'],
   ['Nós', 'o', 'pilotamos.'],

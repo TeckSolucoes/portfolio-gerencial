@@ -1,4 +1,5 @@
 import { BrandMark } from './BrandMark';
+import { NOME_PRODUTO } from '@/lib/marca';
 
 // Reusa o elemento <header> e a classe .brand — mesmo padrão visual do
 // Header do dashboard (globals.css estiliza o seletor `header` genérico) —
@@ -11,7 +12,7 @@ export function LoginHeader() {
         <BrandMark />
         <div className="brand-text">
           <span className="wd">Teck Soluções</span>
-          <span className="sub">Portfólio de Projetos</span>
+          <span className="sub">{NOME_PRODUTO}</span>
         </div>
       </div>
     </header>

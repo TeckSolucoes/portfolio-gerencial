@@ -23,7 +23,7 @@ export default async function AdminItemsPage({
       <div className="kicker">Curadoria · {company.name}</div>
       <h1>Itens de {front.title}</h1>
       <p className="lede">
-        Sem sincronização com o Jira ainda, os itens são cadastrados aqui manualmente. Um item marcado como
+        Os itens são cadastrados aqui manualmente. Um item marcado como
         bloqueado precisa de uma observação explicando o motivo.
       </p>
 

@@ -37,6 +37,12 @@ function ordenar(itens: { p: Proposta; i: number }[]) {
   });
 }
 
+// O fim do caso olha a última proposta pelo número crescente; a ordem de "nova x reinserida"
+// (número decrescente no mesmo dia) faria a última ser uma proposta reprovada que veio antes.
+function porNumeroCrescente(ps: Proposta[]): Proposta[] {
+  return [...ps].sort((a, b) => (a.data !== b.data ? (a.data < b.data ? -1 : 1) : Number(a.numero) - Number(b.numero)));
+}
+
 function desfechoDe(propostas: Proposta[]): { desfecho: Desfecho; fim: Fim | null; etapaMorte: Etapa | null } {
   if (propostas.some((p) => p.integrada)) return { desfecho: 'Pagou', fim: null, etapaMorte: null };
 
@@ -91,7 +97,7 @@ export function construirCasos(
       gerente: primeira.gerente,
       equipe: primeira.equipe,
       operador: primeira.operador,
-      ...desfechoDe(ordenadas),
+      ...desfechoDe(porNumeroCrescente(ordenadas)),
     });
   }
   return { casos, descartadas };

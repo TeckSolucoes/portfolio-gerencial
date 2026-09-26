@@ -9,16 +9,13 @@ export function AdminNav({ role }: { role: Role }) {
       </Link>
       {role === 'superadmin' && (
         <>
-          <Link href="/admin/settings/status-mapping" className="btn-ghost">
-            Mapeamento Jira
-          </Link>
           <Link href="/admin/settings/users" className="btn-ghost">
             Usuários
           </Link>
         </>
       )}
       <Link href="/" className="btn-ghost admin-nav-link-muted">
-        ← Ver portfólio
+        ← Início
       </Link>
     </nav>
   );

@@ -26,11 +26,6 @@ export default async function AdminHomePage() {
         </Link>
       </div>
 
-      <div className="admin-notice">
-        Nenhuma sincronização com o Jira configurada ainda. Frentes e itens são criados e mantidos manualmente nesta
-        área até a integração existir.
-      </div>
-
       <div className="admin-stat-row">
         <div className="admin-stat">
           <span className="asv">{companies.length}</span>

@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { auth, signOut } from '@/lib/auth';
 import { BrandMark } from './BrandMark';
+import { NOME_PRODUTO } from '@/lib/marca';
 
 function initialsFrom(name: string): string {
   const parts = name.trim().split(/\s+/);
@@ -20,13 +21,10 @@ export async function Header() {
         <BrandMark />
         <div className="brand-text">
           <span className="wd">Teck Soluções</span>
-          <span className="sub">Portfólio de Projetos</span>
+          <span className="sub">{NOME_PRODUTO}</span>
         </div>
       </Link>
       <div className="header-right">
-        <div className="synced">
-          <span className="sdot"></span>Sincronizado com o Jira · hoje às 08:14
-        </div>
         {user && (
           <Link href="/relatorio" className="admin-link">
             Relatório Gerencial

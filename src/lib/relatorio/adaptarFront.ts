@@ -20,13 +20,40 @@ export interface LinhaFront {
 
 const PREFIXO_APROVADA = 'Aprovada - ';
 
-// Sem o CCNET na mão, "Aprovada - X" no Front é a proposta que já passou pela auditoria e tem
-// Código Função; X é a esteira. Bate exatamente com a prova de 17/09 (Front 47 / CCNET 75).
-// Não há como saber pelo Front se a esteira reprovou, então esteiraReprovada fica falso.
+// O Front só mostra o último status da esteira em "Aprovada - X". Estes X são o CCNET dizendo não
+// (reprovou ou cancelou o contrato); qualquer outro X é a esteira ainda andando. Lista derivada
+// do gabarito de 17/09: bate com os 126 Reprovado CCNET + 4 Cancelado que vêm de "Aprovada - X"
+// (REPROVADO CRÉDITO entra aqui: o gabarito a chama de Reprovado Front, mas conta a morte no CCNET).
+const ESTEIRA_ENCERRADA = new Set([
+  'CALCULO MANUAL NEGATIVO',
+  'CANCELADA',
+  'CLIENTE SEM MARGEM',
+  'CONTEM CTT C/ PROB AVERB',
+  'CONTRATO FORA DE FOLHA',
+  'CTT PAGO NAO AVERBADO',
+  'DUPLICIDADE',
+  'FORA DA POLÍTICA DE CRÉD',
+  'IDADE FORA DA POLITICA',
+  'M NEGATIVA / SEM MARGEM',
+  'NÃO ATINGE VLR MIN PARC',
+  'PEND NÃO SANADA/FORA SLA',
+  'REPROVADO CRÉDITO',
+  'REPROVA POR RISCO OP',
+  'REPROVA POR RISCO OP.',
+  'SALDO MAIOR',
+  'SEM ATUAÇÃO / FORA DA SLA',
+  'SITUAÇÃO FUNC NÃO ATENDID',
+  'ULTRAPASSA VALOR CESSÃO',
+]);
+
+// Limites do Front: ele não diferencia "CCNET reprovou" de "CCNET cancelou" (PEND NÃO SANADA/FORA SLA
+// e CANCELADA caem em Reprovado CCNET aqui; no gabarito 4 desses casos são Cancelado), e `cancelada`
+// fica só com o status "Cancelada" pra bater com os 166 cancelados do export.
 export function propostaDeFront(r: LinhaFront): Proposta | null {
   const produto = normalizarProduto(r.produto);
   if (!produto) return null;
   const aprovada = r.status.startsWith(PREFIXO_APROVADA);
+  const sufixo = aprovada ? r.status.slice(PREFIXO_APROVADA.length) : '';
   return {
     numero: r.numero,
     cpf: r.cpf,
@@ -40,13 +67,13 @@ export function propostaDeFront(r: LinhaFront): Proposta | null {
     operador: r.operador,
     convenio: r.convenio,
     status: r.status,
-    esteira: aprovada ? r.status.slice(PREFIXO_APROVADA.length) : '',
+    esteira: sufixo,
     temCodigoFuncao: aprovada,
     integrada: r.status.toUpperCase().includes('INTEGRADO'),
     excecao: r.politica === 'FRONT EXCEÇÃO',
     cancelada: r.status === 'Cancelada',
     frontReprovado: r.status === 'Reprovada',
-    esteiraReprovada: false,
+    esteiraReprovada: ESTEIRA_ENCERRADA.has(sufixo),
     motivoCancFront: r.motivoCancFront ?? '',
     motivoCancelamento: '',
     dataCancelamento: '',
