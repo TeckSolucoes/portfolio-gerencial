@@ -12,6 +12,7 @@ export interface Worker {
   nome: string;
   grupo: GrupoWorker;
   descricao: string;
+  limiteMs?: number; // teto de duração de uma execução (padrão do motor: 5 min)
   // Devolve o motivo de NÃO poder rodar (ex.: falta configuração) ou null se está pronto.
   pendencia?: () => string | null;
   executar: () => Promise<ResultadoWorker>;

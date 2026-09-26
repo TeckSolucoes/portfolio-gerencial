@@ -33,7 +33,7 @@ export async function executarWorker(id: string, origem: 'agendado' | 'manual'):
   let itens: number | null = null;
   let mensagem: string | null = null;
   try {
-    const r = await comLimite(w.executar(), LIMITE_EXECUCAO_MS);
+    const r = await comLimite(w.executar(), w.limiteMs ?? LIMITE_EXECUCAO_MS);
     await gravarCache(id, r.dados);
     itens = r.itens;
     mensagem = r.mensagem;

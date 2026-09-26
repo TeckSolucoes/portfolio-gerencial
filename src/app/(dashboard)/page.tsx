@@ -52,13 +52,6 @@ export default function HomePage() {
               Abrir monitoramento <span aria-hidden="true">→</span>
             </span>
           </Link>
-          <Link href="/transparencia" className="atalho t-verde">
-            <span className="atalho-nome">Transparência</span>
-            <span className="atalho-desc">Servidores federais por órgão, pelo Portal da Transparência.</span>
-            <span className="atalho-ir">
-              Abrir transparência <span aria-hidden="true">→</span>
-            </span>
-          </Link>
         </div>
       </section>
 

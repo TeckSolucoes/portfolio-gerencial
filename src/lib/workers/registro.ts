@@ -2,7 +2,7 @@ import 'server-only';
 import { atosDoDiarioOficial } from '../diarioOficial';
 import { FONTES } from '../diarios';
 import { ibovespa, indicadores, noticias } from '../mercado';
-import { chaveConfigurada, coletarAgregadoFederal } from '../transparencia/federal';
+import { atualizarMapeamento } from '../transparencia/mapeamento';
 import type { Worker } from './tipos';
 
 // Fonte que respondeu vazio = coleta ok com 0 itens; fonte que não respondeu (null) = erro.
@@ -83,16 +83,24 @@ const diarioWorkers: Worker[] = [
 
 const transparenciaWorkers: Worker[] = [
   {
-    id: 'transparencia-federal',
-    nome: 'Transparência · Servidores federais (por órgão)',
+    id: 'transparencia-servidores',
+    nome: 'Transparência · Servidores federais (mapeamento mensal)',
     grupo: 'Transparência',
     descricao:
-      'Contagem agregada de servidores por órgão (Portal da Transparência federal). Só números, sem nome nem CPF. A chave da API foi enviada para pflendesjr@hotmail.com.',
-    pendencia: () =>
-      chaveConfigurada() ? null : 'Falta a chave da API: está no e-mail pflendesjr@hotmail.com. Coloque em PORTAL_TRANSPARENCIA_CHAVE no EasyPanel.',
+      'Baixa o arquivo mensal oficial de servidores SIAPE do Portal da Transparência, compara com o mês anterior e monta a lista de novos que ainda não são clientes. Só roda de fato quando o Portal publica um mês novo.',
+    limiteMs: 60 * 60_000, // arquivo de centenas de MB: download e leitura levam minutos
     executar: async () => {
-      const agregado = await coletarAgregadoFederal();
-      return { itens: agregado.linhas, mensagem: `${agregado.totalPessoas.toLocaleString('pt-BR')} pessoas em ${agregado.porOrgao.length} órgãos`, dados: agregado };
+      const rs = await atualizarMapeamento();
+      if (rs.length === 0) return { itens: 0, mensagem: 'Nenhum mês novo publicado pelo Portal.', dados: rs };
+      const partes = rs.map((r) =>
+        r.situacao === 'indisponivel'
+          ? `${r.mes}: ainda não publicado`
+          : r.situacao === 'base'
+            ? `${r.mes}: base registrada (${r.servidores.toLocaleString('pt-BR')} servidores)`
+            : `${r.mes}: ${r.acionaveis.toLocaleString('pt-BR')} acionáveis de ${r.entraram.toLocaleString('pt-BR')} novos`,
+      );
+      const itens = rs.reduce((t, r) => t + (r.situacao === 'processado' ? r.acionaveis : 0), 0);
+      return { itens, mensagem: partes.join(' · '), dados: rs };
     },
   },
 ];

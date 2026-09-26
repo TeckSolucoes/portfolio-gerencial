@@ -42,7 +42,7 @@ export async function Header() {
             Diário Oficial
           </Link>
         )}
-        {user && (
+        {user?.role === 'superadmin' && (
           <Link href="/transparencia" className="admin-link">
             Transparência
           </Link>

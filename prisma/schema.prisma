@@ -244,3 +244,64 @@ model WorkerExecucao {
   @@index([workerId, iniciadoEm])
   @@map("worker_execucoes")
 }
+
+// Mapeamento mensal de servidores (Portal da Transparência) para achar clientes novos.
+// Resumo de cada mês processado do arquivo oficial.
+model PortalMes {
+  mes             String   @id // AAAA-MM do arquivo do Portal
+  totalServidores Int      @map("total_servidores")
+  entraram        Int
+  jaClientes      Int      @map("ja_clientes")
+  acionaveis      Int
+  ignoradas       Int
+  processadoEm    DateTime @default(now()) @map("processado_em")
+
+  @@map("portal_meses")
+}
+
+// A lista do comercial: quem entrou no mês e não é nosso cliente. Tem nome de pessoa: só superadmin
+// vê, e listas com mais de 12 meses são apagadas.
+model PortalNovo {
+  id            String @id @default(uuid())
+  mes           String
+  servidorId    String @map("servidor_id") // Id_SERVIDOR_PORTAL
+  nome          String
+  cpf6          String
+  orgao         String
+  orgaoSuperior String @map("orgao_superior")
+  uf            String
+  cargo         String
+  situacao      String
+  ingressoCargo String @map("ingresso_cargo")
+  tipo          String // recem-nomeado | outro
+  chave         String // hash de cpf6 + nome (cruza com base_clientes)
+
+  @@unique([mes, servidorId])
+  @@index([chave])
+  @@map("portal_novos")
+}
+
+// Nossa base (export do Front / SELECT do Função), SEM CPF nem nome: só o hash da pessoa.
+model BaseCliente {
+  id     String @id @default(uuid())
+  origem String // front | funcao
+  chave  String
+  data   String // AAAA-MM-DD ou ''
+  valor  Float
+  status String
+
+  @@index([chave])
+  @@index([origem])
+  @@map("base_clientes")
+}
+
+model BaseImportacao {
+  origem       String   @id // front | funcao
+  arquivo      String
+  linhas       Int
+  ignoradas    Int
+  importadoEm  DateTime @default(now()) @map("importado_em")
+  importadoPor String?  @map("importado_por")
+
+  @@map("base_importacoes")
+}
