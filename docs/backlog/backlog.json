@@ -71,7 +71,7 @@
       "tema": "Decisão",
       "impacto": "alto",
       "esforco": "P",
-      "status": "pendente",
+      "status": "concluido",
       "dependeDe": [
         "INF-3"
       ],
@@ -80,7 +80,15 @@
       "riscos": [
         "RSK-7"
       ],
-      "notas": "Regra é falha-fechada de propósito."
+      "notas": "Regra é falha-fechada de propósito.",
+      "historico": [
+        {
+          "data": "2026-09-27",
+          "acao": "concluido",
+          "nota": "Gestão de usuários já permite liberar AKRK e DIG individualmente, persiste apenas empresas válidas no servidor e aplica o escopo em relatórios e monitoramento. Fluxo revisado e coberto por testes de permissão."
+        }
+      ],
+      "concluidoEm": "2026-09-27"
     },
     {
       "id": "INF-10",
@@ -386,12 +394,20 @@
       "tema": "Dados",
       "impacto": "médio",
       "esforco": "P",
-      "status": "pendente",
+      "status": "concluido",
       "dependeDe": [],
       "donoSugerido": "IA",
       "criterioPronto": "Função de normalização única usada por monitoramento, ficha e ranking; teste com os 49 nomes reais.",
       "riscos": [],
-      "notas": "Hoje infla alertas 'convênio novo'."
+      "notas": "Hoje infla alertas 'convênio novo'.",
+      "historico": [
+        {
+          "data": "2026-09-27",
+          "acao": "concluido",
+          "nota": "Convênios passam por normalização única na entrada do Front e dos diários, unificando caixa, espaços, pontuação e variantes com ou sem acento, como SAO/SÃO."
+        }
+      ],
+      "concluidoEm": "2026-09-27"
     },
     {
       "id": "TEC-1",
@@ -400,12 +416,20 @@
       "tema": "Dívida técnica",
       "impacto": "baixo",
       "esforco": "P",
-      "status": "pendente",
+      "status": "concluido",
       "dependeDe": [],
       "donoSugerido": "IA",
       "criterioPronto": "Action devolve {ok:false, erro} em vez de lançar; diálogo mostra o motivo real.",
       "riscos": [],
-      "notas": "Next mascara erros lançados em produção."
+      "notas": "Next mascara erros lançados em produção.",
+      "historico": [
+        {
+          "data": "2026-09-27",
+          "acao": "concluido",
+          "nota": "Exclusão de usuário agora retorna mensagens controladas para regras de negócio e uma mensagem genérica para falhas inesperadas, mantendo o erro técnico apenas no log do servidor."
+        }
+      ],
+      "concluidoEm": "2026-09-27"
     },
     {
       "id": "DEC-6",
@@ -469,14 +493,22 @@
       "tema": "Infraestrutura",
       "impacto": "médio",
       "esforco": "P",
-      "status": "pendente",
+      "status": "concluido",
       "dependeDe": [
         "INF-5"
       ],
       "donoSugerido": "IA",
       "criterioPronto": "Rota de saúde e painel resumido para o ADM.",
       "riscos": [],
-      "notas": ""
+      "notas": "",
+      "historico": [
+        {
+          "data": "2026-09-27",
+          "acao": "concluido",
+          "nota": "Criada a aba NOC com permissão modular por perfil e usuário. O painel mostra saúde do banco, volume, backup detectado, agendador, workers, fontes, falhas e próximas execuções."
+        }
+      ],
+      "concluidoEm": "2026-09-27"
     },
     {
       "id": "PRD-11",
@@ -686,14 +718,22 @@
       "tema": "Dados",
       "impacto": "baixo",
       "esforco": "P",
-      "status": "pendente",
+      "status": "concluido",
       "dependeDe": [],
       "donoSugerido": "IA",
       "criterioPronto": "Investigado; a tela exibe a data de vigência de forma clara ou usa a série correta.",
       "riscos": [
         "RSK-9"
       ],
-      "notas": ""
+      "notas": "",
+      "historico": [
+        {
+          "data": "2026-09-27",
+          "acao": "concluido",
+          "nota": "Leitura do Banco Central consulta as últimas 10 observações, descarta datas futuras e seleciona o valor válido mais recente no fuso de São Paulo."
+        }
+      ],
+      "concluidoEm": "2026-09-27"
     },
     {
       "id": "TEC-2",

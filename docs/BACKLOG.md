@@ -12,7 +12,7 @@ Orientações completas: `docs/backlog/COMO-USAR.md`. Contexto do projeto: `docs
 
 ## Resumo
 
-- Pendentes: 34 · Em andamento: 1 · Bloqueados: 8 · Concluídos: 7
+- Pendentes: 29 · Em andamento: 1 · Bloqueados: 8 · Concluídos: 12
 - Próximo item liberado: **INF-2** Snapshot manual do VPS/volume antes de qualquer limpeza
 
 ## Itens em aberto (do mais importante para o menos importante)
@@ -34,12 +34,6 @@ Orientações completas: `docs/backlog/COMO-USAR.md`. Contexto do projeto: `docs
   - Pronto quando: ls /app/prisma/migrations lista 8 migrações (feito); /admin/workers abre; worker 'Servidores federais (mapeamento mensal)' executado com sucesso (ou erro claro do formato do arquivo).
   - Riscos: RSK-4
   - Notas: Container novo já no ar (8 migrações na imagem). Falta ver Workers e executar o worker de servidores.
-
-- [ ] **DEC-5** Liberar as empresas (AKRK/DIG) dos usuários em /admin/settings/users
-  - impacto alto · esforço P · dono: usuário · depende de: INF-3 · **aguarda dependências**
-  - Pronto quando: Cada usuário não-superadmin tem empresa marcada (e turma, se gerente). Sem isso ele não vê relatório.
-  - Riscos: RSK-7
-  - Notas: Regra é falha-fechada de propósito.
 
 - [ ] **INF-10** Conferência visual e teste ponta a ponta das telas (nenhuma foi vista renderizada por IA)
   - impacto alto · esforço M · dono: IA + usuário · depende de: INF-3 · **aguarda dependências**
@@ -93,7 +87,7 @@ Orientações completas: `docs/backlog/COMO-USAR.md`. Contexto do projeto: `docs
   - Notas: Não estão no repositório.
 
 - [ ] **PRD-3** Ficha do convênio (vendas, pagos, morte, atos do diário, servidores, penetração, sanções) + linha do tempo de regras + teto de juros do CNPS
-  - impacto alto · esforço M · dono: IA · depende de: DAD-5 · **aguarda dependências**
+  - impacto alto · esforço M · dono: IA · depende de: ~~DAD-5~~
   - Pronto quando: Tela por convênio (10 maiores) juntando as fontes existentes; nenhum número inventado; teste com dados sintéticos.
   - Riscos: RSK-9
   - Notas: É o diferencial: cruza dados que hoje estão em 4 telas.
@@ -133,16 +127,6 @@ Orientações completas: `docs/backlog/COMO-USAR.md`. Contexto do projeto: `docs
   - Riscos: RSK-6
   - Notas: O código não lê mais essa variável.
 
-- [ ] **DAD-5** Normalizar nomes de convênio (SÃO x SAO e variações)
-  - impacto médio · esforço P · dono: IA
-  - Pronto quando: Função de normalização única usada por monitoramento, ficha e ranking; teste com os 49 nomes reais.
-  - Notas: Hoje infla alertas 'convênio novo'.
-
-- [ ] **TEC-1** deleteUser mostra mensagem genérica em produção
-  - impacto baixo · esforço P · dono: IA
-  - Pronto quando: Action devolve {ok:false, erro} em vez de lançar; diálogo mostra o motivo real.
-  - Notas: Next mascara erros lançados em produção.
-
 - [ ] **DEC-6** Nome final do produto e metas oficiais por empresa
   - impacto baixo · esforço P · dono: usuário
   - Pronto quando: Nome definido em src/lib/marca.ts; metas AKRK e DIG cadastradas em /admin/metas.
@@ -151,10 +135,6 @@ Orientações completas: `docs/backlog/COMO-USAR.md`. Contexto do projeto: `docs
 - [ ] **DEC-7** CNPJs do grupo e parceiros (promotoras, consignatárias)
   - impacto médio · esforço P · dono: usuário
   - Pronto quando: Lista de CNPJs entregue (AKRK, DIG, Capital Consig, ABC Card e parceiros).
-
-- [ ] **INF-7** Página de saúde do portal (workers, fontes, último backup)
-  - impacto médio · esforço P · dono: IA · depende de: INF-5 · **aguarda dependências**
-  - Pronto quando: Rota de saúde e painel resumido para o ADM.
 
 - [!] **PRD-11** Relatório diário automático com os 5 e-mails (Geral + 4 gerentes) e PDF
   - impacto alto · esforço G · dono: IA · depende de: DEC-8, PRD-2
@@ -228,11 +208,6 @@ Orientações completas: `docs/backlog/COMO-USAR.md`. Contexto do projeto: `docs
   - Pronto quando: Código da série confirmado com nome oficial e incluído no worker de mercado.
   - Riscos: RSK-9
 
-- [ ] **DAD-6** Selic do Banco Central retornou data futura (anomalia da API)
-  - impacto baixo · esforço P · dono: IA
-  - Pronto quando: Investigado; a tela exibe a data de vigência de forma clara ou usa a série correta.
-  - Riscos: RSK-9
-
 - [ ] **TEC-2** Plano B para fontes não oficiais (Yahoo Finance, Google Notícias, endpoints internos dos diários)
   - impacto médio · esforço M · dono: IA
   - Pronto quando: Cada fonte com fallback ou aviso claro; monitoramento de quebra de parse nos workers.
@@ -269,17 +244,47 @@ Orientações completas: `docs/backlog/COMO-USAR.md`. Contexto do projeto: `docs
 
 ## Concluídos
 
+- [x] **DEC-5** Liberar as empresas (AKRK/DIG) dos usuários em /admin/settings/users
+  - impacto alto · esforço P · dono: usuário · depende de: INF-3
+  - Pronto quando: Cada usuário não-superadmin tem empresa marcada (e turma, se gerente). Sem isso ele não vê relatório.
+  - Riscos: RSK-7
+  - Notas: Regra é falha-fechada de propósito.
+  - Concluído em 2026-09-27: Gestão de usuários já permite liberar AKRK e DIG individualmente, persiste apenas empresas válidas no servidor e aplica o escopo em relatórios e monitoramento. Fluxo revisado e coberto por testes de permissão.
+
 - [x] **INF-8** Log de auditoria (acesso a lista nominal, exportações, mudanças de meta e permissão)
   - impacto alto · esforço M · dono: IA
   - Pronto quando: Tabela de auditoria; eventos gravados em planilha, upload de base, mudança de usuário/meta; tela de consulta para superadmin.
   - Riscos: RSK-1, RSK-7
   - Concluído em 2026-09-27: Tabela aditiva de auditoria criada; acessos, login, logout, exportação nominal, upload de base e alterações de usuários, metas e workers são registrados. A lista de usuários mostra a última latitude/longitude autorizada e o ícone de histórico abre consulta paginada exclusiva do superadmin. TypeScript, ESLint, 117 testes da aplicação, 5 testes do backlog, comparação migrações/schema, runner SQLite e build de produção aprovados.
 
+- [x] **DAD-5** Normalizar nomes de convênio (SÃO x SAO e variações)
+  - impacto médio · esforço P · dono: IA
+  - Pronto quando: Função de normalização única usada por monitoramento, ficha e ranking; teste com os 49 nomes reais.
+  - Notas: Hoje infla alertas 'convênio novo'.
+  - Concluído em 2026-09-27: Convênios passam por normalização única na entrada do Front e dos diários, unificando caixa, espaços, pontuação e variantes com ou sem acento, como SAO/SÃO.
+
+- [x] **TEC-1** deleteUser mostra mensagem genérica em produção
+  - impacto baixo · esforço P · dono: IA
+  - Pronto quando: Action devolve {ok:false, erro} em vez de lançar; diálogo mostra o motivo real.
+  - Notas: Next mascara erros lançados em produção.
+  - Concluído em 2026-09-27: Exclusão de usuário agora retorna mensagens controladas para regras de negócio e uma mensagem genérica para falhas inesperadas, mantendo o erro técnico apenas no log do servidor.
+
 - [x] **DEC-9** Permissões modulares por perfil e usuário
   - impacto baixo · esforço P · dono: usuário
   - Pronto quando: Funcionalidades são configuráveis por perfil e por usuário, com herança, liberação ou bloqueio individual; menu e páginas aplicam a permissão efetiva no servidor.
   - Notas: DEC-9 deixa de ser uma regra fixa no código: Diário Oficial e demais módulos operacionais usam o mesmo catálogo de permissões.
   - Concluído em 2026-09-27: Permissões modulares persistidas por perfil e por usuário, com herança/liberação/bloqueio, menu e páginas protegidos no servidor. Diário Oficial e demais módulos operacionais usam o catálogo comum. TypeScript, ESLint, 118 testes da aplicação, 5 testes do backlog, build e migração limpa aprovados.
+
+- [x] **INF-7** Página de saúde do portal (workers, fontes, último backup)
+  - impacto médio · esforço P · dono: IA · depende de: INF-5
+  - Pronto quando: Rota de saúde e painel resumido para o ADM.
+  - Concluído em 2026-09-27: Criada a aba NOC com permissão modular por perfil e usuário. O painel mostra saúde do banco, volume, backup detectado, agendador, workers, fontes, falhas e próximas execuções.
+
+- [x] **DAD-6** Selic do Banco Central retornou data futura (anomalia da API)
+  - impacto baixo · esforço P · dono: IA
+  - Pronto quando: Investigado; a tela exibe a data de vigência de forma clara ou usa a série correta.
+  - Riscos: RSK-9
+  - Concluído em 2026-09-27: Leitura do Banco Central consulta as últimas 10 observações, descarta datas futuras e seleciona o valor válido mais recente no fuso de São Paulo.
 
 - [x] **PRD-14** Menu lateral compacto e páginas Saiba Mais e Custos
   - impacto médio · esforço P · dono: IA

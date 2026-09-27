@@ -1,4 +1,5 @@
 import { assuntosDe } from '../diarioOficial';
+import { normalizarConvenio } from '../convenios';
 import type { AtoOficial } from '../diarioOficial';
 
 // Cada diário estadual/municipal vira um adaptador que devolve ItemDiario[] (o que a fonte
@@ -36,7 +37,7 @@ export function paraAto(item: ItemDiario, convenios: string[], fonte: string): A
     link: item.link,
     trecho: item.trecho,
     assuntos: assuntosDe(base),
-    convenios,
+    convenios: [...new Set(convenios.map(normalizarConvenio))],
     fonte,
     prioritario: true, // é o diário oficial do próprio ente do convênio
   };

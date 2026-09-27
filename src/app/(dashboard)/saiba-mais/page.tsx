@@ -6,6 +6,7 @@ const recursos = [
   { titulo: 'Monitoramento', texto: 'Destaca movimentos de convênios que fogem do comportamento habitual.', itens: ['Alertas de convênio inédito, raro ou em pico', 'Filtros por empresa', 'Leitura rápida das propostas relacionadas'], tom: 'laranja' },
   { titulo: 'Diário Oficial', texto: 'Centraliza atos públicos relevantes para a operação de consignado.', itens: ['Consulta de fontes federais, estaduais e municipais', 'Busca de atos relacionados aos convênios acompanhados', 'Atualização por coletas agendadas'], tom: '' },
   { titulo: 'Transparência', texto: 'Apoia a identificação de novos servidores federais com acesso restrito.', itens: ['Comparação mensal do arquivo SIAPE', 'Exclusão de pessoas já presentes na base de clientes', 'Geração de planilha para uso autorizado'], tom: 'roxo' },
+  { titulo: 'NOC', texto: 'Mostra a saúde operacional do portal e das fontes de dados.', itens: ['Estado do banco e do volume', 'Último backup detectado', 'Workers, falhas e próximas execuções'], tom: '' },
   { titulo: 'Administração', texto: 'Reúne os controles de operação e acesso do portal.', itens: ['Usuários, perfis, empresas e turmas', 'Metas mensais por empresa', 'Agenda, execução e histórico dos workers'], tom: 'laranja' },
 ];
 

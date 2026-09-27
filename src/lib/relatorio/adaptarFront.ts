@@ -1,4 +1,5 @@
 import { normalizarProduto } from './casos';
+import { normalizarConvenio } from '../convenios';
 import type { Proposta } from './types';
 
 export interface LinhaFront {
@@ -65,7 +66,7 @@ export function propostaDeFront(r: LinhaFront): Proposta | null {
     gerente: r.gerente,
     equipe: r.equipe,
     operador: r.operador,
-    convenio: r.convenio,
+    convenio: normalizarConvenio(r.convenio),
     status: r.status,
     esteira: sufixo,
     temCodigoFuncao: aprovada,

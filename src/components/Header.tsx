@@ -27,6 +27,7 @@ export async function Header({ sidebar = false }: { sidebar?: boolean }) {
     if (acesso && podeAcessar(acesso, 'diario_oficial')) items.push({ href: '/diario-oficial', label: 'Diário Oficial', icon: 'news' });
     if (acesso && podeAcessar(acesso, 'transparencia')) items.push({ href: '/transparencia', label: 'Transparência', icon: 'people' });
     if (acesso && podeAcessar(acesso, 'custos')) items.push({ href: '/custos', label: 'Custos', icon: 'costs' });
+    if (acesso && podeAcessar(acesso, 'noc')) items.push({ href: '/noc', label: 'NOC', icon: 'noc' });
     if (user.role === 'superadmin') items.push({ href: '/admin/settings/users', label: 'Usuários', icon: 'users' });
     if (acesso && podeAcessar(acesso, 'metas')) items.push({ href: '/admin/metas', label: 'Metas', icon: 'target' });
     if (acesso && podeAcessar(acesso, 'workers')) items.push({ href: '/admin/workers', label: 'Workers', icon: 'workers' });

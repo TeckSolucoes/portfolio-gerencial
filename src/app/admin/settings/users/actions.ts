@@ -167,21 +167,22 @@ export async function salvarPermissoesPerfil(formData: FormData) {
   revalidatePath('/', 'layout');
 }
 
-export async function deleteUser(id: string): Promise<void> {
-  const session = await requireSuperadminForAction();
-  if (session.user.id === id) {
-    throw new Error('Você não pode remover o próprio usuário.');
-  }
+export async function deleteUser(id: string): Promise<{ ok: true } | { ok: false; error: string }> {
+  try {
+    const session = await requireSuperadminForAction();
+    if (session.user.id === id) return { ok: false, error: 'Você não pode remover o próprio usuário.' };
+    if (await ehUltimoSuperadmin(id)) return { ok: false, error: 'Não é possível remover o único superadmin.' };
 
-  if (await ehUltimoSuperadmin(id)) {
-    throw new Error('Não é possível remover o único superadmin.');
+    const removido = await prisma.user.delete({ where: { id } });
+    await registrarAuditoria(session.user, {
+      acao: 'Usuário excluído',
+      rota: '/admin/settings/users',
+      detalhes: `${removido.email} · perfil ${removido.role}`,
+    });
+    revalidatePath('/admin/settings/users');
+    return { ok: true };
+  } catch (error) {
+    console.error('Falha ao excluir usuário.', error);
+    return { ok: false, error: 'Não foi possível excluir o usuário. Tente novamente.' };
   }
-
-  const removido = await prisma.user.delete({ where: { id } });
-  await registrarAuditoria(session.user, {
-    acao: 'Usuário excluído',
-    rota: '/admin/settings/users',
-    detalhes: `${removido.email} · perfil ${removido.role}`,
-  });
-  revalidatePath('/admin/settings/users');
 }
