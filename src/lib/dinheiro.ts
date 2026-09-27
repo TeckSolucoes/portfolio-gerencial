@@ -36,6 +36,16 @@ const numero = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximu
 // Para preencher o input: '8.000.000,00' sem o símbolo da moeda.
 export const formatarInputBR = (valor: number): string => numero.format(valor);
 
+// Máscara monetária para digitação: mantém somente algarismos e os interpreta
+// com duas casas decimais ("123456" -> "1.234,56").
+export function mascararInputBR(entrada: string): string {
+  const digitos = entrada.replace(/\D/g, '').slice(0, 15);
+  if (!digitos) return '';
+  const centavos = digitos.padStart(3, '0');
+  const inteiro = centavos.slice(0, -2).replace(/^0+(?=\d)/, '');
+  return `${inteiro.replace(/\B(?=(\d{3})+(?!\d))/g, '.')},${centavos.slice(-2)}`;
+}
+
 export const mesValido = (mes: string): boolean => /^\d{4}-(0[1-9]|1[0-2])$/.test(mes);
 
 export function mesAtual(agora: Date = new Date()): string {
