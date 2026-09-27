@@ -13,9 +13,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   if (session.user.role === 'visualizador') redirect('/');
 
   return (
-    <div className="app">
-      <Header />
-      <main>
+    <div className="app portal-app">
+      <Header sidebar />
+      <main id="portal-content" tabIndex={-1}>
         <AdminNav role={session.user.role} />
         {children}
       </main>

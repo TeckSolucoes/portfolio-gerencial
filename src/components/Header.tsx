@@ -3,6 +3,7 @@ import { auth, signOut } from '@/lib/auth';
 import { carregarAcesso } from '@/lib/acesso';
 import { BrandMark } from './BrandMark';
 import { NOME_PRODUTO } from '@/lib/marca';
+import { PortalNavigation, type NavigationItem } from './PortalNavigation';
 
 function initialsFrom(name: string): string {
   const parts = name.trim().split(/\s+/);
@@ -11,11 +12,27 @@ function initialsFrom(name: string): string {
   return (first + last).toUpperCase();
 }
 
-export async function Header() {
+export async function Header({ sidebar = false }: { sidebar?: boolean }) {
   const session = await auth();
   const user = session?.user;
   const canEdit = user && user.role !== 'visualizador';
   const temEmpresa = user ? ((await carregarAcesso())?.empresas.length ?? 0) > 0 : false;
+
+  if (sidebar && user) {
+    const items: NavigationItem[] = [{ href: '/', label: 'Início', icon: 'home' }];
+    if (temEmpresa) items.push(
+      { href: '/relatorio', label: 'Relatório Gerencial', icon: 'report' },
+      { href: '/monitoramento', label: 'Monitoramento', icon: 'radar' },
+    );
+    items.push({ href: '/diario-oficial', label: 'Diário Oficial', icon: 'news' });
+    if (user.role === 'superadmin') items.push({ href: '/transparencia', label: 'Transparência', icon: 'people' });
+    if (canEdit) items.push({ href: '/admin', label: 'Administração', icon: 'settings' });
+    return <PortalNavigation items={items}
+      brand={<Link href="/" className="brand"><BrandMark /><div className="brand-text"><span className="wd">Teck Soluções</span><span className="sub">{NOME_PRODUTO}</span></div></Link>}
+      account={<div className="user"><div className="avatar">{initialsFrom(user.displayName)}</div><div className="user-name"><b>{user.displayName}</b><span>{user.displayTitle ?? user.role}</span></div></div>}
+      logout={async () => { 'use server'; await signOut({ redirectTo: '/login' }); }}
+    />;
+  }
 
   return (
     <header>

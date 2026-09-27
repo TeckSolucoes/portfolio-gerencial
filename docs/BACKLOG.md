@@ -12,7 +12,7 @@ Orientações completas: `docs/backlog/COMO-USAR.md`. Contexto do projeto: `docs
 
 ## Resumo
 
-- Pendentes: 36 · Em andamento: 1 · Bloqueados: 8 · Concluídos: 0
+- Pendentes: 36 · Em andamento: 1 · Bloqueados: 8 · Concluídos: 1
 - Próximo item liberado: **INF-2** Snapshot manual do VPS/volume antes de qualquer limpeza
 
 ## Itens em aberto (do mais importante para o menos importante)
@@ -279,7 +279,12 @@ Orientações completas: `docs/backlog/COMO-USAR.md`. Contexto do projeto: `docs
 
 ## Concluídos
 
-_Nenhum ainda._
+- [x] **PRD-14** Menu lateral compacto com navegação móvel e logotipo preservado
+  - impacto médio · esforço P · dono: IA
+  - Pronto quando: Menu lateral compacto no desktop, expansão com rótulos, menu acessível no celular a 375px, marca Teck original preservada e visibilidade por perfil mantida; validações e PR concluídos.
+  - Riscos: RSK-7
+  - Notas: Solicitado e aprovado pelo usuário em 27/09/2026: opção 2 da prévia, com prioridade ao acesso pelo celular.
+  - Concluído em 2026-09-27: Menu lateral compacto no desktop e dialog acessível no celular, mantendo BrandMark e estilos da marca intactos. TypeScript, ESLint, 117 testes da aplicação, 5 testes do backlog e build aprovados. Conferência local em 375px: abrir/fechar, Escape, foco restaurado, navegação e logout. Menus conferidos como superadmin, gerente e visualizador sem empresa. Publicação pelo PR desta branch.
 
 ## Riscos
 

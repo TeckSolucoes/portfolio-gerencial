@@ -1,0 +1,92 @@
+'use client';
+
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import './PortalNavigation.css';
+
+export type NavigationItem = { href: string; label: string; icon: 'home' | 'report' | 'radar' | 'news' | 'people' | 'settings' };
+
+function Icon({ name }: { name: NavigationItem['icon'] | 'menu' | 'close' | 'logout' }) {
+  const paths = {
+    home: <><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z" /></>,
+    report: <><path d="M4 3v17h17M8 16v-4m5 4V8m5 8V5" /></>,
+    radar: <><circle cx="12" cy="12" r="9" /><path d="M16 8a6 6 0 1 0 2 5M12 12l7-7" /><circle cx="12" cy="12" r="1" /></>,
+    news: <><rect x="4" y="3" width="16" height="18" rx="2" /><path d="M8 7h8M8 11h8M8 15h3m3 0h2M8 18h3m3 0h2" /></>,
+    people: <><circle cx="9" cy="8" r="3" /><path d="M3 21v-3a6 6 0 0 1 12 0v3m2-16a3 3 0 0 1 0 6m2 10v-3a6 6 0 0 0-2-4" /></>,
+    settings: <><path d="M4 6h16M4 12h16M4 18h16" /><circle cx="8" cy="6" r="2" /><circle cx="16" cy="12" r="2" /><circle cx="10" cy="18" r="2" /></>,
+    menu: <><rect x="3" y="4" width="18" height="16" rx="2" /><path d="M9 4v16" /></>,
+    close: <path d="m6 6 12 12M6 18 18 6" />,
+    logout: <><path d="M9 4H4v16h5m5-12 4 4-4 4m-6-4h13" /></>,
+  };
+  return <svg className="portal-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{paths[name]}</svg>;
+}
+
+export function PortalNavigation({ brand, account, items, logout }: {
+  brand: ReactNode;
+  account: ReactNode;
+  items: NavigationItem[];
+  logout: () => Promise<void>;
+}) {
+  const pathname = usePathname();
+  const [expanded, setExpanded] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const dialog = useRef<HTMLDialogElement>(null);
+  const trigger = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    const menu = dialog.current;
+    if (!menu) return;
+    // Native dialog makes the background inert and contains keyboard focus.
+    const close = () => menu.close();
+    const desktop = window.matchMedia('(min-width: 768px)');
+    const resized = () => { if (desktop.matches) close(); };
+    desktop.addEventListener('change', resized);
+    window.addEventListener('popstate', close);
+    return () => {
+      desktop.removeEventListener('change', resized);
+      window.removeEventListener('popstate', close);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = previous; };
+  }, [mobileOpen]);
+
+  const closeMenu = () => dialog.current?.close();
+  const navigation = (
+    <nav aria-label="Menu principal" className="portal-nav-list">
+      {items.map((item) => (
+        <Link key={item.href} href={item.href} className="portal-nav-link" onClick={closeMenu}
+          aria-label={item.label} title={item.label} aria-current={(item.href === '/' ? pathname === '/' : pathname === item.href || pathname.startsWith(`${item.href}/`)) ? 'page' : undefined}>
+          <Icon name={item.icon} /><span className="portal-nav-label">{item.label}</span>
+        </Link>
+      ))}
+    </nav>
+  );
+  const profile = (
+    <div className="portal-account">
+      {account}
+      <form action={logout}><button type="submit" className="portal-signout" aria-label="Sair"><Icon name="logout" /><span className="portal-nav-label">Sair</span></button></form>
+    </div>
+  );
+
+  return <>
+    <a className="portal-skip" href="#portal-content">Ir para o conteúdo</a>
+    <header className="portal-topbar">
+      {brand}
+      <button type="button" className="portal-toggle" aria-label={expanded ? 'Recolher menu' : 'Expandir menu'} aria-expanded={expanded} aria-controls="portal-sidebar" onClick={() => setExpanded(!expanded)}><Icon name="menu" /></button>
+      <button type="button" className="portal-mobile-toggle" ref={trigger} aria-label="Abrir menu" aria-expanded={mobileOpen} aria-controls="portal-mobile-menu" onClick={() => { dialog.current?.showModal(); setMobileOpen(true); }}><Icon name="menu" /></button>
+    </header>
+    <aside id="portal-sidebar" className="portal-sidebar" data-expanded={expanded} aria-label="Navegação lateral">{navigation}{profile}</aside>
+    <dialog id="portal-mobile-menu" ref={dialog} className="portal-mobile-menu" aria-label="Menu principal" onClose={() => { setMobileOpen(false); trigger.current?.focus(); }} onClick={(event) => { if (event.target === event.currentTarget) closeMenu(); }}>
+      <div className="portal-mobile-inner">
+        <div className="portal-mobile-heading"><span>Menu principal</span><button type="button" className="portal-close" aria-label="Fechar menu" onClick={closeMenu}><Icon name="close" /></button></div>
+        {navigation}{profile}
+      </div>
+    </dialog>
+  </>;
+}
