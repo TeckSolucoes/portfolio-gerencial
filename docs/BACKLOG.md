@@ -303,7 +303,7 @@ Orientações completas: `docs/backlog/COMO-USAR.md`. Contexto do projeto: `docs
   - impacto médio · esforço baixo · dono: frontend
   - Pronto quando: Saiba Mais tem chamada visível no topo, o controle hambúrguer fica dentro da lateral, a área útil aproveita monitores largos, o fundo é mais leve, o logo mantém animação moderna e o login tem campos alinhados e conteúdo auxiliar enxuto.
   - Notas: Solicitado após validação visual do menu lateral.
-  - Concluído em 2026-09-27: Refino final do PR 18: topo das páginas reduzido, Home e módulos principais ampliados de 1100px para 1500px e área do portal com menor espaçamento vertical. TypeScript, ESLint e build aprovados.
+  - Concluído em 2026-09-27: Revisão visual consolidada: cabeçalho reduzido para 64px, lateral para 60px recolhida e 220px aberta, ícones para 18px e itens para 40px. Conteúdo passou a ocupar a largura disponível, alinhado à esquerda e com abertura compacta e consistente. Administração foi removida do menu por ser apenas redirecionamento; Usuários, Metas e Workers permanecem diretos. Saiba Mais agora usa somente ícone de livro com rótulo acessível. TypeScript, ESLint e 118 testes aprovados.
 
 ## Riscos
 
