@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { requireSuperadminForAction } from '@/lib/authz';
 import { EMPRESAS, type Empresa } from '@/lib/empresas';
 import { mesValido, parseValorBR } from '@/lib/dinheiro';
+import { registrarAuditoria } from '@/lib/auditoria';
 
 export type MetasFormState = { error?: string; ok?: string } | undefined;
 
@@ -29,6 +30,7 @@ export async function salvarMetas(_prev: MetasFormState, formData: FormData): Pr
   if (limpar) {
     if (!(EMPRESAS as readonly string[]).includes(limpar)) return { error: 'Empresa inválida.' };
     await prisma.metaMensal.deleteMany({ where: { empresa: limpar, mes } });
+    await registrarAuditoria(session.user, { acao: 'Meta removida', rota: '/admin/metas', detalhes: `${limpar} · ${mes}` });
     revalidar();
     return { ok: `Meta de ${limpar} removida.` };
   }
@@ -53,6 +55,11 @@ export async function salvarMetas(_prev: MetasFormState, formData: FormData): Pr
       }),
     ),
   );
+  await registrarAuditoria(session.user, {
+    acao: 'Metas atualizadas',
+    rota: '/admin/metas',
+    detalhes: `${mes} · ${novas.map(({ empresa }) => empresa).join(', ')}`,
+  });
   revalidar();
   return { ok: 'Metas salvas.' };
 }

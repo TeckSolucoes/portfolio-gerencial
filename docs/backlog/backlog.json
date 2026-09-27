@@ -278,7 +278,7 @@
       "tema": "Segurança",
       "impacto": "alto",
       "esforco": "M",
-      "status": "pendente",
+      "status": "concluido",
       "dependeDe": [],
       "donoSugerido": "IA",
       "criterioPronto": "Tabela de auditoria; eventos gravados em planilha, upload de base, mudança de usuário/meta; tela de consulta para superadmin.",
@@ -286,7 +286,20 @@
         "RSK-1",
         "RSK-7"
       ],
-      "notas": ""
+      "notas": "",
+      "historico": [
+        {
+          "data": "2026-09-27",
+          "acao": "em-andamento",
+          "nota": ""
+        },
+        {
+          "data": "2026-09-27",
+          "acao": "concluido",
+          "nota": "Tabela aditiva de auditoria criada; acessos, login, logout, exportação nominal, upload de base e alterações de usuários, metas e workers são registrados. A lista de usuários mostra a última latitude/longitude autorizada e o ícone de histórico abre consulta paginada exclusiva do superadmin. TypeScript, ESLint, 117 testes da aplicação, 5 testes do backlog, comparação migrações/schema, runner SQLite e build de produção aprovados."
+        }
+      ],
+      "concluidoEm": "2026-09-27"
     },
     {
       "id": "INF-9",
@@ -772,18 +785,18 @@
     {
       "id": "PRD-14",
       "ordem": 46,
-      "titulo": "Menu lateral compacto com navegação móvel e logotipo preservado",
+      "titulo": "Menu lateral compacto e páginas Saiba Mais e Custos",
       "tema": "Produto",
       "impacto": "médio",
       "esforco": "P",
       "status": "concluido",
       "dependeDe": [],
       "donoSugerido": "IA",
-      "criterioPronto": "Menu lateral compacto no desktop, expansão com rótulos, menu acessível no celular a 375px, marca Teck original preservada e visibilidade por perfil mantida; validações e PR concluídos.",
+      "criterioPronto": "Menu lateral compacto no desktop, navegação móvel a 375px, marca Teck preservada, links administrativos à esquerda e páginas Saiba Mais/Custos publicadas com os valores informados; validações e PR concluídos.",
       "riscos": [
         "RSK-7"
       ],
-      "notas": "Solicitado e aprovado pelo usuário em 27/09/2026: opção 2 da prévia, com prioridade ao acesso pelo celular.",
+      "notas": "Solicitado e aprovado pelo usuário em 27/09/2026: opção 2 da prévia, com prioridade ao acesso pelo celular. Refinado para manter todos os links, inclusive Usuários, Metas, Workers e Início, no lado esquerdo.",
       "historico": [
         {
           "data": "2026-09-27",
@@ -804,6 +817,21 @@
           "data": "2026-09-27",
           "acao": "concluido",
           "nota": "Menu lateral compacto no desktop e dialog acessível no celular, mantendo BrandMark e estilos da marca intactos. TypeScript, ESLint, 117 testes da aplicação, 5 testes do backlog e build aprovados. Conferência local em 375px: abrir/fechar, Escape, foco restaurado, navegação e logout. Menus conferidos como superadmin, gerente e visualizador sem empresa. Publicação pelo PR desta branch."
+        },
+        {
+          "data": "2026-09-27",
+          "acao": "pendente",
+          "nota": ""
+        },
+        {
+          "data": "2026-09-27",
+          "acao": "em-andamento",
+          "nota": ""
+        },
+        {
+          "data": "2026-09-27",
+          "acao": "concluido",
+          "nota": "Menu fixado à esquerda com gatilho antes da marca, rolagem para não esconder itens e links Usuários, Metas e Workers incorporados à navegação lateral. Páginas Saiba Mais e Custos adicionadas com Claude R$ 130, Codex R$ 130, W-API R$ 60 e total R$ 320. TypeScript, ESLint, testes e build aprovados."
         }
       ],
       "concluidoEm": "2026-09-27"

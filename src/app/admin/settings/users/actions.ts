@@ -6,6 +6,7 @@ import { prisma } from '@/lib/prisma';
 import { requireSuperadminForAction } from '@/lib/authz';
 import { EMPRESAS, gravarEmpresas } from '@/lib/empresas';
 import type { Role } from '@/generated/prisma/enums';
+import { registrarAuditoria } from '@/lib/auditoria';
 
 const ROLES: readonly Role[] = ['visualizador', 'gerente', 'superadmin'];
 
@@ -42,8 +43,9 @@ async function ehUltimoSuperadmin(id: string): Promise<boolean> {
 export type UserFormState = { error?: string } | undefined;
 
 export async function createUser(_prevState: UserFormState, formData: FormData): Promise<UserFormState> {
+  let session;
   try {
-    await requireSuperadminForAction();
+    session = await requireSuperadminForAction();
   } catch (error) {
     return { error: error instanceof Error ? error.message : 'Sem permissão.' };
   }
@@ -67,7 +69,7 @@ export async function createUser(_prevState: UserFormState, formData: FormData):
     return { error: 'Já existe um usuário com esse e-mail.' };
   }
 
-  await prisma.user.create({
+  const criado = await prisma.user.create({
     data: {
       email,
       passwordHash: bcrypt.hashSync(password, BCRYPT_COST),
@@ -75,6 +77,11 @@ export async function createUser(_prevState: UserFormState, formData: FormData):
       displayTitle: displayTitle || null,
       ...acesso,
     },
+  });
+  await registrarAuditoria(session.user, {
+    acao: 'Usuário criado',
+    rota: '/admin/settings/users',
+    detalhes: `${criado.email} · perfil ${criado.role}`,
   });
 
   revalidatePath('/admin/settings/users');
@@ -86,8 +93,9 @@ export async function updateUser(
   _prevState: UserFormState,
   formData: FormData,
 ): Promise<UserFormState> {
+  let session;
   try {
-    await requireSuperadminForAction();
+    session = await requireSuperadminForAction();
   } catch (error) {
     return { error: error instanceof Error ? error.message : 'Sem permissão.' };
   }
@@ -109,7 +117,7 @@ export async function updateUser(
     return { error: 'Este é o único superadmin: promova outro usuário antes de rebaixar este.' };
   }
 
-  await prisma.user.update({
+  const atualizado = await prisma.user.update({
     where: { id },
     data: {
       displayName,
@@ -117,6 +125,11 @@ export async function updateUser(
       ...acesso,
       ...(newPassword ? { passwordHash: bcrypt.hashSync(newPassword, BCRYPT_COST) } : {}),
     },
+  });
+  await registrarAuditoria(session.user, {
+    acao: newPassword ? 'Usuário e senha atualizados' : 'Usuário atualizado',
+    rota: '/admin/settings/users',
+    detalhes: `${atualizado.email} · perfil ${atualizado.role}`,
   });
 
   revalidatePath('/admin/settings/users');
@@ -133,6 +146,11 @@ export async function deleteUser(id: string): Promise<void> {
     throw new Error('Não é possível remover o único superadmin.');
   }
 
-  await prisma.user.delete({ where: { id } });
+  const removido = await prisma.user.delete({ where: { id } });
+  await registrarAuditoria(session.user, {
+    acao: 'Usuário excluído',
+    rota: '/admin/settings/users',
+    detalhes: `${removido.email} · perfil ${removido.role}`,
+  });
   revalidatePath('/admin/settings/users');
 }

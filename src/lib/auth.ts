@@ -3,6 +3,7 @@ import Credentials from 'next-auth/providers/credentials';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
 import type { Role } from '@/generated/prisma/enums';
+import { registrarAuditoria } from '@/lib/auditoria';
 
 // Rate limit de força bruta por conta (não por IP — app interno, poucos
 // usuários, IP compartilhado de escritório não deve travar todo mundo).
@@ -104,6 +105,20 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       session.user.displayName = token.displayName as string;
       session.user.displayTitle = token.displayTitle as string | null;
       return session;
+    },
+  },
+  events: {
+    async signIn({ user }) {
+      if (!user.id) return;
+      const cadastro = await prisma.user.findUnique({
+        where: { id: user.id },
+        select: { id: true, email: true, displayName: true },
+      });
+      if (cadastro) {
+        await registrarAuditoria(cadastro, { acao: 'Entrada no portal', rota: '/' }).catch((error) => {
+          console.error('Falha ao registrar entrada no log de auditoria.', error);
+        });
+      }
     },
   },
 });

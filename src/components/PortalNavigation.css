@@ -4,16 +4,18 @@
 .app.portal-app{max-width:none;margin:0;padding-top:82px;padding-left:76px;}
 .app.portal-app:has(.portal-sidebar[data-expanded="true"]){padding-left:248px;}
 .portal-app>main{width:100%;max-width:1280px;margin-inline:auto;scroll-margin-top:82px;}
-.portal-topbar{position:fixed;inset:0 0 auto;height:82px;z-index:100;display:flex;align-items:center;justify-content:space-between;flex-wrap:nowrap;padding:16px 24px;gap:12px;background:rgba(14,12,23,.97);border-bottom:1px solid var(--hair);box-shadow:0 5px 24px rgba(0,0,0,.12);}
+.portal-topbar{position:fixed;inset:0 0 auto;height:82px;z-index:100;display:flex;align-items:center;justify-content:flex-start;flex-wrap:nowrap;padding:16px 24px;gap:12px;background:rgba(14,12,23,.97);border-bottom:1px solid var(--hair);box-shadow:0 5px 24px rgba(0,0,0,.12);}
 .portal-toggle,.portal-mobile-toggle,.portal-close{display:inline-flex;align-items:center;justify-content:center;flex:none;width:44px;min-height:44px;padding:10px;border:1px solid var(--hair-strong);border-radius:12px;color:var(--text-dim);background:var(--panel);cursor:pointer;}
 .portal-mobile-toggle{display:none;}
 .portal-icon{width:21px;height:21px;flex:none;stroke-width:1.7;}
-.portal-sidebar{position:fixed;inset:82px auto 0 0;width:76px;z-index:90;display:flex;flex-direction:column;gap:20px;padding:20px 12px 16px;background:var(--bg-2);border-right:1px solid var(--hair);}
-.portal-sidebar[data-expanded="true"]{width:248px;overflow-y:auto;}
+.portal-sidebar{position:fixed;top:82px;right:auto;bottom:0;left:0;width:76px;z-index:90;display:flex;flex-direction:column;align-items:stretch;direction:ltr;gap:20px;padding:20px 12px 16px;background:var(--bg-2);border-right:1px solid var(--hair);overflow-y:auto;scrollbar-width:thin;}
+.portal-sidebar[data-expanded="true"]{width:248px;}
 .portal-nav-list{display:flex;flex-direction:column;gap:8px;list-style:none;margin:0;padding:0;}
 .portal-nav-link,.portal-signout{position:relative;display:flex;align-items:center;gap:13px;width:100%;min-height:48px;padding:12px 14px;border:1px solid transparent;border-radius:12px;background:transparent;color:var(--text-dim);text-align:left;font-size:12px;font-weight:600;line-height:1.5;cursor:pointer;transition:background .15s,color .15s,border-color .15s;}
 .portal-nav-link:hover,.portal-signout:hover,.portal-toggle:hover,.portal-mobile-toggle:hover,.portal-close:hover{color:var(--text);background:var(--panel-2);border-color:var(--hair-strong);}
 .portal-nav-link[aria-current="page"]{color:var(--violet-strong);background:var(--violet-soft);border-color:rgba(155,123,240,.32);box-shadow:inset 3px 0 0 var(--violet);}
+.portal-sidebar[data-expanded="true"] .portal-nav-sub{padding-left:24px;font-size:11.5px;}
+.portal-nav-sub .portal-icon{width:19px;height:19px;}
 .portal-nav-link:focus-visible,.portal-signout:focus-visible,.portal-toggle:focus-visible,.portal-mobile-toggle:focus-visible,.portal-close:focus-visible{outline:2px solid var(--violet-strong);outline-offset:3px;}
 .portal-nav-label{min-width:0;}
 .portal-nav-group{margin:10px 12px 12px;color:var(--text-dim);font:10px var(--mono);letter-spacing:1.4px;text-transform:uppercase;}
@@ -26,7 +28,7 @@
 .portal-account .user-name{min-width:0;gap:5px;overflow-wrap:anywhere;}
 .portal-account .user-name span{color:var(--text-dim);}
 .portal-sidebar:not([data-expanded="true"]) .user-name{display:none;}
-.portal-mobile-menu{position:fixed;inset:0 auto 0 0;margin:0;width:min(320px,calc(100% - 24px));max-width:none;max-height:100dvh;min-height:100dvh;padding:20px;color:var(--text);background:var(--bg-2);border:0;border-right:1px solid var(--hair);overflow-y:auto;overscroll-behavior:contain;box-shadow:16px 0 70px rgba(0,0,0,.35);}
+.portal-mobile-menu{position:fixed;top:0;right:auto;bottom:0;left:0;margin:0;width:min(320px,calc(100% - 24px));max-width:none;max-height:100dvh;min-height:100dvh;padding:20px;color:var(--text);background:var(--bg-2);border:0;border-right:1px solid var(--hair);overflow-y:auto;overscroll-behavior:contain;box-shadow:16px 0 70px rgba(0,0,0,.35);}
 .portal-mobile-menu[open]{display:flex;flex-direction:column;gap:24px;}
 .portal-mobile-menu::backdrop{background:rgba(3,3,9,.76);backdrop-filter:blur(4px);}
 .portal-mobile-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:var(--display);font-size:15px;}
