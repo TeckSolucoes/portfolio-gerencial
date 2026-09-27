@@ -933,6 +933,16 @@
           "data": "2026-09-27",
           "acao": "concluido",
           "nota": "Refino final do PR 18: topo das páginas reduzido, Home e módulos principais ampliados de 1100px para 1500px e área do portal com menor espaçamento vertical. TypeScript, ESLint e build aprovados."
+        },
+        {
+          "data": "2026-09-27",
+          "acao": "pendente",
+          "nota": ""
+        },
+        {
+          "data": "2026-09-27",
+          "acao": "concluido",
+          "nota": "Revisão visual consolidada: cabeçalho reduzido para 64px, lateral para 60px recolhida e 220px aberta, ícones para 18px e itens para 40px. Conteúdo passou a ocupar a largura disponível, alinhado à esquerda e com abertura compacta e consistente. Administração foi removida do menu por ser apenas redirecionamento; Usuários, Metas e Workers permanecem diretos. Saiba Mais agora usa somente ícone de livro com rótulo acessível. TypeScript, ESLint e 118 testes aprovados."
         }
       ],
       "concluidoEm": "2026-09-27"

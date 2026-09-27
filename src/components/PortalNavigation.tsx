@@ -20,7 +20,7 @@ function Icon({ name }: { name: NavigationItem['icon'] | 'menu' | 'close' | 'log
     radar: <><circle cx="12" cy="12" r="9" /><path d="M16 8a6 6 0 1 0 2 5M12 12l7-7" /><circle cx="12" cy="12" r="1" /></>,
     news: <><rect x="4" y="3" width="16" height="18" rx="2" /><path d="M8 7h8M8 11h8M8 15h3m3 0h2M8 18h3m3 0h2" /></>,
     people: <><circle cx="9" cy="8" r="3" /><path d="M3 21v-3a6 6 0 0 1 12 0v3m2-16a3 3 0 0 1 0 6m2 10v-3a6 6 0 0 0-2-4" /></>,
-    info: <><circle cx="12" cy="12" r="9" /><path d="M12 11v5m0-9h.01" /></>,
+    info: <><path d="M12 7v14" /><path d="M3 18a1 1 0 0 1-1-1V5a2 2 0 0 1 2-2h5a3 3 0 0 1 3 3v15a3 3 0 0 0-3-3Z" /><path d="M21 18a1 1 0 0 0 1-1V5a2 2 0 0 0-2-2h-5a3 3 0 0 0-3 3v15a3 3 0 0 1 3-3Z" /></>,
     costs: <><rect x="3" y="5" width="18" height="14" rx="2" /><path d="M3 10h18m-5 5h2" /></>,
     settings: <><path d="M4 6h16M4 12h16M4 18h16" /><circle cx="8" cy="6" r="2" /><circle cx="16" cy="12" r="2" /><circle cx="10" cy="18" r="2" /></>,
     users: <><circle cx="9" cy="8" r="3" /><path d="M3 20a6 6 0 0 1 12 0m2-14a3 3 0 0 1 0 6m1 3a5 5 0 0 1 3 5" /></>,
@@ -90,7 +90,7 @@ export function PortalNavigation({ brand, account, items, logout }: {
     <header className="portal-topbar">
       <button type="button" className="portal-mobile-toggle" ref={trigger} aria-label="Abrir menu" aria-expanded={mobileOpen} aria-controls="portal-mobile-menu" onClick={() => { dialog.current?.showModal(); setMobileOpen(true); }}><Icon name="menu" /></button>
       {brand}
-      <Link href="/saiba-mais" className="portal-info-link" aria-label="Saiba Mais" title="Conheça as funcionalidades do portal" aria-current={pathname === '/saiba-mais' ? 'page' : undefined}><Icon name="info" /><span>Saiba Mais</span></Link>
+      <Link href="/saiba-mais" className="portal-info-link" aria-label="Saiba Mais" title="Saiba Mais" aria-current={pathname === '/saiba-mais' ? 'page' : undefined}><Icon name="info" /></Link>
     </header>
     <aside id="portal-sidebar" className="portal-sidebar" data-expanded={expanded} aria-label="Navegação lateral">
       <button type="button" className="portal-toggle portal-sidebar-toggle" aria-label={expanded ? 'Recolher menu' : 'Expandir menu'} aria-expanded={expanded} aria-controls="portal-sidebar" onClick={() => setExpanded(!expanded)}><Icon name="menu" /><span className="portal-nav-label">{expanded ? 'Recolher menu' : 'Expandir menu'}</span></button>
