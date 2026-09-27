@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { efetivado } from '@/lib/transparencia/baseClientes';
 import { gravarBase, origemValida } from '@/lib/transparencia/painel';
+import { registrarAuditoria } from '@/lib/auditoria';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,6 +29,11 @@ export async function POST(req: Request) {
 
   try {
     const r = await gravarBase(origem, arquivo.name, decodificar(await arquivo.arrayBuffer()), session.user.email ?? null);
+    await registrarAuditoria(session.user, {
+      acao: 'Base de clientes importada',
+      rota: '/transparencia',
+      detalhes: `${origem} · ${arquivo.name} · ${r.linhas.length} linhas`,
+    });
     return NextResponse.json({
       linhas: r.linhas.length,
       ignoradas: r.ignoradas,

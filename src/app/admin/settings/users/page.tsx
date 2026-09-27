@@ -33,7 +33,16 @@ export default async function UsersPage() {
   const session = await auth();
   if (session?.user.role !== 'superadmin') redirect('/admin');
 
-  const rows = await prisma.user.findMany({ orderBy: { email: 'asc' } });
+  const rows = await prisma.user.findMany({
+    orderBy: { email: 'asc' },
+    include: {
+      auditorias: {
+        where: { latitude: { not: null }, longitude: { not: null } },
+        orderBy: { criadoEm: 'desc' },
+        take: 1,
+      },
+    },
+  });
   const users: UserDTO[] = rows.map((u) => ({
     id: u.id,
     email: u.email,
@@ -42,6 +51,9 @@ export default async function UsersPage() {
     role: u.role,
     empresas: lerEmpresas(u.empresas),
     escopoGerente: u.escopoGerente,
+    ultimaLatitude: u.auditorias[0]?.latitude ?? null,
+    ultimaLongitude: u.auditorias[0]?.longitude ?? null,
+    ultimoAcessoEm: u.auditorias[0]?.criadoEm.toISOString() ?? null,
   }));
 
   return (

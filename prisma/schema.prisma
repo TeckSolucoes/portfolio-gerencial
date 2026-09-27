@@ -201,7 +201,30 @@ model User {
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
+  auditorias AuditoriaUsuario[]
+
   @@map("users")
+}
+
+// Trilha de uso do portal. A relação fica nula se o cadastro for removido,
+// preservando o histórico pelo e-mail e nome gravados no momento do evento.
+model AuditoriaUsuario {
+  id        String   @id @default(uuid())
+  userId    String?  @map("user_id")
+  userEmail String   @map("user_email")
+  userName  String   @map("user_name")
+  acao      String
+  rota      String?
+  detalhes  String?
+  latitude  Float?
+  longitude Float?
+  criadoEm  DateTime @default(now()) @map("criado_em")
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId, criadoEm])
+  @@index([userEmail, criadoEm])
+  @@map("auditoria_usuarios")
 }
 
 // Meta mensal por empresa, informada pelo ADM. Sem registro, o relatório mostra a meta de MODELO.

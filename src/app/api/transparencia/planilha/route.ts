@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { linhasDoMes } from '@/lib/transparencia/painel';
 import { gerarPlanilha } from '@/lib/transparencia/planilha';
+import { registrarAuditoria } from '@/lib/auditoria';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,6 +15,11 @@ export async function GET(req: Request) {
   const mes = new URL(req.url).searchParams.get('mes') ?? '';
   if (!/^\d{4}-\d{2}$/.test(mes)) return NextResponse.json({ erro: 'Mês inválido (use AAAA-MM).' }, { status: 400 });
   const linhas = await linhasDoMes(mes);
+  await registrarAuditoria(session.user, {
+    acao: 'Planilha nominal exportada',
+    rota: '/transparencia',
+    detalhes: `${mes} · ${linhas.length} linhas`,
+  });
   return new NextResponse(gerarPlanilha(linhas), {
     headers: {
       'Content-Type': 'text/csv; charset=utf-8',

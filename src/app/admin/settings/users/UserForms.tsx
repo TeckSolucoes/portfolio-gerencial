@@ -16,6 +16,9 @@ export type UserDTO = {
   role: Perfil;
   empresas: Empresa[];
   escopoGerente: string | null;
+  ultimaLatitude: number | null;
+  ultimaLongitude: number | null;
+  ultimoAcessoEm: string | null;
 };
 
 export const PERFIS: { value: Perfil; label: string; descricao: string }[] = [

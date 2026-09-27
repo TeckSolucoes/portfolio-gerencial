@@ -110,7 +110,7 @@ Orientações completas: `docs/backlog/COMO-USAR.md`. Contexto do projeto: `docs
 
 ## Resumo
 
-- Pendentes: 36 · Em andamento: 1 · Bloqueados: 8 · Concluídos: 1
+- Pendentes: 35 · Em andamento: 1 · Bloqueados: 8 · Concluídos: 2
 - Próximo item liberado: **INF-2** Snapshot manual do VPS/volume antes de qualquer limpeza
 
 ## Itens em aberto (do mais importante para o menos importante)
@@ -202,11 +202,6 @@ Orientações completas: `docs/backlog/COMO-USAR.md`. Contexto do projeto: `docs
   - Riscos: RSK-1, RSK-2
   - Notas: Bloqueado pelo aval jurídico. Opt-out é o item mais importante de LGPD.
   - Bloqueado: depende de outros itens
-
-- [ ] **INF-8** Log de auditoria (acesso a lista nominal, exportações, mudanças de meta e permissão)
-  - impacto alto · esforço M · dono: IA
-  - Pronto quando: Tabela de auditoria; eventos gravados em planilha, upload de base, mudança de usuário/meta; tela de consulta para superadmin.
-  - Riscos: RSK-1, RSK-7
 
 - [ ] **INF-9** Autenticação em dois fatores para o ADM
   - impacto médio · esforço M · dono: IA
@@ -377,12 +372,18 @@ Orientações completas: `docs/backlog/COMO-USAR.md`. Contexto do projeto: `docs
 
 ## Concluídos
 
-- [x] **PRD-14** Menu lateral compacto com navegação móvel e logotipo preservado
+- [x] **INF-8** Log de auditoria (acesso a lista nominal, exportações, mudanças de meta e permissão)
+  - impacto alto · esforço M · dono: IA
+  - Pronto quando: Tabela de auditoria; eventos gravados em planilha, upload de base, mudança de usuário/meta; tela de consulta para superadmin.
+  - Riscos: RSK-1, RSK-7
+  - Concluído em 2026-09-27: Tabela aditiva de auditoria criada; acessos, login, logout, exportação nominal, upload de base e alterações de usuários, metas e workers são registrados. A lista de usuários mostra a última latitude/longitude autorizada e o ícone de histórico abre consulta paginada exclusiva do superadmin. TypeScript, ESLint, 117 testes da aplicação, 5 testes do backlog, comparação migrações/schema, runner SQLite e build de produção aprovados.
+
+- [x] **PRD-14** Menu lateral compacto e páginas Saiba Mais e Custos
   - impacto médio · esforço P · dono: IA
-  - Pronto quando: Menu lateral compacto no desktop, expansão com rótulos, menu acessível no celular a 375px, marca Teck original preservada e visibilidade por perfil mantida; validações e PR concluídos.
+  - Pronto quando: Menu lateral compacto no desktop, navegação móvel a 375px, marca Teck preservada, links administrativos à esquerda e páginas Saiba Mais/Custos publicadas com os valores informados; validações e PR concluídos.
   - Riscos: RSK-7
-  - Notas: Solicitado e aprovado pelo usuário em 27/09/2026: opção 2 da prévia, com prioridade ao acesso pelo celular.
-  - Concluído em 2026-09-27: Menu lateral compacto no desktop e dialog acessível no celular, mantendo BrandMark e estilos da marca intactos. TypeScript, ESLint, 117 testes da aplicação, 5 testes do backlog e build aprovados. Conferência local em 375px: abrir/fechar, Escape, foco restaurado, navegação e logout. Menus conferidos como superadmin, gerente e visualizador sem empresa. Publicação pelo PR desta branch.
+  - Notas: Solicitado e aprovado pelo usuário em 27/09/2026: opção 2 da prévia, com prioridade ao acesso pelo celular. Refinado para manter todos os links, inclusive Usuários, Metas, Workers e Início, no lado esquerdo.
+  - Concluído em 2026-09-27: Menu fixado à esquerda com gatilho antes da marca, rolagem para não esconder itens e links Usuários, Metas e Workers incorporados à navegação lateral. Páginas Saiba Mais e Custos adicionadas com Claude R$ 130, Codex R$ 130, W-API R$ 60 e total R$ 320. TypeScript, ESLint, testes e build aprovados.
 
 ## Riscos
 

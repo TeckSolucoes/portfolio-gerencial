@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import Link from 'next/link';
 import { deleteUser } from './actions';
 import { EMPRESAS } from '@/lib/empresas';
 import type { Perfil } from '@/lib/permissoes';
@@ -313,6 +314,7 @@ export function UsersManager({ users, currentUserId }: { users: UserDTO[]; curre
                 </th>
                 <th scope="col">Empresas</th>
                 <th scope="col">Escopo</th>
+                <th scope="col">Última localização</th>
                 <th scope="col" className="adm-col-actions">
                   <span className="adm-sr">Ações</span>
                 </th>
@@ -358,7 +360,25 @@ export function UsersManager({ users, currentUserId }: { users: UserDTO[]; curre
                   <td data-label="Escopo" className="adm-scope">
                     {u.role !== 'superadmin' && u.escopoGerente ? `Turma de ${u.escopoGerente}` : '—'}
                   </td>
+                  <td data-label="Última localização" className="adm-location">
+                    {u.ultimaLatitude !== null && u.ultimaLongitude !== null ? (
+                      <>
+                        <span>{u.ultimaLatitude.toFixed(6)}, {u.ultimaLongitude.toFixed(6)}</span>
+                        {u.ultimoAcessoEm && <small>{new Date(u.ultimoAcessoEm).toLocaleString('pt-BR')}</small>}
+                      </>
+                    ) : 'Não informada'}
+                  </td>
                   <td className="adm-col-actions">
+                    <Link
+                      href={`/admin/settings/users/${u.id}/historico`}
+                      className="adm-icon-btn"
+                      aria-label={`Ver histórico de ${u.displayName}`}
+                      title="Histórico completo"
+                    >
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="M3 12a9 9 0 1 0 3-6.7L3 8" /><path d="M3 3v5h5M12 7v5l3 2" />
+                      </svg>
+                    </Link>
                     <RowMenu
                       user={u}
                       motivoNaoExcluir={motivoNaoExcluir(u)}

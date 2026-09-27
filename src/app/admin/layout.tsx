@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { Header } from '@/components/Header';
-import { AdminNav } from '@/components/AdminNav';
+import { AuditTracker } from '@/components/AuditTracker';
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
@@ -16,7 +16,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     <div className="app portal-app">
       <Header sidebar />
       <main id="portal-content" tabIndex={-1}>
-        <AdminNav role={session.user.role} />
+        <AuditTracker />
         {children}
       </main>
     </div>
