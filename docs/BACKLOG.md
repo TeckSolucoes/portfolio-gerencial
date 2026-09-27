@@ -303,7 +303,7 @@ Orientações completas: `docs/backlog/COMO-USAR.md`. Contexto do projeto: `docs
   - impacto médio · esforço baixo · dono: frontend
   - Pronto quando: Saiba Mais tem chamada visível no topo, o controle hambúrguer fica dentro da lateral, a área útil aproveita monitores largos, o fundo é mais leve, o logo mantém animação moderna e o login tem campos alinhados e conteúdo auxiliar enxuto.
   - Notas: Solicitado após validação visual do menu lateral.
-  - Concluído em 2026-09-27: Área útil ampliada para 1680px, Saiba Mais destacado com texto, hambúrguer movido para a lateral e fundo simplificado. Login com e-mail e senha iguais, sem Manter conectado nem nota de acesso, recuperação menor; logo preservado com animação refinada e Starfield reduzido para aliviar renderização. TypeScript, ESLint, 118 testes da aplicação, 5 do backlog e build aprovados.
+  - Concluído em 2026-09-27: Refino final do PR 18: topo das páginas reduzido, Home e módulos principais ampliados de 1100px para 1500px e área do portal com menor espaçamento vertical. TypeScript, ESLint e build aprovados.
 
 ## Riscos
 

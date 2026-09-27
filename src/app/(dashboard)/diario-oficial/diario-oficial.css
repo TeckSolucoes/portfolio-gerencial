@@ -1,7 +1,7 @@
 .diario{--page:#0B1424;--card:#112036;--inner:#0D1A2C;--line:#1a2d45;--text:#F0F8FF;--muted:#8CA2BA;
   --blue:#38BDF8;--green:#2DD4A3;--orange:#FBB034;--red:#F87171;--ink:#0B1424;
   background:var(--page);color:var(--text);border-radius:16px;padding:clamp(16px,3vw,28px);line-height:1.4;
-  font-variant-numeric:tabular-nums;max-width:1100px;margin:0 auto;overflow-x:clip}
+  font-variant-numeric:tabular-nums;max-width:1500px;margin:0 auto;overflow-x:clip}
 .diario *{box-sizing:border-box}
 .diario :is(h1,h2,h3,p,ul,ol){margin:0;padding:0}
 .diario :is(ul,ol){list-style:none}
