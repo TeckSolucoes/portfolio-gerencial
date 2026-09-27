@@ -81,11 +81,7 @@ export function LoginForm() {
           required
         />
       </div>
-      <div className="form-row">
-        <label className="check">
-          <input type="checkbox" name="remember" />
-          Manter conectado
-        </label>
+      <div className="login-help">
         <a href="#" className="link-muted" onClick={handleForgotClick}>
           Esqueci minha senha
         </a>
@@ -101,7 +97,6 @@ export function LoginForm() {
         <span className="btn-label">{loading ? 'Entrando…' : 'Entrar no portfólio'}</span>
         <span className="btn-arrow">→</span>
       </button>
-      <p className="form-note">Acesso restrito a colaboradores autorizados da Teck Soluções.</p>
     </form>
   );
 }

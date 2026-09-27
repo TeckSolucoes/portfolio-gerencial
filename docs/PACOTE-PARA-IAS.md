@@ -110,7 +110,7 @@ Orientações completas: `docs/backlog/COMO-USAR.md`. Contexto do projeto: `docs
 
 ## Resumo
 
-- Pendentes: 34 · Em andamento: 1 · Bloqueados: 8 · Concluídos: 5
+- Pendentes: 34 · Em andamento: 1 · Bloqueados: 8 · Concluídos: 6
 - Próximo item liberado: **INF-2** Snapshot manual do VPS/volume antes de qualquer limpeza
 
 ## Itens em aberto (do mais importante para o menos importante)
@@ -396,6 +396,12 @@ Orientações completas: `docs/backlog/COMO-USAR.md`. Contexto do projeto: `docs
   - impacto médio · esforço baixo · dono: frontend
   - Pronto quando: Saiba Mais aparece como ícone de informação no topo, a barra visual da lateral não aparece e Workers usa grade responsiva de dois ou três cards.
   - Concluído em 2026-09-27: Saiba Mais virou ícone de informação no topo, a barra visual de rolagem da lateral foi ocultada sem impedir rolagem e Workers passou a grade responsiva com dois cards. TypeScript, ESLint, testes e build aprovados.
+
+- [x] **UX-6** Ampliar e aliviar a interface do portal e login
+  - impacto médio · esforço baixo · dono: frontend
+  - Pronto quando: Saiba Mais tem chamada visível no topo, o controle hambúrguer fica dentro da lateral, a área útil aproveita monitores largos, o fundo é mais leve, o logo mantém animação moderna e o login tem campos alinhados e conteúdo auxiliar enxuto.
+  - Notas: Solicitado após validação visual do menu lateral.
+  - Concluído em 2026-09-27: Área útil ampliada para 1680px, Saiba Mais destacado com texto, hambúrguer movido para a lateral e fundo simplificado. Login com e-mail e senha iguais, sem Manter conectado nem nota de acesso, recuperação menor; logo preservado com animação refinada e Starfield reduzido para aliviar renderização. TypeScript, ESLint, 118 testes da aplicação, 5 do backlog e build aprovados.
 
 ## Riscos
 

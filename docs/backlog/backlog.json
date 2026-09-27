@@ -900,6 +900,32 @@
         }
       ],
       "concluidoEm": "2026-09-27"
+    },
+    {
+      "id": "UX-6",
+      "titulo": "Ampliar e aliviar a interface do portal e login",
+      "ordem": 49,
+      "impacto": "médio",
+      "esforco": "baixo",
+      "donoSugerido": "frontend",
+      "dependeDe": [],
+      "riscos": [],
+      "criterioPronto": "Saiba Mais tem chamada visível no topo, o controle hambúrguer fica dentro da lateral, a área útil aproveita monitores largos, o fundo é mais leve, o logo mantém animação moderna e o login tem campos alinhados e conteúdo auxiliar enxuto.",
+      "notas": "Solicitado após validação visual do menu lateral.",
+      "status": "concluido",
+      "historico": [
+        {
+          "data": "2026-09-27",
+          "acao": "em-andamento",
+          "nota": ""
+        },
+        {
+          "data": "2026-09-27",
+          "acao": "concluido",
+          "nota": "Área útil ampliada para 1680px, Saiba Mais destacado com texto, hambúrguer movido para a lateral e fundo simplificado. Login com e-mail e senha iguais, sem Manter conectado nem nota de acesso, recuperação menor; logo preservado com animação refinada e Starfield reduzido para aliviar renderização. TypeScript, ESLint, 118 testes da aplicação, 5 do backlog e build aprovados."
+        }
+      ],
+      "concluidoEm": "2026-09-27"
     }
   ],
   "riscos": [
