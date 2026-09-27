@@ -24,10 +24,6 @@ export default auth((req) => {
     return NextResponse.redirect(new URL('/login', req.nextUrl));
   }
 
-  if (pathname.startsWith('/admin') && req.auth.user.role === 'visualizador') {
-    return NextResponse.redirect(new URL('/', req.nextUrl));
-  }
-
   return NextResponse.next();
 });
 

@@ -1,5 +1,6 @@
 import { EMPRESAS, lerEmpresas } from './empresas';
 import type { Empresa } from './empresas';
+import { CHAVES_FUNCIONALIDADES, type Funcionalidade } from './funcionalidades';
 
 export type Perfil = 'superadmin' | 'gerente' | 'visualizador';
 
@@ -9,6 +10,18 @@ export interface Acesso {
   nome: string;
   empresas: Empresa[]; // já resolvido: superadmin recebe todas
   escopoGerente: string | null; // primeiro nome do gerente; limita o usuário à turma dele
+  funcionalidades: Record<Funcionalidade, boolean>;
+}
+
+export type RegraFuncionalidade = { funcionalidade: string; permitido: boolean };
+
+export function resolverFuncionalidades(
+  perfil: readonly RegraFuncionalidade[],
+  usuario: readonly RegraFuncionalidade[],
+): Record<Funcionalidade, boolean> {
+  const porPerfil = new Map(perfil.map((r) => [r.funcionalidade, r.permitido]));
+  const porUsuario = new Map(usuario.map((r) => [r.funcionalidade, r.permitido]));
+  return Object.fromEntries(CHAVES_FUNCIONALIDADES.map((chave) => [chave, porUsuario.get(chave) ?? porPerfil.get(chave) ?? false])) as Record<Funcionalidade, boolean>;
 }
 
 export function montarAcesso(u: {
@@ -17,6 +30,8 @@ export function montarAcesso(u: {
   displayName: string;
   empresas: string;
   escopoGerente: string | null;
+  permissoesPerfil?: RegraFuncionalidade[];
+  permissoesUsuario?: RegraFuncionalidade[];
 }): Acesso {
   return {
     userId: u.id,
@@ -24,8 +39,11 @@ export function montarAcesso(u: {
     nome: u.displayName,
     empresas: u.role === 'superadmin' ? [...EMPRESAS] : lerEmpresas(u.empresas),
     escopoGerente: u.escopoGerente?.trim() ? u.escopoGerente.trim() : null,
+    funcionalidades: resolverFuncionalidades(u.permissoesPerfil ?? [], u.permissoesUsuario ?? []),
   };
 }
+
+export const podeAcessar = (acesso: Acesso, funcionalidade: Funcionalidade) => acesso.funcionalidades[funcionalidade];
 
 // Empresa não identificada (null) só é vista pelo superadmin.
 export function podeVerEmpresa(a: Acesso, empresa: Empresa | null): boolean {

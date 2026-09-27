@@ -7,10 +7,23 @@ import { requireSuperadminForAction } from '@/lib/authz';
 import { EMPRESAS, gravarEmpresas } from '@/lib/empresas';
 import type { Role } from '@/generated/prisma/enums';
 import { registrarAuditoria } from '@/lib/auditoria';
+import { CHAVES_FUNCIONALIDADES, ehFuncionalidade } from '@/lib/funcionalidades';
+import type { Funcionalidade } from '@/lib/funcionalidades';
 
 const ROLES: readonly Role[] = ['visualizador', 'gerente', 'superadmin'];
 
 type Acesso = { role: Role; empresas: string; escopoGerente: string | null };
+
+function lerPermissoes(formData: FormData): { funcionalidade: Funcionalidade; permitido: boolean }[] | { error: string } {
+  const resultado: { funcionalidade: Funcionalidade; permitido: boolean }[] = [];
+  for (const chave of CHAVES_FUNCIONALIDADES) {
+    const valor = String(formData.get(`permissao_${chave}`) ?? 'herdar');
+    if (valor === 'herdar') continue;
+    if (!['liberar', 'bloquear'].includes(valor) || !ehFuncionalidade(chave)) return { error: 'Permissão inválida.' };
+    resultado.push({ funcionalidade: chave, permitido: valor === 'liberar' });
+  }
+  return resultado;
+}
 
 function lerAcesso(formData: FormData): Acesso | { error: string } {
   const role = String(formData.get('role') ?? 'visualizador') as Role;
@@ -56,6 +69,8 @@ export async function createUser(_prevState: UserFormState, formData: FormData):
   const displayTitle = String(formData.get('displayTitle') ?? '').trim();
   const acesso = lerAcesso(formData);
   if ('error' in acesso) return acesso;
+  const permissoes = lerPermissoes(formData);
+  if ('error' in permissoes) return permissoes;
 
   if (!email || !password || !displayName) {
     return { error: 'Preencha e-mail, senha e nome de exibição.' };
@@ -76,6 +91,7 @@ export async function createUser(_prevState: UserFormState, formData: FormData):
       displayName,
       displayTitle: displayTitle || null,
       ...acesso,
+      permissoes: { create: permissoes },
     },
   });
   await registrarAuditoria(session.user, {
@@ -104,6 +120,8 @@ export async function updateUser(
   const displayTitle = String(formData.get('displayTitle') ?? '').trim();
   const acesso = lerAcesso(formData);
   if ('error' in acesso) return acesso;
+  const permissoes = lerPermissoes(formData);
+  if ('error' in permissoes) return permissoes;
   const newPassword = String(formData.get('newPassword') ?? '');
 
   if (!displayName) {
@@ -117,14 +135,13 @@ export async function updateUser(
     return { error: 'Este é o único superadmin: promova outro usuário antes de rebaixar este.' };
   }
 
-  const atualizado = await prisma.user.update({
-    where: { id },
-    data: {
-      displayName,
-      displayTitle: displayTitle || null,
-      ...acesso,
+  const atualizado = await prisma.$transaction(async (tx) => {
+    await tx.permissaoUsuario.deleteMany({ where: { userId: id } });
+    return tx.user.update({ where: { id }, data: {
+      displayName, displayTitle: displayTitle || null, ...acesso,
       ...(newPassword ? { passwordHash: bcrypt.hashSync(newPassword, BCRYPT_COST) } : {}),
-    },
+      permissoes: { create: permissoes },
+    } });
   });
   await registrarAuditoria(session.user, {
     acao: newPassword ? 'Usuário e senha atualizados' : 'Usuário atualizado',
@@ -134,6 +151,20 @@ export async function updateUser(
 
   revalidatePath('/admin/settings/users');
   return undefined;
+}
+
+export async function salvarPermissoesPerfil(formData: FormData) {
+  const session = await requireSuperadminForAction();
+  const role = String(formData.get('role') ?? '') as Role;
+  if (!ROLES.includes(role)) throw new Error('Perfil inválido.');
+  const regras = CHAVES_FUNCIONALIDADES.map((funcionalidade) => ({
+    role, funcionalidade, permitido: formData.getAll('funcionalidades').some((v) => v === funcionalidade),
+  }));
+  await prisma.$transaction(regras.map((regra) => prisma.permissaoPerfil.upsert({
+    where: { role_funcionalidade: { role, funcionalidade: regra.funcionalidade } }, create: regra, update: { permitido: regra.permitido },
+  })));
+  await registrarAuditoria(session.user, { acao: 'Permissões do perfil atualizadas', rota: '/admin/settings/users', detalhes: role });
+  revalidatePath('/', 'layout');
 }
 
 export async function deleteUser(id: string): Promise<void> {

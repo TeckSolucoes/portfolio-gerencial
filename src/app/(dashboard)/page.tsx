@@ -4,6 +4,8 @@ import { auth } from '@/lib/auth';
 import { dataExtenso } from '@/lib/tempo';
 import { BLOCOS, Bolsa, BolsaSkeleton, BlocoNoticias, DiarioHome, DiarioHomeSkeleton, Indicadores, IndicadoresSkeleton, NoticiasSkeleton } from './secoes';
 import './home.css';
+import { carregarAcesso } from '@/lib/acesso';
+import { podeAcessar } from '@/lib/permissoes';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,7 +15,8 @@ async function Saudacao() {
   return <>Bem-vindo{nome ? `, ${nome}` : ''}</>;
 }
 
-export default function HomePage() {
+export default async function HomePage() {
+  const acesso = await carregarAcesso();
   return (
     <div className="home">
       <section className="abertura" aria-label="Boas-vindas">
@@ -38,28 +41,28 @@ export default function HomePage() {
       <section className="acesso" aria-labelledby="h-acesso">
         <h2 id="h-acesso" className="sec-titulo">Acesso rápido</h2>
         <div className="atalhos">
-          <Link href="/relatorio" className="atalho t-azul">
+          {acesso && podeAcessar(acesso, 'relatorio') && <Link href="/relatorio" className="atalho t-azul">
             <span className="atalho-nome">Relatório Gerencial</span>
             <span className="atalho-desc">Metas, ranking e churn por equipe, com a leitura do dia.</span>
             <span className="atalho-ir">
               Abrir relatório <span aria-hidden="true">→</span>
             </span>
-          </Link>
-          <Link href="/monitoramento" className="atalho t-laranja">
+          </Link>}
+          {acesso && podeAcessar(acesso, 'monitoramento') && <Link href="/monitoramento" className="atalho t-laranja">
             <span className="atalho-nome">Monitoramento</span>
             <span className="atalho-desc">Alertas de propostas em convênios fora do padrão de cada equipe.</span>
             <span className="atalho-ir">
               Abrir monitoramento <span aria-hidden="true">→</span>
             </span>
-          </Link>
+          </Link>}
         </div>
       </section>
 
-      <div className="sec-diario">
+      {acesso && podeAcessar(acesso, 'diario_oficial') && <div className="sec-diario">
         <Suspense fallback={<DiarioHomeSkeleton />}>
           <DiarioHome />
         </Suspense>
-      </div>
+      </div>}
 
       <h2 className="sec-titulo sec-noticias">Notícias</h2>
       <div className="blocos">

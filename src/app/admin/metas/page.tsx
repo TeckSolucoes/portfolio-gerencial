@@ -1,6 +1,5 @@
 import Link from 'next/link';
-import { redirect } from 'next/navigation';
-import { auth } from '@/lib/auth';
+import { requireFuncionalidadeForPage } from '@/lib/authz';
 import { prisma } from '@/lib/prisma';
 import { EMPRESAS } from '@/lib/empresas';
 import { formatarBRL, formatarInputBR, mesAtual, mesValido, rotuloMes, somarMeses, ultimosMeses } from '@/lib/dinheiro';
@@ -8,8 +7,7 @@ import { MetasForm } from './MetasForm';
 import '../admin-forms.css';
 
 export default async function MetasPage({ searchParams }: { searchParams: Promise<{ mes?: string }> }) {
-  const session = await auth();
-  if (session?.user.role !== 'superadmin') redirect('/admin');
+  await requireFuncionalidadeForPage('metas');
 
   const { mes: mesParam } = await searchParams;
   const hoje = mesAtual();

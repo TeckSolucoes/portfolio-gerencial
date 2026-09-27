@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/prisma';
-import { requireSuperadminForAction } from '@/lib/authz';
+import { requireFuncionalidadeForAction, requireSessionForAction } from '@/lib/authz';
 import { EMPRESAS, type Empresa } from '@/lib/empresas';
 import { mesValido, parseValorBR } from '@/lib/dinheiro';
 import { registrarAuditoria } from '@/lib/auditoria';
@@ -17,7 +17,8 @@ function revalidar() {
 export async function salvarMetas(_prev: MetasFormState, formData: FormData): Promise<MetasFormState> {
   let session;
   try {
-    session = await requireSuperadminForAction();
+    session = await requireSessionForAction();
+    await requireFuncionalidadeForAction('metas');
   } catch (error) {
     return { error: error instanceof Error ? error.message : 'Sem permissão.' };
   }

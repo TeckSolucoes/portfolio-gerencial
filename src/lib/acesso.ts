@@ -11,7 +11,15 @@ export async function carregarAcesso(): Promise<Acesso | null> {
   if (!session?.user?.id) return null;
   const u = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { id: true, role: true, displayName: true, empresas: true, escopoGerente: true },
+    select: {
+      id: true, role: true, displayName: true, empresas: true, escopoGerente: true,
+      permissoes: { select: { funcionalidade: true, permitido: true } },
+    },
   });
-  return u ? montarAcesso(u) : null;
+  if (!u) return null;
+  const perfil = await prisma.permissaoPerfil.findMany({
+    where: { role: u.role },
+    select: { funcionalidade: true, permitido: true },
+  });
+  return montarAcesso({ ...u, permissoesPerfil: perfil, permissoesUsuario: u.permissoes });
 }

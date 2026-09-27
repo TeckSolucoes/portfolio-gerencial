@@ -7,6 +7,7 @@ import { EMPRESAS } from '@/lib/empresas';
 import type { Empresa } from '@/lib/empresas';
 import type { Perfil } from '@/lib/permissoes';
 import { Modal } from './Modal';
+import { FUNCIONALIDADES, type Funcionalidade } from '@/lib/funcionalidades';
 
 export type UserDTO = {
   id: string;
@@ -19,6 +20,7 @@ export type UserDTO = {
   ultimaLatitude: number | null;
   ultimaLongitude: number | null;
   ultimoAcessoEm: string | null;
+  permissoes: Partial<Record<Funcionalidade, boolean>>;
 };
 
 export const PERFIS: { value: Perfil; label: string; descricao: string }[] = [
@@ -80,12 +82,14 @@ export function UserFormDrawer({
   onClose,
   onDone,
   pedirConfirmacao,
+  permissoesPerfil,
 }: {
   user: UserDTO | null;
   ultimoSuperadmin: boolean;
   onClose: () => void;
   onDone: (mensagem: string) => void;
   pedirConfirmacao: (c: { titulo: string; texto: string; confirmar: string; executar: () => Promise<void> }) => void;
+  permissoesPerfil: Record<Perfil, Record<Funcionalidade, boolean>>;
 }) {
   const base = useId();
   const criando = user === null;
@@ -252,6 +256,24 @@ export function UserFormDrawer({
             />
           </fieldset>
 
+          <fieldset className="adm-fieldset">
+            <legend className="adm-label">Funcionalidades</legend>
+            <p className="adm-help">Herdar segue o check do perfil. Use liberar ou bloquear somente para exceções deste usuário.</p>
+            <div className="adm-permission-list">
+              {FUNCIONALIDADES.map((f) => {
+                const atual = user?.permissoes[f.chave];
+                return <label key={f.chave} className="adm-permission-row">
+                  <span><strong>{f.nome}</strong><small>Perfil {permissoesPerfil[role][f.chave] ? 'libera' : 'bloqueia'}</small></span>
+                  <select name={`permissao_${f.chave}`} defaultValue={atual === undefined ? 'herdar' : atual ? 'liberar' : 'bloquear'}>
+                    <option value="herdar">Herdar do perfil</option>
+                    <option value="liberar">Liberar</option>
+                    <option value="bloquear">Bloquear</option>
+                  </select>
+                </label>;
+              })}
+            </div>
+          </fieldset>
+
           <fieldset className="adm-fieldset" aria-describedby={`${idDe('empresas')}-help`}>
             <legend className="adm-label">Empresas que pode ver</legend>
             <div className="adm-check-grid">
@@ -351,6 +373,7 @@ export function ResetPasswordDialog({
     fd.set('role', user.role);
     user.empresas.forEach((e) => fd.append('empresas', e));
     fd.set('escopoGerente', user.escopoGerente ?? '');
+    for (const [chave, permitido] of Object.entries(user.permissoes)) fd.set(`permissao_${chave}`, permitido ? 'liberar' : 'bloquear');
     fd.set('newPassword', senha);
     startTransition(async () => {
       const r = await updateUser(user.id, undefined, fd);
