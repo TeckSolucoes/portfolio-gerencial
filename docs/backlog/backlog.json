@@ -946,6 +946,27 @@
         }
       ],
       "concluidoEm": "2026-09-27"
+    },
+    {
+      "id": "UX-7",
+      "titulo": "Aplicar máscara monetária brasileira nas metas",
+      "ordem": 50,
+      "impacto": "médio",
+      "esforco": "baixo",
+      "donoSugerido": "frontend",
+      "dependeDe": [],
+      "riscos": [],
+      "criterioPronto": "Campos de metas formatam a digitação em reais com pontos de milhar e vírgula decimal, preservando a validação no servidor.",
+      "notas": "Solicitado após revisão visual das telas administrativas.",
+      "status": "concluido",
+      "historico": [
+        {
+          "data": "2026-09-27",
+          "acao": "concluido",
+          "nota": "Máscara brasileira aplicada durante a digitação, com teclado numérico no celular, limite compatível com a validação existente e teste automatizado da formatação."
+        }
+      ],
+      "concluidoEm": "2026-09-27"
     }
   ],
   "riscos": [

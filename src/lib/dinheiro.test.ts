@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mesValido, parseValorBR, somarMeses, ultimosMeses, formatarInputBR } from './dinheiro';
+import { mesValido, parseValorBR, somarMeses, ultimosMeses, formatarInputBR, mascararInputBR } from './dinheiro';
 
 test('parseValorBR aceita formatos pt-BR e simples', () => {
   const v = (s: string) => {
@@ -35,4 +35,11 @@ test('meses: validação, aritmética e viragem de ano', () => {
 
 test('formatarInputBR usa milhar e vírgula', () => {
   assert.equal(formatarInputBR(8_000_000), '8.000.000,00');
+});
+
+test('mascararInputBR formata a digitação como moeda brasileira', () => {
+  assert.equal(mascararInputBR('1'), '0,01');
+  assert.equal(mascararInputBR('123456'), '1.234,56');
+  assert.equal(mascararInputBR('R$ 8.000.000,00'), '8.000.000,00');
+  assert.equal(mascararInputBR(''), '');
 });

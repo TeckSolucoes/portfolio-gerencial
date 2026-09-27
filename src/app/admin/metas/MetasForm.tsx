@@ -3,6 +3,7 @@
 import { useActionState } from 'react';
 import { salvarMetas } from './actions';
 import { EMPRESAS } from '@/lib/empresas';
+import { mascararInputBR } from '@/lib/dinheiro';
 
 export function MetasForm({ mes, atuais }: { mes: string; atuais: Record<string, string> }) {
   const [state, formAction, pending] = useActionState(salvarMetas, undefined);
@@ -21,9 +22,14 @@ export function MetasForm({ mes, atuais }: { mes: string; atuais: Record<string,
                   id={`valor_${e}`}
                   name={`valor_${e}`}
                   type="text"
-                  inputMode="decimal"
+                  inputMode="numeric"
                   defaultValue={atuais[e] ?? ''}
                   placeholder="8.000.000,00"
+                  maxLength={20}
+                  autoComplete="off"
+                  onInput={(event) => {
+                    event.currentTarget.value = mascararInputBR(event.currentTarget.value);
+                  }}
                   aria-describedby="metas-hint"
                 />
               </div>
@@ -44,7 +50,7 @@ export function MetasForm({ mes, atuais }: { mes: string; atuais: Record<string,
           </div>
         ))}
         <span className="adm-hint adm-span-2" id="metas-hint">
-          Aceita 8.000.000,00 ou 8000000. Campo em branco mantém a meta atual daquela empresa.
+          Digite apenas os números; o valor será formatado automaticamente em reais. Campo em branco mantém a meta atual daquela empresa.
         </span>
       </div>
 

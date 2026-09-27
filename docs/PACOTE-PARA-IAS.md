@@ -110,7 +110,7 @@ Orientações completas: `docs/backlog/COMO-USAR.md`. Contexto do projeto: `docs
 
 ## Resumo
 
-- Pendentes: 34 · Em andamento: 1 · Bloqueados: 8 · Concluídos: 6
+- Pendentes: 34 · Em andamento: 1 · Bloqueados: 8 · Concluídos: 7
 - Próximo item liberado: **INF-2** Snapshot manual do VPS/volume antes de qualquer limpeza
 
 ## Itens em aberto (do mais importante para o menos importante)
@@ -402,6 +402,12 @@ Orientações completas: `docs/backlog/COMO-USAR.md`. Contexto do projeto: `docs
   - Pronto quando: Saiba Mais tem chamada visível no topo, o controle hambúrguer fica dentro da lateral, a área útil aproveita monitores largos, o fundo é mais leve, o logo mantém animação moderna e o login tem campos alinhados e conteúdo auxiliar enxuto.
   - Notas: Solicitado após validação visual do menu lateral.
   - Concluído em 2026-09-27: Revisão visual consolidada: cabeçalho reduzido para 64px, lateral para 60px recolhida e 220px aberta, ícones para 18px e itens para 40px. Conteúdo passou a ocupar a largura disponível, alinhado à esquerda e com abertura compacta e consistente. Administração foi removida do menu por ser apenas redirecionamento; Usuários, Metas e Workers permanecem diretos. Saiba Mais agora usa somente ícone de livro com rótulo acessível. TypeScript, ESLint e 118 testes aprovados.
+
+- [x] **UX-7** Aplicar máscara monetária brasileira nas metas
+  - impacto médio · esforço baixo · dono: frontend
+  - Pronto quando: Campos de metas formatam a digitação em reais com pontos de milhar e vírgula decimal, preservando a validação no servidor.
+  - Notas: Solicitado após revisão visual das telas administrativas.
+  - Concluído em 2026-09-27: Máscara brasileira aplicada durante a digitação, com teclado numérico no celular, limite compatível com a validação existente e teste automatizado da formatação.
 
 ## Riscos
 
