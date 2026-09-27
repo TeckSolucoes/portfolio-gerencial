@@ -3,6 +3,8 @@ import { auth } from '@/lib/auth';
 import { efetivado } from '@/lib/transparencia/baseClientes';
 import { gravarBase, origemValida } from '@/lib/transparencia/painel';
 import { registrarAuditoria } from '@/lib/auditoria';
+import { carregarAcesso } from '@/lib/acesso';
+import { podeAcessar } from '@/lib/permissoes';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,7 +20,8 @@ function decodificar(bytes: ArrayBuffer): string {
 export async function POST(req: Request) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ erro: 'Não autenticado.' }, { status: 401 });
-  if (session.user.role !== 'superadmin') return NextResponse.json({ erro: 'Restrito a superadmin.' }, { status: 403 });
+  const acesso = await carregarAcesso();
+  if (!acesso || !podeAcessar(acesso, 'transparencia')) return NextResponse.json({ erro: 'Sem permissão.' }, { status: 403 });
 
   const form = await req.formData().catch(() => null);
   const origem = form?.get('origem');

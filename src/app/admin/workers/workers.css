@@ -34,7 +34,7 @@
 .workers .w-grupo{margin-bottom:22px}
 .workers .w-grupo h2{font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;display:flex;align-items:center;gap:8px}
 .workers .w-grupo h2 span{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:1px 8px;font-size:11px;letter-spacing:0}
-.workers .w-lista{display:flex;flex-direction:column;gap:10px}
+.workers .w-lista{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .workers .w-vazio{color:var(--muted);font-size:14px;padding:16px 0}
 
 .workers .w-item{--c:var(--muted);position:relative;background:var(--card);border:1px solid var(--line);border-radius:14px;
@@ -56,7 +56,7 @@
 .workers .w-badge.s-rodando .w-badge-dot{animation:w-pulso 1.2s ease-in-out infinite}
 .workers .w-pend{background:#3A2A10;border:1px solid #6b4d16;color:#FDE7B8;border-radius:8px;padding:8px 12px;font-size:13px}
 
-.workers .w-fatos{display:grid;grid-template-columns:1.4fr repeat(3,minmax(0,1fr)) 1.2fr;gap:10px 16px;background:var(--inner);border-radius:10px;padding:10px 14px;margin:0}
+.workers .w-fatos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 16px;background:var(--inner);border-radius:10px;padding:10px 14px;margin:0}
 .workers .w-fatos div{min-width:0}
 .workers .w-fatos dt{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
 .workers .w-fatos dd{font-size:13.5px;font-weight:600;overflow-wrap:anywhere}
@@ -115,9 +115,9 @@
 
 @media (max-width:900px){
   .workers .w-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}
-  .workers .w-fatos{grid-template-columns:repeat(3,minmax(0,1fr))}
 }
 @media (max-width:560px){
+  .workers .w-lista{grid-template-columns:1fr}
   .workers .w-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
   .workers .w-fatos{grid-template-columns:repeat(2,minmax(0,1fr))}
   .workers .w-topo{flex-direction:column-reverse;align-items:flex-start}

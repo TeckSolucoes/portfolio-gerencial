@@ -10,7 +10,18 @@ import {
   podeVerAba,
   podeVerEmpresa,
   statusMonitoramento,
+  resolverFuncionalidades,
 } from './permissoes';
+
+test('permissão do usuário prevalece sobre perfil e ausência nega', () => {
+  const regras = resolverFuncionalidades(
+    [{ funcionalidade: 'diario_oficial', permitido: true }, { funcionalidade: 'transparencia', permitido: false }],
+    [{ funcionalidade: 'diario_oficial', permitido: false }, { funcionalidade: 'transparencia', permitido: true }],
+  );
+  assert.equal(regras.diario_oficial, false);
+  assert.equal(regras.transparencia, true);
+  assert.equal(regras.custos, false);
+});
 
 const usuario = (over: Partial<Parameters<typeof montarAcesso>[0]> = {}) =>
   montarAcesso({ id: 'u1', role: 'visualizador', displayName: 'Fulano', empresas: '', escopoGerente: null, ...over });

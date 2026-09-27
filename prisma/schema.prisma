@@ -54,6 +54,17 @@ enum Role {
   visualizador
 }
 
+enum CustoPeriodicidade {
+  unico
+  mensal
+  anual
+}
+
+enum CustoStatus {
+  pendente
+  pago
+}
+
 model Company {
   id        String   @id @default(uuid())
   slug      String   @unique
@@ -202,8 +213,68 @@ model User {
   updatedAt    DateTime @updatedAt @map("updated_at")
 
   auditorias AuditoriaUsuario[]
+  permissoes PermissaoUsuario[]
 
   @@map("users")
+}
+
+model PermissaoPerfil {
+  role           Role
+  funcionalidade String
+  permitido      Boolean
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@id([role, funcionalidade])
+  @@map("permissoes_perfil")
+}
+
+model PermissaoUsuario {
+  userId         String @map("user_id")
+  funcionalidade String
+  permitido      Boolean
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, funcionalidade])
+  @@map("permissoes_usuario")
+}
+
+model Custo {
+  id                  String              @id @default(uuid())
+  nome                String
+  descricao           String?
+  periodicidade       CustoPeriodicidade
+  valorPadraoCentavos Int                 @map("valor_padrao_centavos")
+  ativo               Boolean             @default(true)
+  criadoPor           String?             @map("criado_por")
+  atualizadoPor       String?             @map("atualizado_por")
+  createdAt           DateTime            @default(now()) @map("created_at")
+  updatedAt           DateTime            @updatedAt @map("updated_at")
+
+  lancamentos CustoLancamento[]
+
+  @@map("custos")
+}
+
+model CustoLancamento {
+  id            String      @id @default(uuid())
+  custoId       String      @map("custo_id")
+  competencia   String
+  valorCentavos Int         @map("valor_centavos")
+  status        CustoStatus @default(pendente)
+  pagoEm        DateTime?   @map("pago_em")
+  observacao    String?
+  criadoPor     String?     @map("criado_por")
+  atualizadoPor String?     @map("atualizado_por")
+  createdAt     DateTime    @default(now()) @map("created_at")
+  updatedAt     DateTime    @updatedAt @map("updated_at")
+
+  custo Custo @relation(fields: [custoId], references: [id], onDelete: Cascade)
+
+  @@unique([custoId, competencia])
+  @@index([competencia, status])
+  @@map("custo_lancamentos")
 }
 
 // Trilha de uso do portal. A relação fica nula se o cadastro for removido,

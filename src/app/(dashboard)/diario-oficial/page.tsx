@@ -1,3 +1,4 @@
+import { requireFuncionalidadeForPage } from '@/lib/authz';
 import { Suspense } from 'react';
 import Link from 'next/link';
 import { atosDoCache } from '@/lib/workers/leitura';
@@ -101,6 +102,7 @@ function Skeleton() {
 }
 
 export default async function DiarioOficialPage({ searchParams }: { searchParams: Promise<{ periodo?: string | string[] }> }) {
+  await requireFuncionalidadeForPage('diario_oficial');
   const periodo = periodoValido((await searchParams).periodo);
   return (
     <div className="diario">

@@ -1,3 +1,4 @@
+import { requireFuncionalidadeForPage } from '@/lib/authz';
 import { redirect } from 'next/navigation';
 import evidencia from '@/lib/monitoramento/evidencia.json';
 import { carregarAcesso } from '@/lib/acesso';
@@ -20,6 +21,7 @@ function Aviso({ titulo, texto }: { titulo: string; texto: string }) {
 }
 
 export default async function MonitoramentoPage() {
+  await requireFuncionalidadeForPage('monitoramento');
   const acesso = await carregarAcesso();
   if (!acesso) redirect('/login');
   const status = statusMonitoramento(acesso);

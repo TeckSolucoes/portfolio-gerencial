@@ -22,11 +22,11 @@ Portal interno (Next.js 16 App Router, TypeScript, Prisma 7 + SQLite via better-
 - `src/lib/diarios/` um adaptador por diário (MA, TO, SP, PB, MG, SP capital, Imperatriz) + `diarioOficial.ts` (DOU).
 - `src/lib/workers/` agendador (`instrumentation.ts` liga no boot), registro, motor, cache em `data/cache/`, horários 08:00/13:00/19:00 (Brasília).
 - `src/lib/transparencia/` mapeamento mensal do arquivo SIAPE, clientes novos, base de clientes por hash, planilha CSV.
-- `src/lib/permissoes.ts`, `acesso.ts`, `empresas.ts`, `metas.ts` acesso por empresa, metas.
+- `src/lib/funcionalidades.ts`, `permissoes.ts`, `acesso.ts`, `authz.ts` catálogo de módulos, herança por perfil, exceções por usuário e proteção no servidor; `empresas.ts`, `metas.ts` recorte dos dados.
 - `scripts/boot.sh`, `aplicar-migracoes.cjs`, `migracoes-pendentes.cjs` boot e migração; `scripts/backlog.mjs` este backlog.
 
 ## Acesso
-Perfis: `superadmin` (tudo, todas as empresas), `gerente`, `visualizador`. Cada usuário tem **empresas liberadas** (`AKRK`,`DIG`) e, opcional, **turma de um gerente**. Permissões lidas do banco a cada request. Sem empresa = não vê relatório (de propósito). Empresa da equipe vem do prefixo (`AKRK - ...`); **a regra da DIG é uma suposição** (DEC-1).
+Perfis: `superadmin`, `gerente`, `visualizador`. Cada módulo pode ser ligado ou desligado no perfil e receber exceção individual (herdar, liberar ou bloquear); as regras são lidas do banco a cada request e aplicadas no menu, página, action e API. Cada usuário também tem **empresas liberadas** (`AKRK`,`DIG`) e, opcional, **turma de um gerente**. Sem empresa = não vê relatório (de propósito). Empresa da equipe vem do prefixo (`AKRK - ...`); **a regra da DIG é uma suposição** (DEC-1).
 
 ## Regras do relatório (resumo)
 - Caso = CPF (dígitos) + tipo (Adiantamento > Compra > Novo) + produto. Lote = dia da 1ª proposta.
@@ -39,7 +39,7 @@ Perfis: `superadmin` (tudo, todas as empresas), `gerente`, `visualizador`. Cada 
 Portal da Transparência federal (API: 400/min de dia, 700/min 00–06h, 180/min nas restritas; **não publica descontos nem margem**); DOU e diários estaduais/municipais (sem limite publicado, endpoints internos); Banco Central SGS; Yahoo Finance (não oficial); Google Notícias (uso pessoal). Detalhes por fonte em `docs/BACKLOG.md` (DAD-4, TEC-2).
 
 ## O que já está no ar / entregue
-Relatório e Monitoramento por empresa; metas por empresa em tela; Diário Oficial (8 fontes) com cache; 15+ workers com tela de controle; usuários e metas no padrão de mercado; Transparência (SIAPE) com planilha e indicador; runner de migração no boot (causa raiz do `database is locked`: o `prisma migrate deploy` não espera quando o container antigo está conectado).
+Relatório e Monitoramento por empresa; metas por empresa em tela; Diário Oficial (8 fontes) com cache; 15+ workers com tela em grade; usuários com permissões modulares por perfil e pessoa; Custos com cadastro, periodicidade, competência e pagamento; Transparência (SIAPE) com planilha e indicador; runner de migração no boot (causa raiz do `database is locked`: o `prisma migrate deploy` não espera quando o container antigo está conectado).
 
 ## Bloqueios e cuidados conhecidos
 - O classificador de permissões do Claude Code já barrou: coleta em massa de nomes de servidores (mais tarde liberada pelo dono), push de código vindo de patch externo (liberado por pedido explícito). **Não contornar**: explicar ao dono.
@@ -110,7 +110,7 @@ Orientações completas: `docs/backlog/COMO-USAR.md`. Contexto do projeto: `docs
 
 ## Resumo
 
-- Pendentes: 35 · Em andamento: 1 · Bloqueados: 8 · Concluídos: 2
+- Pendentes: 34 · Em andamento: 1 · Bloqueados: 8 · Concluídos: 5
 - Próximo item liberado: **INF-2** Snapshot manual do VPS/volume antes de qualquer limpeza
 
 ## Itens em aberto (do mais importante para o menos importante)
@@ -250,11 +250,6 @@ Orientações completas: `docs/backlog/COMO-USAR.md`. Contexto do projeto: `docs
   - impacto médio · esforço P · dono: usuário
   - Pronto quando: Lista de CNPJs entregue (AKRK, DIG, Capital Consig, ABC Card e parceiros).
 
-- [ ] **DEC-9** Confirmar a intenção de acesso do Diário Oficial (hoje todos os perfis logados veem)
-  - impacto baixo · esforço P · dono: usuário
-  - Pronto quando: Decisão registrada; matriz de acesso em /admin/settings/users ajustada se mudar.
-  - Notas: Atos são públicos.
-
 - [ ] **INF-7** Página de saúde do portal (workers, fontes, último backup)
   - impacto médio · esforço P · dono: IA · depende de: INF-5 · **aguarda dependências**
   - Pronto quando: Rota de saúde e painel resumido para o ADM.
@@ -378,12 +373,29 @@ Orientações completas: `docs/backlog/COMO-USAR.md`. Contexto do projeto: `docs
   - Riscos: RSK-1, RSK-7
   - Concluído em 2026-09-27: Tabela aditiva de auditoria criada; acessos, login, logout, exportação nominal, upload de base e alterações de usuários, metas e workers são registrados. A lista de usuários mostra a última latitude/longitude autorizada e o ícone de histórico abre consulta paginada exclusiva do superadmin. TypeScript, ESLint, 117 testes da aplicação, 5 testes do backlog, comparação migrações/schema, runner SQLite e build de produção aprovados.
 
+- [x] **DEC-9** Permissões modulares por perfil e usuário
+  - impacto baixo · esforço P · dono: usuário
+  - Pronto quando: Funcionalidades são configuráveis por perfil e por usuário, com herança, liberação ou bloqueio individual; menu e páginas aplicam a permissão efetiva no servidor.
+  - Notas: DEC-9 deixa de ser uma regra fixa no código: Diário Oficial e demais módulos operacionais usam o mesmo catálogo de permissões.
+  - Concluído em 2026-09-27: Permissões modulares persistidas por perfil e por usuário, com herança/liberação/bloqueio, menu e páginas protegidos no servidor. Diário Oficial e demais módulos operacionais usam o catálogo comum. TypeScript, ESLint, 118 testes da aplicação, 5 testes do backlog, build e migração limpa aprovados.
+
 - [x] **PRD-14** Menu lateral compacto e páginas Saiba Mais e Custos
   - impacto médio · esforço P · dono: IA
   - Pronto quando: Menu lateral compacto no desktop, navegação móvel a 375px, marca Teck preservada, links administrativos à esquerda e páginas Saiba Mais/Custos publicadas com os valores informados; validações e PR concluídos.
   - Riscos: RSK-7
   - Notas: Solicitado e aprovado pelo usuário em 27/09/2026: opção 2 da prévia, com prioridade ao acesso pelo celular. Refinado para manter todos os links, inclusive Usuários, Metas, Workers e Início, no lado esquerdo.
   - Concluído em 2026-09-27: Menu fixado à esquerda com gatilho antes da marca, rolagem para não esconder itens e links Usuários, Metas e Workers incorporados à navegação lateral. Páginas Saiba Mais e Custos adicionadas com Claude R$ 130, Codex R$ 130, W-API R$ 60 e total R$ 320. TypeScript, ESLint, testes e build aprovados.
+
+- [x] **PRD-15** Cadastro e lançamentos de custos
+  - impacto alto · esforço médio · dono: produto + engenharia
+  - Pronto quando: Custos podem ser cadastrados e arquivados em tela, com periodicidade e lançamentos por competência, status pago ou pendente e histórico mensal.
+  - Notas: Os valores iniciais de Claude, Codex e W-API entram como custos únicos já pagos.
+  - Concluído em 2026-09-27: Custos agora são cadastrados em tela com periodicidade única, mensal ou anual, competência, status pago/pendente, geração de lançamento e arquivamento. Claude, Codex e W-API foram migrados como já pagos, totalizando R$ 320,00. Build, testes e migração limpa aprovados.
+
+- [x] **UX-5** Refinar navegação e grade de workers
+  - impacto médio · esforço baixo · dono: frontend
+  - Pronto quando: Saiba Mais aparece como ícone de informação no topo, a barra visual da lateral não aparece e Workers usa grade responsiva de dois ou três cards.
+  - Concluído em 2026-09-27: Saiba Mais virou ícone de informação no topo, a barra visual de rolagem da lateral foi ocultada sem impedir rolagem e Workers passou a grade responsiva com dois cards. TypeScript, ESLint, testes e build aprovados.
 
 ## Riscos
 

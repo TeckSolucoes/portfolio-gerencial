@@ -5,44 +5,27 @@ import { lerEmpresas } from '@/lib/empresas';
 import { UsersManager } from './UsersManager';
 import type { UserDTO } from './UserForms';
 import '../../admin-forms.css';
-
-const MATRIZ: { area: string; superadmin: string; gerente: string; visualizador: string }[] = [
-  {
-    area: 'Relatório gerencial',
-    superadmin: 'Todas as empresas, todas as visões',
-    gerente: 'Empresas marcadas; com turma definida, só a turma',
-    visualizador: 'Empresas marcadas; com turma definida, só a turma',
-  },
-  {
-    area: 'Monitoramento',
-    superadmin: 'Todas as empresas e totais da base',
-    gerente: 'Empresas marcadas; indisponível com turma definida',
-    visualizador: 'Empresas marcadas; indisponível com turma definida',
-  },
-  { area: 'Diário Oficial', superadmin: 'Sim', gerente: 'Sim', visualizador: 'Sim' },
-  {
-    area: 'Área Administração',
-    superadmin: 'Sim',
-    gerente: 'Entra, mas sem telas de gestão',
-    visualizador: 'Não',
-  },
-  { area: 'Metas, Usuários e Workers', superadmin: 'Sim', gerente: 'Não', visualizador: 'Não' },
-];
+import { FUNCIONALIDADES, type Funcionalidade } from '@/lib/funcionalidades';
+import { salvarPermissoesPerfil } from './actions';
 
 export default async function UsersPage() {
   const session = await auth();
   if (session?.user.role !== 'superadmin') redirect('/admin');
 
-  const rows = await prisma.user.findMany({
+  const [rows, regrasPerfil] = await Promise.all([prisma.user.findMany({
     orderBy: { email: 'asc' },
     include: {
+      permissoes: true,
       auditorias: {
         where: { latitude: { not: null }, longitude: { not: null } },
         orderBy: { criadoEm: 'desc' },
         take: 1,
       },
     },
-  });
+  }), prisma.permissaoPerfil.findMany()]);
+  const perfis = Object.fromEntries((['superadmin', 'gerente', 'visualizador'] as const).map((role) => [role,
+    Object.fromEntries(FUNCIONALIDADES.map((f) => [f.chave, regrasPerfil.find((r) => r.role === role && r.funcionalidade === f.chave)?.permitido ?? false]))
+  ])) as Record<'superadmin' | 'gerente' | 'visualizador', Record<Funcionalidade, boolean>>;
   const users: UserDTO[] = rows.map((u) => ({
     id: u.id,
     email: u.email,
@@ -54,6 +37,7 @@ export default async function UsersPage() {
     ultimaLatitude: u.auditorias[0]?.latitude ?? null,
     ultimaLongitude: u.auditorias[0]?.longitude ?? null,
     ultimoAcessoEm: u.auditorias[0]?.criadoEm.toISOString() ?? null,
+    permissoes: Object.fromEntries(u.permissoes.map((p) => [p.funcionalidade, p.permitido])),
   }));
 
   return (
@@ -65,34 +49,19 @@ export default async function UsersPage() {
         limita ainda mais.
       </p>
 
-      <UsersManager users={users} currentUserId={session.user.id} />
+      <UsersManager users={users} currentUserId={session.user.id} permissoesPerfil={perfis} />
 
       <details className="adm-matrix">
         <summary>Matriz de acesso por perfil</summary>
-        <div className="adm-tablewrap">
-          <table className="adm-utable adm-mtable">
-            <caption className="adm-sr">O que cada perfil acessa</caption>
-            <thead>
-              <tr>
-                <th scope="col">Área</th>
-                <th scope="col">Superadmin</th>
-                <th scope="col">Gerente</th>
-                <th scope="col">Visualizador</th>
-              </tr>
-            </thead>
-            <tbody>
-              {MATRIZ.map((l) => (
-                <tr key={l.area}>
-                  <th scope="row">{l.area}</th>
-                  <td data-label="Superadmin">{l.superadmin}</td>
-                  <td data-label="Gerente">{l.gerente}</td>
-                  <td data-label="Visualizador">{l.visualizador}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="adm-profile-grid">
+          {(['superadmin', 'gerente', 'visualizador'] as const).map((role) => <form action={salvarPermissoesPerfil} className="adm-profile-card" key={role}>
+            <input type="hidden" name="role" value={role} />
+            <h3>{role === 'superadmin' ? 'Superadmin' : role === 'gerente' ? 'Gerente' : 'Visualizador'}</h3>
+            {FUNCIONALIDADES.map((f) => <label key={f.chave}><input type="checkbox" name="funcionalidades" value={f.chave} defaultChecked={perfis[role][f.chave]} /> <span>{f.nome}</span></label>)}
+            <button className="btn btn-secondary" type="submit">Salvar perfil</button>
+          </form>)}
         </div>
-        <p className="adm-hint">Informativo. Regras aplicadas em permissoes.ts, no proxy e nas server actions.</p>
+        <p className="adm-hint">O usuário herda estes checks, mas pode ter uma liberação ou bloqueio individual.</p>
       </details>
     </div>
   );

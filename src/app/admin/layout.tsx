@@ -10,7 +10,6 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   // depender só do proxy (não roda em toda navegação client-side em certos
   // casos de cache) — layout e cada Server Action seguram a mesma regra.
   if (!session?.user) redirect('/login');
-  if (session.user.role === 'visualizador') redirect('/');
 
   return (
     <div className="app portal-app">

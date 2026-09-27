@@ -245,6 +245,10 @@ th[aria-sort="ascending"] .adm-sort,th[aria-sort="descending"] .adm-sort{color:v
 .adm-matrix .adm-tablewrap{margin:10px 0 12px;}
 .adm-mtable tbody th{color:var(--text);font-family:var(--body);font-size:13px;letter-spacing:0;text-transform:none;white-space:normal;}
 .adm-mtable td{font-size:12.5px;line-height:1.45;}
+.adm-profile-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:12px 0;}
+.adm-profile-card{display:flex;flex-direction:column;gap:10px;padding:16px;border:1px solid var(--hair);border-radius:12px;background:var(--panel);}
+.adm-profile-card h3{margin:0 0 4px;font-size:14px;text-transform:capitalize}.adm-profile-card label{display:flex;align-items:center;gap:8px;font-size:12.5px}.adm-profile-card .btn{margin-top:auto}
+.adm-permission-list{display:flex;flex-direction:column;gap:8px}.adm-permission-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;border:1px solid var(--hair);border-radius:10px;background:var(--panel-2)}.adm-permission-row>span{display:flex;flex-direction:column;gap:3px}.adm-permission-row small{color:var(--text-dim)}.adm-permission-row select{min-height:38px;max-width:180px}
 
 /* ---------- diálogos e drawer (top layer) ---------- */
 .adm-modal{
@@ -286,6 +290,7 @@ th[aria-sort="ascending"] .adm-sort,th[aria-sort="descending"] .adm-sort{color:v
 
 /* ---------- celular ---------- */
 @media (max-width:760px){
+  .adm-profile-grid{grid-template-columns:1fr}.adm-permission-row{align-items:stretch;flex-direction:column}.adm-permission-row select{max-width:none}
   .adm-card{padding:18px 16px;}
   .adm-footer{flex-direction:column-reverse;align-items:stretch;}
   .adm-actions{width:100%;}

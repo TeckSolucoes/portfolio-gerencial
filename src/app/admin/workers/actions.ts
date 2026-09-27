@@ -1,15 +1,16 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { requireSuperadminForAction } from '@/lib/authz';
+import { requireFuncionalidadeForAction, requireSessionForAction } from '@/lib/authz';
 import { definirAgendaPadrao, definirAtivo, definirHorarios, executarWorker } from '@/lib/workers/motor';
 import { registrarAuditoria } from '@/lib/auditoria';
 
 export type ResultadoAcao = { ok: true; aviso?: string } | { ok: false; erro: string };
 
-async function protegida(fn: (session: Awaited<ReturnType<typeof requireSuperadminForAction>>) => Promise<ResultadoAcao>): Promise<ResultadoAcao> {
+async function protegida(fn: (session: Awaited<ReturnType<typeof requireSessionForAction>>) => Promise<ResultadoAcao>): Promise<ResultadoAcao> {
   try {
-    const session = await requireSuperadminForAction();
+    const session = await requireSessionForAction();
+    await requireFuncionalidadeForAction('workers');
     return await fn(session);
   } catch (e) {
     return { ok: false, erro: e instanceof Error ? e.message : 'Falha.' };

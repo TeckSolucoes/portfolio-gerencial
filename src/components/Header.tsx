@@ -5,6 +5,7 @@ import { BrandMark } from './BrandMark';
 import { NOME_PRODUTO } from '@/lib/marca';
 import { PortalNavigation, type NavigationItem } from './PortalNavigation';
 import { registrarAuditoria } from '@/lib/auditoria';
+import { podeAcessar } from '@/lib/permissoes';
 
 function initialsFrom(name: string): string {
   const parts = name.trim().split(/\s+/);
@@ -16,27 +17,20 @@ function initialsFrom(name: string): string {
 export async function Header({ sidebar = false }: { sidebar?: boolean }) {
   const session = await auth();
   const user = session?.user;
-  const canEdit = user && user.role !== 'visualizador';
-  const temEmpresa = user ? ((await carregarAcesso())?.empresas.length ?? 0) > 0 : false;
+  const acesso = user ? await carregarAcesso() : null;
+  const temEmpresa = (acesso?.empresas.length ?? 0) > 0;
 
   if (sidebar && user) {
     const items: NavigationItem[] = [{ href: '/', label: 'Início', icon: 'home', exact: true }];
-    if (temEmpresa) items.push(
-      { href: '/relatorio', label: 'Relatório Gerencial', icon: 'report' },
-      { href: '/monitoramento', label: 'Monitoramento', icon: 'radar' },
-    );
-    items.push({ href: '/diario-oficial', label: 'Diário Oficial', icon: 'news' });
-    if (user.role === 'superadmin') items.push({ href: '/transparencia', label: 'Transparência', icon: 'people' });
-    items.push(
-      { href: '/saiba-mais', label: 'Saiba Mais', icon: 'info' },
-      { href: '/custos', label: 'Custos', icon: 'costs' },
-    );
-    if (canEdit) items.push({ href: '/admin', label: 'Administração', icon: 'settings', exact: true });
-    if (user.role === 'superadmin') items.push(
-      { href: '/admin/settings/users', label: 'Usuários', icon: 'users', secondary: true },
-      { href: '/admin/metas', label: 'Metas', icon: 'target', secondary: true },
-      { href: '/admin/workers', label: 'Workers', icon: 'workers', secondary: true },
-    );
+    if (acesso && temEmpresa && podeAcessar(acesso, 'relatorio')) items.push({ href: '/relatorio', label: 'Relatório Gerencial', icon: 'report' });
+    if (acesso && temEmpresa && podeAcessar(acesso, 'monitoramento')) items.push({ href: '/monitoramento', label: 'Monitoramento', icon: 'radar' });
+    if (acesso && podeAcessar(acesso, 'diario_oficial')) items.push({ href: '/diario-oficial', label: 'Diário Oficial', icon: 'news' });
+    if (acesso && podeAcessar(acesso, 'transparencia')) items.push({ href: '/transparencia', label: 'Transparência', icon: 'people' });
+    if (acesso && podeAcessar(acesso, 'custos')) items.push({ href: '/custos', label: 'Custos', icon: 'costs' });
+    if (user.role === 'superadmin' || (acesso && (podeAcessar(acesso, 'metas') || podeAcessar(acesso, 'workers')))) items.push({ href: '/admin', label: 'Administração', icon: 'settings', exact: true });
+    if (user.role === 'superadmin') items.push({ href: '/admin/settings/users', label: 'Usuários', icon: 'users', secondary: true });
+    if (acesso && podeAcessar(acesso, 'metas')) items.push({ href: '/admin/metas', label: 'Metas', icon: 'target', secondary: true });
+    if (acesso && podeAcessar(acesso, 'workers')) items.push({ href: '/admin/workers', label: 'Workers', icon: 'workers', secondary: true });
     return <PortalNavigation items={items}
       brand={<Link href="/" className="brand"><BrandMark /><div className="brand-text"><span className="wd">Teck Soluções</span><span className="sub">{NOME_PRODUTO}</span></div></Link>}
       account={<div className="user"><div className="avatar">{initialsFrom(user.displayName)}</div><div className="user-name"><b>{user.displayName}</b><span>{user.displayTitle ?? user.role}</span></div></div>}
@@ -60,27 +54,27 @@ export async function Header({ sidebar = false }: { sidebar?: boolean }) {
         </div>
       </Link>
       <div className="header-right">
-        {temEmpresa && (
+        {acesso && temEmpresa && podeAcessar(acesso, 'relatorio') && (
           <Link href="/relatorio" className="admin-link">
             Relatório Gerencial
           </Link>
         )}
-        {temEmpresa && (
+        {acesso && temEmpresa && podeAcessar(acesso, 'monitoramento') && (
           <Link href="/monitoramento" className="admin-link">
             Monitoramento
           </Link>
         )}
-        {user && (
+        {acesso && podeAcessar(acesso, 'diario_oficial') && (
           <Link href="/diario-oficial" className="admin-link">
             Diário Oficial
           </Link>
         )}
-        {user?.role === 'superadmin' && (
+        {acesso && podeAcessar(acesso, 'transparencia') && (
           <Link href="/transparencia" className="admin-link">
             Transparência
           </Link>
         )}
-        {canEdit && (
+        {user && (user.role === 'superadmin' || (acesso && (podeAcessar(acesso, 'metas') || podeAcessar(acesso, 'workers')))) && (
           <Link href="/admin" className="admin-link">
             Administração
           </Link>

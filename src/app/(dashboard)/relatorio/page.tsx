@@ -1,3 +1,4 @@
+import { requireFuncionalidadeForPage } from '@/lib/authz';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import evidencia from '@/lib/relatorio/evidencia.json';
@@ -70,6 +71,7 @@ function SeletorEmpresa({ empresas, atual }: { empresas: Empresa[]; atual: Empre
 }
 
 export default async function RelatorioPage({ searchParams }: { searchParams: Promise<{ escopo?: string; empresa?: string }> }) {
+  await requireFuncionalidadeForPage('relatorio');
   const acesso = await carregarAcesso();
   if (!acesso) redirect('/login');
   if (acesso.empresas.length === 0) {

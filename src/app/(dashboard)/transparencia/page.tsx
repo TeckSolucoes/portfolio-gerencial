@@ -1,6 +1,5 @@
+import { requireFuncionalidadeForPage } from '@/lib/authz';
 import Link from 'next/link';
-import { redirect } from 'next/navigation';
-import { auth } from '@/lib/auth';
 import { FAIXAS_PADRAO } from '@/lib/transparencia/clientesNovos';
 import { detalheDoMes, importacoes, indicadores, mesesProcessados, ORIGENS } from '@/lib/transparencia/painel';
 import { estadoDosWorkers } from '@/lib/workers/motor';
@@ -39,9 +38,7 @@ async function SemMeses() {
 }
 
 export default async function TransparenciaPage({ searchParams }: { searchParams: Promise<{ mes?: string | string[] }> }) {
-  const session = await auth();
-  if (session?.user?.role !== 'superadmin') redirect('/');
-
+  await requireFuncionalidadeForPage('transparencia');
   const [meses, bases, inds] = await Promise.all([mesesProcessados(), importacoes(), indicadores()]);
   const pedido = (await searchParams).mes;
   const mesSel = meses.find((m) => m.mes === (Array.isArray(pedido) ? pedido[0] : pedido)) ?? meses[0] ?? null;

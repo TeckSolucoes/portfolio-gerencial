@@ -438,16 +438,29 @@
     {
       "id": "DEC-9",
       "ordem": 26,
-      "titulo": "Confirmar a intenção de acesso do Diário Oficial (hoje todos os perfis logados veem)",
+      "titulo": "Permissões modulares por perfil e usuário",
       "tema": "Decisão",
       "impacto": "baixo",
       "esforco": "P",
-      "status": "pendente",
+      "status": "concluido",
       "dependeDe": [],
       "donoSugerido": "usuário",
-      "criterioPronto": "Decisão registrada; matriz de acesso em /admin/settings/users ajustada se mudar.",
+      "criterioPronto": "Funcionalidades são configuráveis por perfil e por usuário, com herança, liberação ou bloqueio individual; menu e páginas aplicam a permissão efetiva no servidor.",
       "riscos": [],
-      "notas": "Atos são públicos."
+      "notas": "DEC-9 deixa de ser uma regra fixa no código: Diário Oficial e demais módulos operacionais usam o mesmo catálogo de permissões.",
+      "historico": [
+        {
+          "data": "2026-09-27",
+          "acao": "em-andamento",
+          "nota": ""
+        },
+        {
+          "data": "2026-09-27",
+          "acao": "concluido",
+          "nota": "Permissões modulares persistidas por perfil e por usuário, com herança/liberação/bloqueio, menu e páginas protegidos no servidor. Diário Oficial e demais módulos operacionais usam o catálogo comum. TypeScript, ESLint, 118 testes da aplicação, 5 testes do backlog, build e migração limpa aprovados."
+        }
+      ],
+      "concluidoEm": "2026-09-27"
     },
     {
       "id": "INF-7",
@@ -832,6 +845,58 @@
           "data": "2026-09-27",
           "acao": "concluido",
           "nota": "Menu fixado à esquerda com gatilho antes da marca, rolagem para não esconder itens e links Usuários, Metas e Workers incorporados à navegação lateral. Páginas Saiba Mais e Custos adicionadas com Claude R$ 130, Codex R$ 130, W-API R$ 60 e total R$ 320. TypeScript, ESLint, testes e build aprovados."
+        }
+      ],
+      "concluidoEm": "2026-09-27"
+    },
+    {
+      "id": "PRD-15",
+      "titulo": "Cadastro e lançamentos de custos",
+      "ordem": 47,
+      "impacto": "alto",
+      "esforco": "médio",
+      "donoSugerido": "produto + engenharia",
+      "dependeDe": [],
+      "riscos": [],
+      "criterioPronto": "Custos podem ser cadastrados e arquivados em tela, com periodicidade e lançamentos por competência, status pago ou pendente e histórico mensal.",
+      "notas": "Os valores iniciais de Claude, Codex e W-API entram como custos únicos já pagos.",
+      "status": "concluido",
+      "historico": [
+        {
+          "data": "2026-09-27",
+          "acao": "em-andamento",
+          "nota": ""
+        },
+        {
+          "data": "2026-09-27",
+          "acao": "concluido",
+          "nota": "Custos agora são cadastrados em tela com periodicidade única, mensal ou anual, competência, status pago/pendente, geração de lançamento e arquivamento. Claude, Codex e W-API foram migrados como já pagos, totalizando R$ 320,00. Build, testes e migração limpa aprovados."
+        }
+      ],
+      "concluidoEm": "2026-09-27"
+    },
+    {
+      "id": "UX-5",
+      "titulo": "Refinar navegação e grade de workers",
+      "ordem": 48,
+      "impacto": "médio",
+      "esforco": "baixo",
+      "donoSugerido": "frontend",
+      "dependeDe": [],
+      "riscos": [],
+      "criterioPronto": "Saiba Mais aparece como ícone de informação no topo, a barra visual da lateral não aparece e Workers usa grade responsiva de dois ou três cards.",
+      "notas": "",
+      "status": "concluido",
+      "historico": [
+        {
+          "data": "2026-09-27",
+          "acao": "em-andamento",
+          "nota": ""
+        },
+        {
+          "data": "2026-09-27",
+          "acao": "concluido",
+          "nota": "Saiba Mais virou ícone de informação no topo, a barra visual de rolagem da lateral foi ocultada sem impedir rolagem e Workers passou a grade responsiva com dois cards. TypeScript, ESLint, testes e build aprovados."
         }
       ],
       "concluidoEm": "2026-09-27"

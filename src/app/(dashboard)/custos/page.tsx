@@ -1,32 +1,61 @@
+import { auth } from '@/lib/auth';
+import { prisma } from '@/lib/prisma';
+import { requireFuncionalidadeForPage } from '@/lib/authz';
+import { arquivarCusto, alternarPagamento, cadastrarCusto, gerarCompetencia } from './actions';
 import '../institucional.css';
 
-const custos = [
-  { nome: 'Claude', valor: 130, descricao: 'Assistente de IA usado no apoio ao desenvolvimento.' },
-  { nome: 'Codex', valor: 130, descricao: 'Assistente de IA usado no desenvolvimento e na manutenção.' },
-  { nome: 'W-API', valor: 60, descricao: 'Serviço usado na operação de comunicação por WhatsApp.' },
-];
+const moeda = (centavos: number) => (centavos / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+const competenciaAtual = () => new Date().toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' }).slice(0, 7);
+const rotuloPeriodicidade = { unico: 'Único', mensal: 'Mensal', anual: 'Anual' } as const;
 
-const moeda = (valor: number) => valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-
-export default function CustosPage() {
-  const total = custos.reduce((soma, item) => soma + item.valor, 0);
-  return <div className="institucional">
+export default async function CustosPage() {
+  await requireFuncionalidadeForPage('custos');
+  const session = await auth();
+  const podeGerenciar = session?.user.role === 'superadmin';
+  const custos = await prisma.custo.findMany({ include: { lancamentos: { orderBy: { competencia: 'desc' } } }, orderBy: [{ ativo: 'desc' }, { nome: 'asc' }] });
+  const lancamentos = custos.flatMap((c) => c.lancamentos);
+  const total = lancamentos.reduce((s, l) => s + l.valorCentavos, 0);
+  const pago = lancamentos.filter((l) => l.status === 'pago').reduce((s, l) => s + l.valorCentavos, 0);
+  const pendente = total - pago;
+  const competencia = competenciaAtual();
+  return <div className="institucional custos-page">
     <section className="intro">
       <div className="kicker">Portal Teck · Custos</div>
-      <h1>Custos iniciais das ferramentas</h1>
-      <p className="lede">Valores de referência informados para as ferramentas de inteligência artificial e comunicação usadas no projeto.</p>
+      <h1>Custos das ferramentas</h1>
+      <p className="lede">Cadastro de custos únicos, mensais e anuais, com lançamentos por competência e controle de pagamento.</p>
     </section>
-    <section className="custos-grade" aria-label="Custos informados">
-      {custos.map((custo, indice) => <article className={`custo ${indice === 1 ? 'roxo' : indice === 2 ? 'laranja' : ''}`} key={custo.nome}>
-        <span className="custo-nome">{custo.nome}</span>
-        <strong className="custo-valor">{moeda(custo.valor)}</strong>
-        <p>{custo.descricao}</p>
+
+    <section className="custos-resumo" aria-label="Resumo de custos">
+      <div><span>Total lançado</span><strong>{moeda(total)}</strong></div>
+      <div><span>Já pago</span><strong>{moeda(pago)}</strong></div>
+      <div><span>Pendente</span><strong>{moeda(pendente)}</strong></div>
+    </section>
+    <p className="nota nota-paga" role="note">Os custos iniciais de Claude, Codex e W-API já foram pagos e estão registrados no histórico de setembro de 2026.</p>
+
+    {podeGerenciar && <details className="custo-cadastro">
+      <summary>+ Cadastrar custo</summary>
+      <form action={cadastrarCusto} className="custo-form">
+        <label>Nome<input name="nome" required maxLength={80} /></label>
+        <label>Valor (R$)<input name="valor" required inputMode="decimal" placeholder="130,00" /></label>
+        <label>Periodicidade<select name="periodicidade" defaultValue="mensal"><option value="unico">Único</option><option value="mensal">Mensal</option><option value="anual">Anual</option></select></label>
+        <label>Competência<input name="competencia" type="month" defaultValue={competencia} required /></label>
+        <label className="custo-descricao">Descrição<input name="descricao" maxLength={240} /></label>
+        <label className="custo-check"><input name="pago" type="checkbox" /> Já foi pago</label>
+        <button className="btn btn-primary" type="submit">Salvar custo</button>
+      </form>
+    </details>}
+
+    <section className="custos-cadastros" aria-label="Custos cadastrados">
+      {custos.map((custo) => <article className={`custo-registro${custo.ativo ? '' : ' is-arquivado'}`} key={custo.id}>
+        <div className="custo-registro-head"><div><span>{rotuloPeriodicidade[custo.periodicidade]}</span><h2>{custo.nome}</h2><p>{custo.descricao}</p></div><strong>{moeda(custo.valorPadraoCentavos)}</strong></div>
+        {podeGerenciar && custo.ativo && <div className="custo-acoes">
+          {custo.periodicidade !== 'unico' && <form action={gerarCompetencia.bind(null, custo.id)}><input name="competencia" type="month" defaultValue={competencia} aria-label={`Competência de ${custo.nome}`} /><button className="btn btn-secondary">Gerar competência</button></form>}
+          <form action={arquivarCusto.bind(null, custo.id)}><button className="btn btn-ghost">Arquivar</button></form>
+        </div>}
+        <div className="custo-historico">
+          {custo.lancamentos.map((l) => <div className="custo-lancamento" key={l.id}><span>{l.competencia}</span><strong>{moeda(l.valorCentavos)}</strong><em className={`custo-status ${l.status}`}>{l.status === 'pago' ? 'Pago' : 'Pendente'}</em>{podeGerenciar && <form action={alternarPagamento.bind(null, l.id, l.status === 'pago' ? 'pendente' : 'pago')}><button className="custo-link">Marcar {l.status === 'pago' ? 'pendente' : 'pago'}</button></form>}</div>)}
+        </div>
       </article>)}
     </section>
-    <section className="total" aria-label="Total dos custos iniciais">
-      <div><h2>Total inicial</h2><span>Soma dos três valores informados.</span></div>
-      <strong>{moeda(total)}</strong>
-    </section>
-    <p className="nota" role="note">A periodicidade não foi definida. Por isso, estes números aparecem como custos iniciais, sem indicação de valor mensal ou anual. Os workers do portal são rotinas determinísticas e não geram cobrança de IA por execução.</p>
   </div>;
 }

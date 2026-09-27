@@ -8,6 +8,7 @@ import type { Perfil } from '@/lib/permissoes';
 import { ConfirmDialog } from './Modal';
 import { PERFIS, ResetPasswordDialog, UserFormDrawer, rotuloPerfil } from './UserForms';
 import type { UserDTO } from './UserForms';
+import type { Funcionalidade } from '@/lib/funcionalidades';
 
 type SortKey = 'nome' | 'perfil';
 type FiltroEmpresa = 'todas' | 'AKRK' | 'DIG' | 'nenhuma';
@@ -131,7 +132,7 @@ function RowMenu({
   );
 }
 
-export function UsersManager({ users, currentUserId }: { users: UserDTO[]; currentUserId: string }) {
+export function UsersManager({ users, currentUserId, permissoesPerfil }: { users: UserDTO[]; currentUserId: string; permissoesPerfil: Record<Perfil, Record<Funcionalidade, boolean>> }) {
   const [busca, setBusca] = useState('');
   const [fPerfil, setFPerfil] = useState<Perfil | 'todos'>('todos');
   const [fEmpresa, setFEmpresa] = useState<FiltroEmpresa>('todas');
@@ -422,6 +423,7 @@ export function UsersManager({ users, currentUserId }: { users: UserDTO[]; curre
               },
             })
           }
+          permissoesPerfil={permissoesPerfil}
         />
       )}
 
