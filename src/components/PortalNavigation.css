@@ -3,7 +3,7 @@
 .portal-mobile-inner{display:flex;flex-direction:column;gap:24px;min-height:calc(100dvh - 40px);}
 .app.portal-app{max-width:none;margin:0;padding-top:82px;padding-left:76px;}
 .app.portal-app:has(.portal-sidebar[data-expanded="true"]){padding-left:248px;}
-.portal-app>main{width:100%;max-width:1680px;margin-inline:auto;padding-inline:clamp(24px,2.6vw,48px);scroll-margin-top:82px;}
+.portal-app>main{width:100%;max-width:1680px;margin-inline:auto;padding:28px clamp(24px,2.6vw,48px) 64px;scroll-margin-top:82px;}
 .portal-topbar{position:fixed;inset:0 0 auto;height:82px;z-index:100;display:flex;align-items:center;justify-content:flex-start;flex-wrap:nowrap;padding:16px 24px;gap:12px;background:rgba(14,12,23,.97);border-bottom:1px solid var(--hair);box-shadow:0 5px 24px rgba(0,0,0,.12);}
 .portal-toggle,.portal-mobile-toggle,.portal-close{display:inline-flex;align-items:center;justify-content:center;flex:none;width:44px;min-height:44px;padding:10px;border:1px solid var(--hair-strong);border-radius:12px;color:var(--text-dim);background:var(--panel);cursor:pointer;}
 .portal-mobile-toggle{display:none;}

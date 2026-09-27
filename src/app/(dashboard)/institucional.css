@@ -1,11 +1,11 @@
-.institucional{--page:#0b1424;--card:#112036;--inner:#0d1a2c;--line:#1a2d45;--text:#f0f8ff;--muted:#9db0c7;--blue:#38bdf8;--purple:#c4a4ff;--orange:#fbb034;max-width:1100px;margin:0 auto;padding:clamp(18px,3vw,30px);border-radius:16px;background:var(--page);color:var(--text)}
+.institucional{--page:#0b1424;--card:#112036;--inner:#0d1a2c;--line:#1a2d45;--text:#f0f8ff;--muted:#9db0c7;--blue:#38bdf8;--purple:#c4a4ff;--orange:#fbb034;max-width:1500px;margin:0 auto;padding:clamp(16px,2vw,24px);border-radius:16px;background:var(--page);color:var(--text)}
 .institucional *{box-sizing:border-box}
 .institucional :is(h1,h2,h3,p,ul){margin:0;padding:0}
-.institucional .intro{position:relative;padding:clamp(20px,4vw,34px);border:1px solid var(--line);border-radius:16px;overflow:hidden;background:radial-gradient(120% 160% at 100% 0%,#183553 0%,var(--card) 52%,var(--page) 100%)}
+.institucional .intro{position:relative;padding:18px 22px;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:linear-gradient(110deg,var(--card),var(--page))}
 .institucional .intro::before{content:"";position:absolute;inset:0 auto 0 0;width:4px;background:linear-gradient(var(--blue),var(--purple))}
 .institucional .kicker{margin-bottom:9px;color:var(--blue);font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase}
-.institucional h1{font-size:clamp(27px,4.5vw,42px);line-height:1.1;letter-spacing:-.03em}
-.institucional .lede{max-width:66ch;margin-top:12px;color:var(--muted);font-size:14px;line-height:1.65}
+.institucional h1{font-size:clamp(24px,3vw,32px);line-height:1.1;letter-spacing:-.03em}
+.institucional .lede{max-width:80ch;margin-top:7px;color:var(--muted);font-size:13px;line-height:1.55}
 .institucional .grade{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:20px}
 .institucional .recurso,.institucional .custo{position:relative;padding:20px;border:1px solid var(--line);border-radius:14px;background:linear-gradient(145deg,var(--card),var(--inner))}
 .institucional .recurso::before,.institucional .custo::before{content:"";position:absolute;inset:16px auto 16px 0;width:3px;border-radius:5px;background:var(--cor,var(--blue))}

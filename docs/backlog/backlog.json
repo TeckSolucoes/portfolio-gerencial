@@ -923,6 +923,16 @@
           "data": "2026-09-27",
           "acao": "concluido",
           "nota": "Área útil ampliada para 1680px, Saiba Mais destacado com texto, hambúrguer movido para a lateral e fundo simplificado. Login com e-mail e senha iguais, sem Manter conectado nem nota de acesso, recuperação menor; logo preservado com animação refinada e Starfield reduzido para aliviar renderização. TypeScript, ESLint, 118 testes da aplicação, 5 do backlog e build aprovados."
+        },
+        {
+          "data": "2026-09-27",
+          "acao": "pendente",
+          "nota": "Refino final solicitado: aberturas compactas e conteúdo em largura ampla."
+        },
+        {
+          "data": "2026-09-27",
+          "acao": "concluido",
+          "nota": "Refino final do PR 18: topo das páginas reduzido, Home e módulos principais ampliados de 1100px para 1500px e área do portal com menor espaçamento vertical. TypeScript, ESLint e build aprovados."
         }
       ],
       "concluidoEm": "2026-09-27"
