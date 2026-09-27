@@ -28,7 +28,7 @@ export function Starfield() {
 
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const hasPointer = window.matchMedia('(pointer: fine)').matches;
-    const DPR = Math.min(window.devicePixelRatio || 1, 2);
+    const DPR = Math.min(window.devicePixelRatio || 1, 1.5);
 
     let W = 0;
     let H = 0;
@@ -43,7 +43,7 @@ export function Starfield() {
     let rafId = 0;
 
     function seedStars() {
-      const count = Math.max(90, Math.min(Math.round((W * H) / 5200), 260));
+      const count = Math.max(55, Math.min(Math.round((W * H) / 9000), 140));
       stars = [];
       for (let i = 0; i < count; i++) {
         const layer = Math.random();

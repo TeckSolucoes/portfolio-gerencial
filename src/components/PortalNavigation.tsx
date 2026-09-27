@@ -26,7 +26,7 @@ function Icon({ name }: { name: NavigationItem['icon'] | 'menu' | 'close' | 'log
     users: <><circle cx="9" cy="8" r="3" /><path d="M3 20a6 6 0 0 1 12 0m2-14a3 3 0 0 1 0 6m1 3a5 5 0 0 1 3 5" /></>,
     target: <><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="5" /><circle cx="12" cy="12" r="1" /></>,
     workers: <><rect x="4" y="4" width="16" height="16" rx="3" /><path d="M9 9h6v6H9zm3-8v3m0 16v3M1 12h3m16 0h3" /></>,
-    menu: <><rect x="3" y="4" width="18" height="16" rx="2" /><path d="M9 4v16" /></>,
+    menu: <path d="M4 6h16M4 12h16M4 18h16" />,
     close: <path d="m6 6 12 12M6 18 18 6" />,
     logout: <><path d="M9 4H4v16h5m5-12 4 4-4 4m-6-4h13" /></>,
   };
@@ -88,12 +88,14 @@ export function PortalNavigation({ brand, account, items, logout }: {
   return <>
     <a className="portal-skip" href="#portal-content">Ir para o conteúdo</a>
     <header className="portal-topbar">
-      <button type="button" className="portal-toggle" aria-label={expanded ? 'Recolher menu' : 'Expandir menu'} aria-expanded={expanded} aria-controls="portal-sidebar" onClick={() => setExpanded(!expanded)}><Icon name="menu" /></button>
       <button type="button" className="portal-mobile-toggle" ref={trigger} aria-label="Abrir menu" aria-expanded={mobileOpen} aria-controls="portal-mobile-menu" onClick={() => { dialog.current?.showModal(); setMobileOpen(true); }}><Icon name="menu" /></button>
       {brand}
-      <Link href="/saiba-mais" className="portal-info-link" aria-label="Saiba Mais" title="Saiba Mais" aria-current={pathname === '/saiba-mais' ? 'page' : undefined}><Icon name="info" /></Link>
+      <Link href="/saiba-mais" className="portal-info-link" aria-label="Saiba Mais" title="Conheça as funcionalidades do portal" aria-current={pathname === '/saiba-mais' ? 'page' : undefined}><Icon name="info" /><span>Saiba Mais</span></Link>
     </header>
-    <aside id="portal-sidebar" className="portal-sidebar" data-expanded={expanded} aria-label="Navegação lateral">{navigation}{profile}</aside>
+    <aside id="portal-sidebar" className="portal-sidebar" data-expanded={expanded} aria-label="Navegação lateral">
+      <button type="button" className="portal-toggle portal-sidebar-toggle" aria-label={expanded ? 'Recolher menu' : 'Expandir menu'} aria-expanded={expanded} aria-controls="portal-sidebar" onClick={() => setExpanded(!expanded)}><Icon name="menu" /><span className="portal-nav-label">{expanded ? 'Recolher menu' : 'Expandir menu'}</span></button>
+      {navigation}{profile}
+    </aside>
     <dialog id="portal-mobile-menu" ref={dialog} className="portal-mobile-menu" aria-label="Menu principal" onClose={() => { setMobileOpen(false); trigger.current?.focus(); }} onClick={(event) => { if (event.target === event.currentTarget) closeMenu(); }}>
       <div className="portal-mobile-inner">
         <div className="portal-mobile-heading"><span>Menu principal</span><button type="button" className="portal-close" aria-label="Fechar menu" onClick={closeMenu}><Icon name="close" /></button></div>
