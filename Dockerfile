@@ -59,7 +59,8 @@ RUN groupadd -r app && useradd -r -g app -m app
 
 # O "prisma migrate deploy" do CMD roda aqui, nao no builder: sem o openssl nesta
 # imagem o Prisma nao detecta a versao da libssl (o do builder nao vem pra ca).
-RUN apt-get update && apt-get install -y --no-install-recommends openssl \
+# unzip: le o arquivo mensal de servidores do Portal da Transparencia em fluxo (centenas de MB).
+RUN apt-get update && apt-get install -y --no-install-recommends openssl unzip \
   && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /app/node_modules ./node_modules

@@ -1,23 +1,13 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { tempoRelativo } from '@/lib/tempo';
-import { INTERVALO_MAX, INTERVALO_MIN, intervaloValido, type EstadoWorker, type GrupoWorker } from '@/lib/workers/tipos';
-import { alternarAtivo, executarAgora, mudarIntervalo, type ResultadoAcao } from './actions';
+import { HORARIOS_PADRAO, horarioValido, MAX_HORARIOS, type EstadoWorker, type GrupoWorker } from '@/lib/workers/tipos';
+import { alternarAtivo, executarAgora, mudarAgendaPadrao, mudarHorarios, type ResultadoAcao } from './actions';
 import './workers.css';
 
 const POLL_MS = 4000;
 const GRUPOS: GrupoWorker[] = ['Notícias', 'Mercado', 'Diário Oficial', 'Transparência'];
-const PRESETS: { min: number; rotulo: string }[] = [
-  { min: 5, rotulo: '5 min' },
-  { min: 15, rotulo: '15 min' },
-  { min: 30, rotulo: '30 min' },
-  { min: 60, rotulo: '1 h' },
-  { min: 180, rotulo: '3 h' },
-  { min: 720, rotulo: '12 h' },
-  { min: 1440, rotulo: '24 h' },
-];
-
 type Situacao = 'rodando' | 'pendente' | 'pausado' | 'erro' | 'ok' | 'nunca';
 const ROTULO_SITUACAO: Record<Situacao, string> = {
   rodando: 'Rodando',
@@ -36,12 +26,7 @@ function situacaoDe(w: EstadoWorker): Situacao {
   return w.ultima.status === 'erro' ? 'erro' : 'ok';
 }
 
-const fmtMin = (min: number) => {
-  if (min % 1440 === 0) return `${min / 1440} d`;
-  if (min % 60 === 0) return `${min / 60} h`;
-  if (min > 60) return `${Math.floor(min / 60)} h ${min % 60} min`;
-  return `${min} min`;
-};
+const listaHoras = (hs: readonly string[]) => hs.join(' · ');
 
 const fmtHora = new Intl.DateTimeFormat('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: 'America/Sao_Paulo' });
 const fmtDataHora = new Intl.DateTimeFormat('pt-BR', {
@@ -74,18 +59,26 @@ interface Aviso {
   texto: string;
 }
 
+const assinarVisibilidade = (avisar: () => void) => {
+  document.addEventListener('visibilitychange', avisar);
+  return () => document.removeEventListener('visibilitychange', avisar);
+};
+const abaVisivel = () => document.visibilityState === 'visible';
+
 type RodarAcao = (chave: string, fn: () => Promise<ResultadoAcao>, sucesso: string) => Promise<void>;
 
-export function Painel({ inicial, agoraInicial }: { inicial: EstadoWorker[]; agoraInicial: string }) {
+export function Painel({ inicial, padraoInicial, agoraInicial }: { inicial: EstadoWorker[]; padraoInicial: string[]; agoraInicial: string }) {
   const [workers, setWorkers] = useState(inicial);
+  const [padrao, setPadrao] = useState(padraoInicial);
   const [agoraMs, setAgoraMs] = useState(() => Date.parse(agoraInicial));
   const [atualizadoEm, setAtualizadoEm] = useState<number>(() => Date.parse(agoraInicial));
   const [falha, setFalha] = useState<string | null>(null);
-  const [visivel, setVisivel] = useState(true);
+  const visivel = useSyncExternalStore(assinarVisibilidade, abaVisivel, () => true);
   const [ocupados, setOcupados] = useState<Set<string>>(new Set());
   const [avisos, setAvisos] = useState<Aviso[]>([]);
   // Diferença entre o relógio do servidor e o do navegador, pra contagem regressiva não depender do fuso/relógio local.
-  const deslocamento = useRef(Date.parse(agoraInicial) - Date.now());
+  // Começa em 0 e é acertada a cada resposta do servidor.
+  const deslocamento = useRef(0);
   const emVoo = useRef(false);
   const seq = useRef(0);
 
@@ -103,9 +96,10 @@ export function Painel({ inicial, agoraInicial }: { inicial: EstadoWorker[]; ago
         return;
       }
       if (!r.ok) throw new Error(String(r.status));
-      const dados: { agora: string; workers: EstadoWorker[] } = await r.json();
+      const dados: { agora: string; workers: EstadoWorker[]; padrao: string[] } = await r.json();
       deslocamento.current = Date.parse(dados.agora) - Date.now();
       setWorkers(dados.workers);
+      setPadrao(dados.padrao);
       setAtualizadoEm(Date.parse(dados.agora));
       setFalha(null);
     } catch {
@@ -116,17 +110,13 @@ export function Painel({ inicial, agoraInicial }: { inicial: EstadoWorker[]; ago
   }, []);
 
   useEffect(() => {
-    const onVis = () => setVisivel(document.visibilityState === 'visible');
-    onVis();
-    document.addEventListener('visibilitychange', onVis);
-    return () => document.removeEventListener('visibilitychange', onVis);
-  }, []);
-
-  useEffect(() => {
     if (!visivel) return;
-    atualizar();
+    const primeira = setTimeout(atualizar, 0);
     const t = setInterval(atualizar, POLL_MS);
-    return () => clearInterval(t);
+    return () => {
+      clearTimeout(primeira);
+      clearInterval(t);
+    };
   }, [visivel, atualizar]);
 
   useEffect(() => {
@@ -209,6 +199,8 @@ export function Painel({ inicial, agoraInicial }: { inicial: EstadoWorker[]; ago
         <Kpi rotulo="Pausados ou aguardando" valor={kpis.parados} tom="pausado" />
       </dl>
 
+      <AgendaPadrao padrao={padrao} seguem={workers.filter((w) => !w.horariosProprios).length} ocupados={ocupados} rodarAcao={rodarAcao} />
+
       {porGrupo.map(({ grupo, itens }) => (
         <section key={grupo} className="w-grupo" aria-labelledby={`g-${grupo}`}>
           <h2 id={`g-${grupo}`}>
@@ -250,26 +242,14 @@ function Linha({ w, agora, ocupados, rodarAcao }: { w: EstadoWorker; agora: Date
   const inicio = u ? new Date(u.iniciadoEm) : null;
   const ocRun = ocupados.has(`${w.id}:run`);
   const ocAtivo = ocupados.has(`${w.id}:ativo`);
-  const ocInt = ocupados.has(`${w.id}:int`);
+  const ocHor = ocupados.has(`${w.id}:hor`);
+  const [editando, setEditando] = useState(false);
 
   let proxima = '—';
   if (w.rodando) proxima = 'em execução';
   else if (w.pendencia) proxima = 'aguardando configuração';
   else if (!w.ativo) proxima = 'pausado';
   else if (w.proximaEm) proxima = contagem(Date.parse(w.proximaEm) - agora.getTime());
-
-  const noPreset = PRESETS.some((p) => p.min === w.intervaloMin);
-  const padrao = w.intervaloMin === w.intervaloPadraoMin;
-  const valorSelect = padrao ? 'padrao' : String(w.intervaloMin);
-
-  const onIntervalo = (v: string) => {
-    if (v === 'padrao') return rodarAcao(`${w.id}:int`, () => mudarIntervalo(w.id, null), 'Intervalo voltou ao padrão.');
-    const min = Number(v);
-    if (!intervaloValido(min)) {
-      return rodarAcao(`${w.id}:int`, async () => ({ ok: false, erro: `Intervalo deve ficar entre ${INTERVALO_MIN} min e ${INTERVALO_MAX / 1440} dias.` }), '');
-    }
-    return rodarAcao(`${w.id}:int`, () => mudarIntervalo(w.id, min), `Intervalo de "${w.nome}" agora é ${fmtMin(min)}.`);
-  };
 
   return (
     <li className={`w-item s-${sit}`}>
@@ -344,19 +324,184 @@ function Linha({ w, agora, ocupados, rodarAcao }: { w: EstadoWorker; agora: Date
         >
           {ocAtivo ? 'Aplicando…' : w.ativo ? 'Pausar' : 'Ativar'}
         </button>
-        <label className="w-int">
-          <span>Intervalo</span>
-          <select value={valorSelect} disabled={ocInt} onChange={(e) => onIntervalo(e.target.value)} aria-label={`Intervalo de ${w.nome}`}>
-            <option value="padrao">Padrão do worker ({fmtMin(w.intervaloPadraoMin)})</option>
-            {!padrao && !noPreset && <option value={String(w.intervaloMin)}>{fmtMin(w.intervaloMin)} (personalizado)</option>}
-            {PRESETS.map((p) => (
-              <option key={p.min} value={String(p.min)} disabled={p.min === w.intervaloPadraoMin}>
-                {p.rotulo}
-              </option>
-            ))}
-          </select>
-        </label>
+        <div className="w-agenda">
+          <span className="w-agenda-rot">Horários</span>
+          <Horas lista={w.horarios} />
+          <span className="w-agenda-origem">{w.horariosProprios ? 'próprios' : 'agenda padrão'}</span>
+          {!editando && (
+            <button type="button" className="w-btn w-btn-link" disabled={ocHor} onClick={() => setEditando(true)} aria-label={`Editar horários de ${w.nome}`}>
+              {ocHor ? 'Aplicando…' : 'Editar'}
+            </button>
+          )}
+        </div>
       </div>
+
+      {editando && (
+        <EditorHorarios
+          titulo={`Horários de ${w.nome}`}
+          inicial={w.horarios}
+          ocupado={ocHor}
+          onCancelar={() => setEditando(false)}
+          onSalvar={async (hs) => {
+            await rodarAcao(`${w.id}:hor`, () => mudarHorarios(w.id, hs), `"${w.nome}" agora roda às ${listaHoras(hs)}.`);
+            setEditando(false);
+          }}
+          extra={
+            w.horariosProprios ? (
+              <button
+                type="button"
+                className="w-btn"
+                disabled={ocHor}
+                onClick={async () => {
+                  await rodarAcao(`${w.id}:hor`, () => mudarHorarios(w.id, null), `"${w.nome}" voltou à agenda padrão.`);
+                  setEditando(false);
+                }}
+              >
+                Voltar à agenda padrão
+              </button>
+            ) : null
+          }
+        />
+      )}
     </li>
+  );
+}
+
+function Horas({ lista }: { lista: readonly string[] }) {
+  return (
+    <span className="w-horas">
+      {lista.map((h) => (
+        <span key={h} className="w-hora">
+          {h}
+        </span>
+      ))}
+    </span>
+  );
+}
+
+function AgendaPadrao({ padrao, seguem, ocupados, rodarAcao }: { padrao: string[]; seguem: number; ocupados: Set<string>; rodarAcao: RodarAcao }) {
+  const [editando, setEditando] = useState(false);
+  const ocupado = ocupados.has('padrao:hor');
+  const ehOriginal = listaHoras(padrao) === listaHoras(HORARIOS_PADRAO);
+  const salvar = async (hs: string[]) => {
+    await rodarAcao('padrao:hor', () => mudarAgendaPadrao(hs), `Agenda padrão agora é ${listaHoras(hs)}.`);
+    setEditando(false);
+  };
+  return (
+    <section className="w-padrao" aria-labelledby="h-padrao">
+      <div className="w-padrao-topo">
+        <div>
+          <h2 id="h-padrao">Agenda padrão</h2>
+          <p>
+            Todo dia, no horário de Brasília. Vale para {seguem} {seguem === 1 ? 'worker' : 'workers'} sem horários próprios. Se o servidor estiver fora do ar
+            num horário, a coleta roda assim que ele voltar.
+          </p>
+        </div>
+        <div className="w-agenda">
+          <Horas lista={padrao} />
+          {!editando && (
+            <button type="button" className="w-btn w-btn-link" disabled={ocupado} onClick={() => setEditando(true)}>
+              {ocupado ? 'Aplicando…' : 'Editar'}
+            </button>
+          )}
+        </div>
+      </div>
+      {editando && (
+        <EditorHorarios
+          titulo="Agenda padrão"
+          inicial={padrao}
+          ocupado={ocupado}
+          onCancelar={() => setEditando(false)}
+          onSalvar={salvar}
+          extra={
+            ehOriginal ? null : (
+              <button type="button" className="w-btn" disabled={ocupado} onClick={() => salvar([...HORARIOS_PADRAO])}>
+                Restaurar manhã, tarde e noite ({listaHoras(HORARIOS_PADRAO)})
+              </button>
+            )
+          }
+        />
+      )}
+    </section>
+  );
+}
+
+function EditorHorarios({
+  titulo,
+  inicial,
+  ocupado,
+  onSalvar,
+  onCancelar,
+  extra,
+}: {
+  titulo: string;
+  inicial: readonly string[];
+  ocupado: boolean;
+  onSalvar: (horarios: string[]) => Promise<void>;
+  onCancelar: () => void;
+  extra?: React.ReactNode;
+}) {
+  const [lista, setLista] = useState<string[]>([...inicial]);
+  const [novo, setNovo] = useState('');
+  const [erro, setErro] = useState<string | null>(null);
+  const mudou = listaHoras(lista) !== listaHoras([...inicial].sort());
+
+  const adicionar = () => {
+    if (!horarioValido(novo)) return setErro('Escolha um horário válido (HH:MM).');
+    if (lista.includes(novo)) return setErro(`${novo} já está na lista.`);
+    if (lista.length >= MAX_HORARIOS) return setErro(`No máximo ${MAX_HORARIOS} horários por dia.`);
+    setLista([...lista, novo].sort());
+    setNovo('');
+    setErro(null);
+  };
+
+  return (
+    <div className="w-editor" role="group" aria-label={titulo}>
+      <ul className="w-horas" aria-label="Horários escolhidos">
+        {lista.map((h) => (
+          <li key={h} className="w-hora w-hora-ed">
+            {h}
+            <button type="button" onClick={() => setLista(lista.filter((x) => x !== h))} aria-label={`Remover ${h}`} disabled={ocupado}>
+              ×
+            </button>
+          </li>
+        ))}
+        {lista.length === 0 && <li className="w-editor-vazio">Nenhum horário: adicione pelo menos um.</li>}
+      </ul>
+      <div className="w-editor-add">
+        <label>
+          <span>Novo horário</span>
+          <input
+            type="time"
+            value={novo}
+            onChange={(e) => setNovo(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                adicionar();
+              }
+            }}
+            disabled={ocupado}
+          />
+        </label>
+        <button type="button" className="w-btn" onClick={adicionar} disabled={ocupado || !novo}>
+          Adicionar
+        </button>
+      </div>
+      {erro && (
+        <p className="w-editor-erro" role="alert">
+          {erro}
+        </p>
+      )}
+      <div className="w-editor-acoes">
+        <button type="button" className="w-btn w-btn-prim" disabled={ocupado || lista.length === 0 || !mudou} onClick={() => onSalvar(lista)}>
+          {ocupado ? 'Salvando…' : 'Salvar horários'}
+        </button>
+        <button type="button" className="w-btn" onClick={onCancelar} disabled={ocupado}>
+          Cancelar
+        </button>
+        {extra}
+      </div>
+    </div>
   );
 }

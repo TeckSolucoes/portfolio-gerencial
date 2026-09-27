@@ -41,7 +41,11 @@ export async function atosDoCache(periodo: 'semana' | 'mes' | 'ano'): Promise<Co
   const status: StatusFonte[] = fontes.map((f, i) => {
     const c = caches[i];
     const doPeriodo = (c?.dados ?? []).filter((a) => a.data >= desde);
-    for (const a of doPeriodo) if (!vistos.has(a.id)) (vistos.add(a.id), atos.push(a));
+    for (const a of doPeriodo) {
+      if (vistos.has(a.id)) continue;
+      vistos.add(a.id);
+      atos.push(a);
+    }
     return { id: f.id, nome: f.nome, situacao: c ? 'ok' : 'indisponivel', qtd: doPeriodo.length, cobertura: COBERTURA[f.id] ?? '' };
   });
   atos.sort((a, b) => Number(b.prioritario) - Number(a.prioritario) || b.data.localeCompare(a.data));

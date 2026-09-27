@@ -221,9 +221,11 @@ model MetaMensal {
 // Workers: tarefas agendadas (sem IA, só código) que atualizam notícias, mercado, diários e
 // transparência. WorkerConfig guarda o que o ADM muda em tela; WorkerExecucao é o histórico.
 model WorkerConfig {
-  id           String   @id // id do worker no registro (src/lib/workers/registro.ts)
+  // id do worker no registro (src/lib/workers/registro.ts), ou "__padrao__" para a agenda padrão
+  id           String   @id
   ativo        Boolean  @default(true)
-  intervaloMin Int? @map("intervalo_min") // null = usa o padrão do worker
+  intervaloMin Int? @map("intervalo_min") // legado (agenda por intervalo); não é mais lido
+  horarios     String? // "08:00,13:00,19:00" em Brasília; null = segue a agenda padrão
   updatedAt    DateTime @updatedAt @map("updated_at")
 
   @@map("worker_configs")
@@ -241,4 +243,65 @@ model WorkerExecucao {
 
   @@index([workerId, iniciadoEm])
   @@map("worker_execucoes")
+}
+
+// Mapeamento mensal de servidores (Portal da Transparência) para achar clientes novos.
+// Resumo de cada mês processado do arquivo oficial.
+model PortalMes {
+  mes             String   @id // AAAA-MM do arquivo do Portal
+  totalServidores Int      @map("total_servidores")
+  entraram        Int
+  jaClientes      Int      @map("ja_clientes")
+  acionaveis      Int
+  ignoradas       Int
+  processadoEm    DateTime @default(now()) @map("processado_em")
+
+  @@map("portal_meses")
+}
+
+// A lista do comercial: quem entrou no mês e não é nosso cliente. Tem nome de pessoa: só superadmin
+// vê, e listas com mais de 12 meses são apagadas.
+model PortalNovo {
+  id            String @id @default(uuid())
+  mes           String
+  servidorId    String @map("servidor_id") // Id_SERVIDOR_PORTAL
+  nome          String
+  cpf6          String
+  orgao         String
+  orgaoSuperior String @map("orgao_superior")
+  uf            String
+  cargo         String
+  situacao      String
+  ingressoCargo String @map("ingresso_cargo")
+  tipo          String // recem-nomeado | outro
+  chave         String // hash de cpf6 + nome (cruza com base_clientes)
+
+  @@unique([mes, servidorId])
+  @@index([chave])
+  @@map("portal_novos")
+}
+
+// Nossa base (export do Front / SELECT do Função), SEM CPF nem nome: só o hash da pessoa.
+model BaseCliente {
+  id     String @id @default(uuid())
+  origem String // front | funcao
+  chave  String
+  data   String // AAAA-MM-DD ou ''
+  valor  Float
+  status String
+
+  @@index([chave])
+  @@index([origem])
+  @@map("base_clientes")
+}
+
+model BaseImportacao {
+  origem       String   @id // front | funcao
+  arquivo      String
+  linhas       Int
+  ignoradas    Int
+  importadoEm  DateTime @default(now()) @map("importado_em")
+  importadoPor String?  @map("importado_por")
+
+  @@map("base_importacoes")
 }
