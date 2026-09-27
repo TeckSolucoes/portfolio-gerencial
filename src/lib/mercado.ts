@@ -53,15 +53,36 @@ const SERIES: { codigo: number; rotulo: string; unidade: string }[] = [
   { codigo: 433, rotulo: 'IPCA', unidade: '% no mês' },
 ];
 
+type LinhaBcb = { data?: unknown; valor?: unknown };
+
+const hojeSaoPaulo = (agora: Date) => new Intl.DateTimeFormat('en-CA', {
+  timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit',
+}).format(agora);
+
+const dataBcbIso = (valor: unknown): string | null => {
+  const partes = String(valor ?? '').match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  return partes ? `${partes[3]}-${partes[2]}-${partes[1]}` : null;
+};
+
+export function ultimoIndicadorValido(linhas: LinhaBcb[], agora = new Date()): LinhaBcb | null {
+  const hoje = hojeSaoPaulo(agora);
+  return [...linhas]
+    .filter((linha) => {
+      const data = dataBcbIso(linha.data);
+      return data !== null && data <= hoje && Number.isFinite(Number(linha.valor));
+    })
+    .sort((a, b) => dataBcbIso(b.data)!.localeCompare(dataBcbIso(a.data)!))[0] ?? null;
+}
+
 export async function indicadores(): Promise<Indicador[]> {
   const linhas = await Promise.all(
     SERIES.map(async (s) => {
-      const r = await buscar(`https://api.bcb.gov.br/dados/serie/bcdata.sgs.${s.codigo}/dados/ultimos/1?formato=json`);
+      const r = await buscar(`https://api.bcb.gov.br/dados/serie/bcdata.sgs.${s.codigo}/dados/ultimos/10?formato=json`);
       if (!r) return null;
       try {
-        const ultimo = (await r.json())?.[0];
+        const ultimo = ultimoIndicadorValido((await r.json()) ?? []);
         const valor = Number(ultimo?.valor);
-        return Number.isFinite(valor) ? { rotulo: s.rotulo, valor, unidade: s.unidade, data: String(ultimo.data) } : null;
+        return ultimo && Number.isFinite(valor) ? { rotulo: s.rotulo, valor, unidade: s.unidade, data: String(ultimo.data) } : null;
       } catch {
         return null;
       }

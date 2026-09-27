@@ -221,11 +221,8 @@ export function UsersManager({ users, currentUserId, permissoesPerfil }: { users
       ),
       confirmar: 'Excluir usuário',
       executar: async () => {
-        try {
-          await deleteUser(u.id);
-        } catch {
-          return 'Não foi possível excluir. Confira se não é o seu próprio usuário nem o único superadmin.';
-        }
+        const resultado = await deleteUser(u.id);
+        if (!resultado.ok) return resultado.error;
         setConfirmacao(null);
         avisar(`${u.displayName} foi excluído.`);
         devolverFoco();

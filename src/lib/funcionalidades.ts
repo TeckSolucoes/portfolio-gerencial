@@ -4,6 +4,7 @@ export const FUNCIONALIDADES = [
   { chave: 'diario_oficial', nome: 'Diário Oficial', rota: '/diario-oficial' },
   { chave: 'transparencia', nome: 'Transparência', rota: '/transparencia' },
   { chave: 'custos', nome: 'Custos', rota: '/custos' },
+  { chave: 'noc', nome: 'NOC', rota: '/noc' },
   { chave: 'metas', nome: 'Metas', rota: '/admin/metas' },
   { chave: 'workers', nome: 'Workers', rota: '/admin/workers' },
 ] as const;
