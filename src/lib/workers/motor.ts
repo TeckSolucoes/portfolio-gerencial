@@ -1,6 +1,6 @@
 import 'server-only';
 import { prisma } from '../prisma';
-import { gravarCache } from './cache';
+import { apagarCache, gravarCache } from './cache';
 import { WORKERS, workerPorId } from './registro';
 import { estaVencido, HORARIOS_PADRAO, lerHorarios, normalizarHorarios, proximaExecucao } from './tipos';
 import type { EstadoWorker, StatusExecucao, Worker } from './tipos';
@@ -127,6 +127,27 @@ export async function estadoDosWorkers(): Promise<EstadoWorker[]> {
 export async function definirAtivo(id: string, ativo: boolean) {
   if (!workerPorId(id)) throw new Error('Worker inexistente.');
   await prisma.workerConfig.upsert({ where: { id }, create: { id, ativo }, update: { ativo } });
+}
+
+export async function limparHistoricoWorker(id: string) {
+  if (!workerPorId(id)) throw new Error('Worker inexistente.');
+  if (rodando().has(id)) throw new Error('Aguarde a execução terminar antes de limpar.');
+
+  const fonteJuridica: Record<string, string | undefined> = {
+    'juridico-cadastro': 'cadastro',
+    'juridico-internet': 'internet',
+    'juridico-processos': 'processos',
+    'juridico-licitacoes': 'licitacoes',
+    'juridico-sancoes': 'sancoes',
+  };
+  const fonte = fonteJuridica[id];
+  const operacoes = [prisma.workerExecucao.deleteMany({ where: { workerId: id } })];
+  if (fonte) {
+    operacoes.push(prisma.juridicoFonteStatus.deleteMany({ where: { fonte } }));
+    operacoes.push(prisma.juridicoEvento.deleteMany({ where: { fonte } }));
+  }
+  await prisma.$transaction(operacoes);
+  await apagarCache(id);
 }
 
 // null = o worker volta a seguir a agenda padrão.
