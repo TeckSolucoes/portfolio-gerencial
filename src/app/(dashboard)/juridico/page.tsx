@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
 import { requireFuncionalidadeForPage } from '@/lib/authz';
 import { formatarCnpj } from '@/lib/cnpj';
+import { termosMonitorados } from '@/lib/juridicoConsulta';
 import { CadastroCnpj } from './CadastroCnpj';
 import { alternarCnpj, marcarEventosVistos } from './actions';
 import './juridico.css';
@@ -39,10 +40,11 @@ export default async function JuridicoPage() {
           <div><span className="jur-situacao">{empresa.situacaoCadastral ?? 'Situação não informada'}</span><h2>{empresa.razaoSocial}</h2><p>{empresa.nomeFantasia || formatarCnpj(empresa.cnpj)} · {formatarCnpj(empresa.cnpj)}</p></div>
           <form action={alternarCnpj}><input type="hidden" name="id" value={empresa.id} /><input type="hidden" name="ativo" value={String(!empresa.ativo)} /><button>{empresa.ativo ? 'Pausar' : 'Ativar'}</button></form>
         </div>
-        <dl className="jur-dados"><div><dt>Local</dt><dd>{[empresa.municipio, empresa.uf].filter(Boolean).join(' · ') || '—'}</dd></div><div><dt>Natureza</dt><dd>{empresa.naturezaJuridica || '—'}</dd></div><div><dt>Atividade principal</dt><dd>{empresa.atividadePrincipal || '—'}</dd></div><div><dt>Cadastro atualizado</dt><dd>{quando(empresa.dadosAtualizadosEm)}</dd></div></dl>
+        <dl className="jur-dados"><div><dt>Local</dt><dd>{[empresa.municipio, empresa.uf].filter(Boolean).join(' · ') || '—'}</dd></div><div><dt>Natureza</dt><dd>{empresa.naturezaJuridica || '—'}</dd></div><div><dt>Atividade principal</dt><dd>{empresa.atividadePrincipal || '—'}</dd></div><div><dt>Consulta cadastral</dt><dd>{quando(empresa.dadosAtualizadosEm)}<a className="jur-registro-link" href={`https://brasilapi.com.br/api/cnpj/v1/${empresa.cnpj}`} target="_blank" rel="noreferrer">Abrir registro na BrasilAPI</a></dd></div></dl>
+        <div className="jur-termos"><strong>Termos monitorados</strong><div>{termosMonitorados(empresa).map((termo) => <span key={termo}>{termo}</span>)}</div><small>Referência Google Alerts: razão social, nome fantasia e CNPJ.</small></div>
         <div className="jur-fontes">{['cadastro', 'internet', 'processos', 'licitacoes', 'sancoes'].map((fonte) => {
           const estado = empresa.fontes.find((f) => f.fonte === fonte);
-          return <div className={`jur-fonte ${estado?.status ?? 'pendente'}`} key={fonte}><span>{nomesFonte[fonte]}</span><strong>{estado?.status === 'ok' ? 'Monitorando' : estado?.status === 'erro' ? 'Falha' : 'Aguardando worker'}</strong><small>{estado?.mensagem ?? 'Sem execução registrada.'}</small></div>;
+          return <div className={`jur-fonte ${estado?.status ?? 'pendente'}`} key={fonte}><span>{nomesFonte[fonte]}</span><strong>{estado?.status === 'ok' ? 'Monitorando' : estado?.status === 'erro' ? 'Falha' : 'Aguardando worker'}</strong><small>{estado?.mensagem ?? 'Sem execução registrada.'}</small>{estado && <small>Última consulta: {quando(estado.consultadoEm)}</small>}</div>;
         })}</div>
         <div className="jur-eventos-head"><h3>Últimos eventos</h3>{empresa.eventos.some((e) => !e.visto) && <form action={marcarEventosVistos}><input type="hidden" name="empresaId" value={empresa.id} /><button>Marcar como vistos</button></form>}</div>
         {empresa.eventos.length === 0 ? <p className="jur-sem-evento">Nenhum evento encontrado até agora.</p> : <ul className="jur-eventos">{empresa.eventos.map((evento) => <li className={evento.visto ? '' : 'novo'} key={evento.id}><span>{evento.tipo}</span><div><strong>{evento.url ? <a href={evento.url} target="_blank" rel="noreferrer">{evento.titulo}</a> : evento.titulo}</strong><small>{evento.resumo} · encontrado em {quando(evento.encontradoEm)}</small></div></li>)}</ul>}

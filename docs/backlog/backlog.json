@@ -1043,6 +1043,16 @@
           "data": "2026-09-28",
           "acao": "concluido",
           "nota": "Tela Jurídico criada com cadastro e validação de CNPJ, consulta cadastral, cinco workers independentes e configuráveis, estados por fonte, eventos não vistos, permissão modular e documentação em Saiba Mais. Nenhum CNPJ fica fixo no código. Validação: migrações SQLite aplicadas do zero, TypeScript, ESLint, 124 testes e build de produção aprovados."
+        },
+        {
+          "data": "2026-09-28",
+          "acao": "pendente",
+          "nota": "Refino: explicitar fonte BrasilAPI, termos no modelo Google Alerts e proteção de limite da API do Portal da Transparência."
+        },
+        {
+          "data": "2026-09-28",
+          "acao": "concluido",
+          "nota": "Refino concluído: a tela exibe o registro e a data da consulta BrasilAPI, mostra razão social, nome fantasia e CNPJ usados nas buscas, e o worker CEIS/CNEP limita a cadência a 120 chamadas/minuto. O card registra que a credencial atual está vinculada ao e-mail pessoal informado e deve ser trocada por conta institucional. TypeScript, ESLint, 126 testes e build aprovados."
         }
       ],
       "concluidoEm": "2026-09-28"

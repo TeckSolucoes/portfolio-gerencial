@@ -123,7 +123,7 @@ const juridicoWorkers: Worker[] = [
     id: 'juridico-internet',
     nome: 'Jurídico · Menções na internet',
     grupo: 'Jurídico',
-    descricao: 'Busca notícias e menções públicas pelo nome cadastrado de cada empresa.',
+    descricao: 'Modelo Google Alerts: busca menções pela razão social, nome fantasia e CNPJ com e sem máscara.',
     executar: async () => {
       const itens = await coletarMencoes('internet');
       return { itens, mensagem: `${itens} novas menções`, dados: { itens } };
@@ -153,7 +153,8 @@ const juridicoWorkers: Worker[] = [
     id: 'juridico-sancoes',
     nome: 'Jurídico · Sanções CEIS/CNEP',
     grupo: 'Jurídico',
-    descricao: 'Consulta CEIS e CNEP por CNPJ na API oficial do Portal da Transparência.',
+    descricao: 'Consulta CEIS e CNEP por CNPJ: 2 chamadas por empresa. Proteção interna de 120 chamadas/minuto, abaixo dos limites oficiais de 400/min durante o dia e 700/min entre 00h e 06h. Observação: a chave atual está vinculada ao responsável e ao e-mail pflendesjr@hotmail.com; substituir por uma credencial institucional.',
+    limiteMs: 30 * 60_000,
     pendencia: () => process.env.PORTAL_TRANSPARENCIA_API_KEY ? null : 'Falta PORTAL_TRANSPARENCIA_API_KEY no EasyPanel.',
     executar: async () => {
       const itens = await coletarSancoes();
