@@ -1,6 +1,6 @@
 # Backlog — Portal Teck (Painel Executivo)
 
-Atualizado em 2026-09-27. **Gerado por `node scripts/backlog.mjs render` a partir de `docs/backlog/backlog.json`: não edite este arquivo à mão.**
+Atualizado em 2026-09-28. **Gerado por `node scripts/backlog.mjs render` a partir de `docs/backlog/backlog.json`: não edite este arquivo à mão.**
 
 **Ao terminar um item, marque como concluído** (obrigatório, no mesmo PR do trabalho):
 
@@ -308,7 +308,7 @@ Orientações completas: `docs/backlog/COMO-USAR.md`. Contexto do projeto: `docs
   - impacto médio · esforço baixo · dono: frontend
   - Pronto quando: Saiba Mais tem chamada visível no topo, o controle hambúrguer fica dentro da lateral, a área útil aproveita monitores largos, o fundo é mais leve, o logo mantém animação moderna e o login tem campos alinhados e conteúdo auxiliar enxuto.
   - Notas: Solicitado após validação visual do menu lateral.
-  - Concluído em 2026-09-27: Revisão visual consolidada: cabeçalho reduzido para 64px, lateral para 60px recolhida e 220px aberta, ícones para 18px e itens para 40px. Conteúdo passou a ocupar a largura disponível, alinhado à esquerda e com abertura compacta e consistente. Administração foi removida do menu por ser apenas redirecionamento; Usuários, Metas e Workers permanecem diretos. Saiba Mais agora usa somente ícone de livro com rótulo acessível. TypeScript, ESLint e 118 testes aprovados.
+  - Concluído em 2026-09-28: A camada decorativa do login deixou de receber cliques, seleção ou arraste nativo; o canvas foi marcado como não arrastável e o parallax ignora movimentos enquanto algum botão do mouse está pressionado.
 
 - [x] **UX-7** Aplicar máscara monetária brasileira nas metas
   - impacto médio · esforço baixo · dono: frontend
