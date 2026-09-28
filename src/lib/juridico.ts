@@ -4,6 +4,7 @@ import { createHash } from 'node:crypto';
 import { prisma } from './prisma';
 import { noticias } from './mercado';
 import { consultaMonitoramento, type FonteMonitoramento } from './juridicoConsulta';
+import { erroConsultaPortal, normalizarChavePortal } from './portalTransparencia';
 
 const TIMEOUT_MS = 15_000;
 // O Portal permite mais chamadas, mas o Jurídico usa uma margem conservadora para
@@ -110,7 +111,7 @@ export async function coletarMencoes(fonte: FonteMonitoramento): Promise<number>
 type SancaoApi = Record<string, unknown>;
 
 export async function coletarSancoes(): Promise<number> {
-  const chave = process.env.PORTAL_TRANSPARENCIA_API_KEY;
+  const chave = normalizarChavePortal(process.env.PORTAL_TRANSPARENCIA_API_KEY);
   if (!chave) throw new Error('Configure PORTAL_TRANSPARENCIA_API_KEY no EasyPanel.');
   const empresas = await prisma.juridicoEmpresa.findMany({ where: { ativo: true } });
   let novos = 0;
@@ -123,7 +124,7 @@ export async function coletarSancoes(): Promise<number> {
         primeiraConsulta = false;
         const url = `https://api.portaldatransparencia.gov.br/api-de-dados/${cadastro}?codigoSancionado=${empresa.cnpj}&pagina=1`;
         const resposta = await fetch(url, { headers: { 'chave-api-dados': chave }, signal: AbortSignal.timeout(TIMEOUT_MS), cache: 'no-store' });
-        if (!resposta.ok) throw new Error(`Portal da Transparência indisponível (${cadastro.toUpperCase()}).`);
+        if (!resposta.ok) throw new Error(erroConsultaPortal(resposta.status, cadastro));
         for (const item of (await resposta.json()) as SancaoApi[]) resultados.push({ cadastro, item });
       }
       for (const { cadastro, item } of resultados) {

@@ -419,7 +419,7 @@ Orientações completas: `docs/backlog/COMO-USAR.md`. Contexto do projeto: `docs
   - Pronto quando: CNPJs são cadastrados em tela e monitorados por rotinas independentes, configuráveis e sem identificadores fixos no código, com consulta cadastral, menções públicas, processos, licitações, sanções, estado por fonte e alertas não vistos.
   - Riscos: RSK-5, RSK-6
   - Notas: Primeira etapa cobre cadastro oficial, menções públicas e CEIS/CNEP. Pesquisa processual completa por parte e busca estruturada de fornecedores no PNCP dependem de conectores específicos das fontes.
-  - Concluído em 2026-09-28: Workers ganhou filtro horizontal por grupo com contadores e ação confirmada para limpar histórico, cache e resultados jurídicos da fonte, mantendo a rotina pronta para nova consulta. TypeScript, ESLint, 126 testes e build aprovados.
+  - Concluído em 2026-09-28: Consulta CEIS/CNEP agora normaliza espaços e aspas acidentais da chave e informa o status seguro da falha: chave rejeitada, consulta inválida, limite excedido ou instabilidade do Portal. TypeScript, ESLint, 128 testes e build aprovados.
 
 ## Riscos
 
