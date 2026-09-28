@@ -36,7 +36,7 @@ export async function cadastrarCnpj(_anterior: JuridicoFormState, formData: Form
       uf: String(dados.uf ?? '').trim() || null,
       criadoPor: session.user.email ?? session.user.displayName,
       dadosAtualizadosEm: new Date(),
-      fontes: { create: { fonte: 'cadastro', status: 'ok', mensagem: 'Dados consultados no cadastro inicial.' } },
+      fontes: { create: { fonte: 'cadastro', status: 'ok', mensagem: 'Registro consultado na BrasilAPI.' } },
     } });
     await registrarAuditoria(session.user, { acao: 'CNPJ incluído no Jurídico', rota: '/juridico', detalhes: `${cnpj} · ${razaoSocial}` });
     revalidatePath('/juridico');

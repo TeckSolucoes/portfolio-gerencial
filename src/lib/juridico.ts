@@ -3,8 +3,13 @@ import 'server-only';
 import { createHash } from 'node:crypto';
 import { prisma } from './prisma';
 import { noticias } from './mercado';
+import { consultaMonitoramento, type FonteMonitoramento } from './juridicoConsulta';
 
 const TIMEOUT_MS = 15_000;
+// O Portal permite mais chamadas, mas o Jurídico usa uma margem conservadora para
+// dividir a chave com outras integrações: no máximo 120 chamadas/minuto (1 a cada 500 ms).
+const INTERVALO_SANCOES_MS = 500;
+const aguardar = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
 type CadastroApi = {
   cnpj?: string;
@@ -66,17 +71,11 @@ export async function atualizarCadastroEmpresa(empresaId: string) {
 
 const idEvento = (valor: string) => createHash('sha256').update(valor).digest('hex').slice(0, 32);
 
-const TERMOS = {
-  internet: '',
-  processos: '(processo OR tribunal OR justiça OR ação judicial)',
-  licitacoes: '(licitação OR pregão OR contrato público OR PNCP)',
-} as const;
-
-export async function coletarMencoes(fonte: keyof typeof TERMOS): Promise<number> {
+export async function coletarMencoes(fonte: FonteMonitoramento): Promise<number> {
   const empresas = await prisma.juridicoEmpresa.findMany({ where: { ativo: true } });
   let novos = 0;
   for (const empresa of empresas) {
-    const consulta = `"${empresa.razaoSocial}" ${TERMOS[fonte]}`.trim();
+    const consulta = consultaMonitoramento(empresa, fonte);
     try {
       const lista = await noticias(consulta, 10);
       if (lista === null) throw new Error('Google Notícias não respondeu.');
@@ -115,10 +114,13 @@ export async function coletarSancoes(): Promise<number> {
   if (!chave) throw new Error('Configure PORTAL_TRANSPARENCIA_API_KEY no EasyPanel.');
   const empresas = await prisma.juridicoEmpresa.findMany({ where: { ativo: true } });
   let novos = 0;
+  let primeiraConsulta = true;
   for (const empresa of empresas) {
     try {
       const resultados: { cadastro: string; item: SancaoApi }[] = [];
       for (const cadastro of ['ceis', 'cnep']) {
+        if (!primeiraConsulta) await aguardar(INTERVALO_SANCOES_MS);
+        primeiraConsulta = false;
         const url = `https://api.portaldatransparencia.gov.br/api-de-dados/${cadastro}?codigoSancionado=${empresa.cnpj}&pagina=1`;
         const resposta = await fetch(url, { headers: { 'chave-api-dados': chave }, signal: AbortSignal.timeout(TIMEOUT_MS), cache: 'no-store' });
         if (!resposta.ok) throw new Error(`Portal da Transparência indisponível (${cadastro.toUpperCase()}).`);
