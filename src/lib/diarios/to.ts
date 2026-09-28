@@ -9,6 +9,11 @@ const REVALIDAR_SEGUNDOS = 3600;
 const TIMEOUT_MS = 15000;
 const NOME = 'Diário Oficial do Tocantins';
 const CONVENIOS = ['GOV TOCANTINS IGEPREV'];
+const HEADERS = {
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/126 Safari/537.36',
+  Accept: 'text/html,application/xhtml+xml',
+  'Accept-Language': 'pt-BR,pt;q=0.9',
+};
 
 // "consignado" e "consignação" sozinhos casam com quase toda edição (ruído); só frases específicas.
 const TERMOS = [
@@ -76,7 +81,7 @@ async function buscarTermo(termo: string, desde: string, ate: string): Promise<E
   const url = `${BASE}?por=texto&texto=${encodeURIComponent(termo)}&data-inicial=${desde}&data-final=${ate}`;
   try {
     const r = await fetch(url, {
-      headers: { 'User-Agent': 'teck-portfolio-monitor/1.0 (monitoramento de consignado)' },
+      headers: HEADERS,
       next: { revalidate: REVALIDAR_SEGUNDOS },
       signal: AbortSignal.timeout(TIMEOUT_MS),
     });

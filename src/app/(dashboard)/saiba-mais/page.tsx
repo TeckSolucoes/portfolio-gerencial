@@ -1,7 +1,7 @@
 import '../institucional.css';
 
 const recursos = [
-  { titulo: 'Visão executiva', texto: 'A página inicial reúne os principais sinais do dia em um só lugar.', itens: ['Indicadores de mercado e Banco Central', 'Notícias de mercado, bancos, investimentos e consignado', 'Acesso rápido às áreas operacionais'], tom: '' },
+  { titulo: 'Visão executiva', texto: 'A página inicial reúne os principais sinais do dia em um só lugar.', itens: ['Indicadores de mercado e Banco Central', 'Notícias de mercado, bancos, investimentos e consignado', 'Normas, comunicados e atualizações do Banco Central'], tom: '' },
   { titulo: 'Relatório Gerencial', texto: 'Acompanha a produção por empresa, equipe e período.', itens: ['Metas e evolução da produção', 'Ranking de equipes e gerentes', 'Casos pagos, em jornada ou encerrados'], tom: 'roxo' },
   { titulo: 'Monitoramento', texto: 'Destaca movimentos de convênios que fogem do comportamento habitual.', itens: ['Alertas de convênio inédito, raro ou em pico', 'Filtros por empresa', 'Leitura rápida das propostas relacionadas'], tom: 'laranja' },
   { titulo: 'Diário Oficial', texto: 'Centraliza atos públicos relevantes para a operação de consignado.', itens: ['Consulta de fontes federais, estaduais e municipais', 'Busca de atos relacionados aos convênios acompanhados', 'Atualização por coletas agendadas'], tom: '' },

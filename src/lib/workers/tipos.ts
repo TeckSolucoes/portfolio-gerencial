@@ -13,6 +13,7 @@ export interface Worker {
   grupo: GrupoWorker;
   descricao: string;
   limiteMs?: number; // teto de duração de uma execução (padrão do motor: 5 min)
+  agendamentoMensal?: { dia: number; horario: string }; // fonte publicada uma vez por mês
   // Devolve o motivo de NÃO poder rodar (ex.: falta configuração) ou null se está pronto.
   pendencia?: () => string | null;
   executar: () => Promise<ResultadoWorker>;
@@ -28,6 +29,7 @@ export interface EstadoWorker {
   ativo: boolean;
   horarios: string[]; // agenda em vigor (própria ou a padrão)
   horariosProprios: boolean; // false = segue a agenda padrão
+  agendaEspecial: string | null;
   pendencia: string | null;
   rodando: boolean;
   ultima: {
@@ -133,3 +135,28 @@ export const estaVencido = (ultimoInicio: Date | null, horarios: readonly string
 
 export const proximaExecucao = (ultimoInicio: Date | null, horarios: readonly string[], agora = new Date()): Date =>
   estaVencido(ultimoInicio, horarios, agora) ? agora : proximoHorario(horarios, agora);
+
+function horarioMensal(dia: number, horario: string, agora: Date, deslocamentoMes: number): Date {
+  const p = partes(agora);
+  const base = new Date(Date.UTC(p.ano, p.mes - 1 + deslocamentoMes, 1));
+  const ano = base.getUTCFullYear();
+  const mes = base.getUTCMonth() + 1;
+  const ultimoDia = new Date(Date.UTC(ano, mes, 0)).getUTCDate();
+  return instante(ano, mes, Math.min(Math.max(1, dia), ultimoDia), horario);
+}
+
+export function ultimoHorarioMensal(dia: number, horario: string, agora = new Date()): Date {
+  const atual = horarioMensal(dia, horario, agora, 0);
+  return atual.getTime() <= agora.getTime() ? atual : horarioMensal(dia, horario, agora, -1);
+}
+
+export function proximoHorarioMensal(dia: number, horario: string, agora = new Date()): Date {
+  const atual = horarioMensal(dia, horario, agora, 0);
+  return atual.getTime() > agora.getTime() ? atual : horarioMensal(dia, horario, agora, 1);
+}
+
+export const estaVencidoMensal = (ultimoInicio: Date | null, dia: number, horario: string, agora = new Date()) =>
+  !ultimoInicio || ultimoHorarioMensal(dia, horario, agora).getTime() > ultimoInicio.getTime();
+
+export const proximaExecucaoMensal = (ultimoInicio: Date | null, dia: number, horario: string, agora = new Date()): Date =>
+  estaVencidoMensal(ultimoInicio, dia, horario, agora) ? agora : proximoHorarioMensal(dia, horario, agora);

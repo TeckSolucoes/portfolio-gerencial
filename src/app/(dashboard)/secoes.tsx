@@ -15,6 +15,7 @@ export const BLOCOS = [
   { id: 'h-bancos', titulo: 'Bancos', consulta: 'bancos', tom: 't-roxo' },
   { id: 'h-invest', titulo: 'Investimentos', consulta: 'investimentos', tom: 't-verde' },
   { id: 'h-consig', titulo: 'Crédito consignado', consulta: 'crédito consignado', tom: 't-laranja' },
+  { id: 'h-bcb', titulo: 'Banco Central · Normas e atualizações', consulta: 'site:bcb.gov.br ("Resolução BCB" OR "Instrução Normativa BCB" OR "Comunicado")', tom: 't-roxo' },
 ] as const;
 
 export async function Bolsa() {

@@ -9,6 +9,11 @@ const BASE = 'https://diariooficial.ma.gov.br';
 const REVALIDAR_SEGUNDOS = 3600;
 const TIMEOUT_MS = 20000;
 const NOME = 'Diário Oficial do Maranhão';
+const HEADERS = {
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/126 Safari/537.36',
+  Accept: 'application/json,text/plain,*/*',
+  'Accept-Language': 'pt-BR,pt;q=0.9',
+};
 
 const TERMOS = [
   'margem consignável',
@@ -95,7 +100,7 @@ async function consultar(termo: string, desde: string, ate: string): Promise<Ite
   const url = `${BASE}/ajax.busca.php?termo=${encodeURIComponent(termo)}&datai=${desde}&dataf=${ate}`;
   try {
     const r = await fetch(url, {
-      headers: { 'User-Agent': 'teck-portfolio-monitor/1.0 (monitoramento de consignado)' },
+      headers: HEADERS,
       next: { revalidate: REVALIDAR_SEGUNDOS },
       signal: AbortSignal.timeout(TIMEOUT_MS),
     });

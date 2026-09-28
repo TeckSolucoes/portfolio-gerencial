@@ -2,7 +2,7 @@ import 'server-only';
 import { prisma } from '../prisma';
 import { apagarCache, gravarCache } from './cache';
 import { WORKERS, workerPorId } from './registro';
-import { estaVencido, HORARIOS_PADRAO, lerHorarios, normalizarHorarios, proximaExecucao } from './tipos';
+import { estaVencido, estaVencidoMensal, HORARIOS_PADRAO, lerHorarios, normalizarHorarios, proximaExecucao, proximaExecucaoMensal } from './tipos';
 import type { EstadoWorker, StatusExecucao, Worker } from './tipos';
 
 const TICK_MS = 30_000;
@@ -96,6 +96,8 @@ export async function estadoDosWorkers(): Promise<EstadoWorker[]> {
   return WORKERS.map((w) => {
     const ativo = cfg.porId.get(w.id)?.ativo ?? true;
     const agenda = cfg.agendaDe(w.id);
+    const mensal = w.agendamentoMensal;
+    const horarios = mensal ? [mensal.horario] : agenda.horarios;
     const u = porWorker.get(w.id) ?? null;
     const pendencia = w.pendencia?.() ?? null;
     const rodandoAgora = rodando().has(w.id) || u?.status === 'rodando';
@@ -105,8 +107,9 @@ export async function estadoDosWorkers(): Promise<EstadoWorker[]> {
       grupo: w.grupo,
       descricao: w.descricao,
       ativo,
-      horarios: agenda.horarios,
-      horariosProprios: agenda.proprios,
+      horarios,
+      horariosProprios: mensal ? false : agenda.proprios,
+      agendaEspecial: mensal ? `Mensal · dia ${mensal.dia} · ${mensal.horario}` : null,
       pendencia,
       rodando: rodandoAgora,
       ultima: u && {
@@ -119,7 +122,11 @@ export async function estadoDosWorkers(): Promise<EstadoWorker[]> {
         origem: u.origem,
       },
       ultimoSucessoEm: sucesso.get(w.id)?.toISOString() ?? null,
-      proximaEm: !ativo || pendencia || rodandoAgora ? null : proximaExecucao(u?.iniciadoEm ?? null, agenda.horarios, agora).toISOString(),
+      proximaEm: !ativo || pendencia || rodandoAgora
+        ? null
+        : (mensal
+            ? proximaExecucaoMensal(u?.iniciadoEm ?? null, mensal.dia, mensal.horario, agora)
+            : proximaExecucao(u?.iniciadoEm ?? null, agenda.horarios, agora)).toISOString(),
     };
   });
 }
@@ -168,7 +175,10 @@ async function rodada() {
   const agora = new Date();
   const vencidos: Worker[] = WORKERS.filter((w) => {
     if (!(cfg.porId.get(w.id)?.ativo ?? true) || w.pendencia?.() || rodando().has(w.id)) return false;
-    return estaVencido(porWorker.get(w.id)?.iniciadoEm ?? null, cfg.agendaDe(w.id).horarios, agora);
+    const ultimo = porWorker.get(w.id)?.iniciadoEm ?? null;
+    return w.agendamentoMensal
+      ? estaVencidoMensal(ultimo, w.agendamentoMensal.dia, w.agendamentoMensal.horario, agora)
+      : estaVencido(ultimo, cfg.agendaDe(w.id).horarios, agora);
   });
   const fila = [...vencidos];
   const trabalhar = async () => {
