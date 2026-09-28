@@ -399,3 +399,61 @@ model BaseImportacao {
 
   @@map("base_importacoes")
 }
+
+// Empresas do grupo acompanhadas pelo módulo Jurídico. Os CNPJs são cadastrados em tela;
+// os workers consultam somente estes registros, sem identificadores fixos no código.
+model JuridicoEmpresa {
+  id                   String   @id @default(uuid())
+  cnpj                 String   @unique
+  razaoSocial          String   @map("razao_social")
+  nomeFantasia         String?  @map("nome_fantasia")
+  situacaoCadastral    String?  @map("situacao_cadastral")
+  naturezaJuridica     String?  @map("natureza_juridica")
+  atividadePrincipal   String?  @map("atividade_principal")
+  municipio            String?
+  uf                   String?
+  ativo                Boolean  @default(true)
+  criadoPor            String?  @map("criado_por")
+  dadosAtualizadosEm   DateTime? @map("dados_atualizados_em")
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  eventos JuridicoEvento[]
+  fontes  JuridicoFonteStatus[]
+
+  @@map("juridico_empresas")
+}
+
+model JuridicoEvento {
+  id            String   @id @default(uuid())
+  empresaId     String   @map("empresa_id")
+  fonte         String
+  tipo          String
+  identificador String
+  titulo        String
+  resumo        String?
+  url           String?
+  dataEvento    DateTime? @map("data_evento")
+  encontradoEm  DateTime @default(now()) @map("encontrado_em")
+  visto         Boolean  @default(false)
+
+  empresa JuridicoEmpresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+
+  @@unique([empresaId, fonte, identificador])
+  @@index([empresaId, encontradoEm])
+  @@index([visto, encontradoEm])
+  @@map("juridico_eventos")
+}
+
+model JuridicoFonteStatus {
+  empresaId    String   @map("empresa_id")
+  fonte        String
+  status       String
+  mensagem     String?
+  consultadoEm DateTime @default(now()) @map("consultado_em")
+
+  empresa JuridicoEmpresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+
+  @@id([empresaId, fonte])
+  @@map("juridico_fontes_status")
+}
