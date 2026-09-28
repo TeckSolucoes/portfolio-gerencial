@@ -1053,6 +1053,16 @@
           "data": "2026-09-28",
           "acao": "concluido",
           "nota": "Refino concluído: a tela exibe o registro e a data da consulta BrasilAPI, mostra razão social, nome fantasia e CNPJ usados nas buscas, e o worker CEIS/CNEP limita a cadência a 120 chamadas/minuto. O card registra que a credencial atual está vinculada ao e-mail pessoal informado e deve ser trocada por conta institucional. TypeScript, ESLint, 126 testes e build aprovados."
+        },
+        {
+          "data": "2026-09-28",
+          "acao": "pendente",
+          "nota": "Correção: o grupo Jurídico existia no motor, mas estava ausente da lista fixa renderizada na tela de Workers."
+        },
+        {
+          "data": "2026-09-28",
+          "acao": "concluido",
+          "nota": "Tela de Workers corrigida para exibir Jurídico e derivar grupos das rotinas recebidas, evitando ocultar futuros grupos. TypeScript, ESLint e build de produção aprovados."
         }
       ],
       "concluidoEm": "2026-09-28"

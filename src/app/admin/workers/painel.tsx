@@ -7,7 +7,7 @@ import { alternarAtivo, executarAgora, mudarAgendaPadrao, mudarHorarios, type Re
 import './workers.css';
 
 const POLL_MS = 4000;
-const GRUPOS: GrupoWorker[] = ['Notícias', 'Mercado', 'Diário Oficial', 'Transparência'];
+const ORDEM_GRUPOS: GrupoWorker[] = ['Notícias', 'Mercado', 'Diário Oficial', 'Transparência', 'Jurídico'];
 type Situacao = 'rodando' | 'pendente' | 'pausado' | 'erro' | 'ok' | 'nunca';
 const ROTULO_SITUACAO: Record<Situacao, string> = {
   rodando: 'Rodando',
@@ -164,7 +164,15 @@ export function Painel({ inicial, padraoInicial, agoraInicial }: { inicial: Esta
     return { total: workers.length, rodando, ok, erro, parados };
   }, [workers]);
 
-  const porGrupo = GRUPOS.map((g) => ({ grupo: g, itens: workers.filter((w) => w.grupo === g) })).filter((g) => g.itens.length > 0);
+  // Deriva os grupos dos workers recebidos para que uma rotina nova nunca fique invisível
+  // apenas porque seu grupo ainda não foi incluído na ordem preferencial da interface.
+  const porGrupo = [...new Set(workers.map((w) => w.grupo))]
+    .sort((a, b) => {
+      const ia = ORDEM_GRUPOS.indexOf(a);
+      const ib = ORDEM_GRUPOS.indexOf(b);
+      return (ia < 0 ? Number.MAX_SAFE_INTEGER : ia) - (ib < 0 ? Number.MAX_SAFE_INTEGER : ib);
+    })
+    .map((grupo) => ({ grupo, itens: workers.filter((w) => w.grupo === grupo) }));
   const agora = new Date(agoraMs);
 
   return (
@@ -174,7 +182,7 @@ export function Painel({ inicial, padraoInicial, agoraInicial }: { inicial: Esta
           <div className="w-kicker">Operação · Superadmin</div>
           <h1>Workers de coleta</h1>
           <p className="w-sub">
-            Coletas agendadas de notícias, mercado, diários oficiais e transparência. Código determinístico, sem IA e sem custo por execução.
+            Coletas agendadas de notícias, mercado, diários oficiais, transparência e monitoramento jurídico. Código determinístico, sem IA e sem custo por execução.
           </p>
         </div>
         <div className={`w-live${falha ? ' w-live-off' : ''}${visivel ? '' : ' w-live-pausa'}`} role="status">
