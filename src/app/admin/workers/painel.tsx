@@ -192,7 +192,7 @@ export function Painel({ inicial, padraoInicial, agoraInicial }: { inicial: Esta
         <div className={`w-live${falha ? ' w-live-off' : ''}${visivel ? '' : ' w-live-pausa'}`} role="status">
           <span className="w-live-dot" aria-hidden="true" />
           <span>
-            {falha ? 'sem atualização' : visivel ? 'ao vivo' : 'em pausa (aba oculta)'} · atualizado às {fmtHora.format(atualizadoEm)}
+            {falha ? 'Sem atualização' : visivel ? 'Atualizado às' : 'Em pausa · atualizado às'} {fmtHora.format(atualizadoEm)}
           </span>
         </div>
       </header>
@@ -220,7 +220,7 @@ export function Painel({ inicial, padraoInicial, agoraInicial }: { inicial: Esta
         })}
       </nav>
 
-      <AgendaPadrao padrao={padrao} seguem={workers.filter((w) => !w.horariosProprios).length} ocupados={ocupados} rodarAcao={rodarAcao} />
+      <AgendaPadrao padrao={padrao} seguem={workers.filter((w) => !w.horariosProprios && !w.agendaEspecial).length} ocupados={ocupados} rodarAcao={rodarAcao} />
 
       {porGrupo.map(({ grupo, itens }) => (
         <section key={grupo} className="w-grupo" aria-labelledby={`g-${grupo}`}>
@@ -358,10 +358,10 @@ function Linha({ w, agora, ocupados, rodarAcao }: { w: EstadoWorker; agora: Date
           {ocLimpar ? 'Limpando…' : 'Limpar histórico'}
         </button>
         <div className="w-agenda">
-          <span className="w-agenda-rot">Horários</span>
-          <Horas lista={w.horarios} />
-          <span className="w-agenda-origem">{w.horariosProprios ? 'próprios' : 'agenda padrão'}</span>
-          {!editando && (
+          <span className="w-agenda-rot">{w.agendaEspecial ? 'Periodicidade' : 'Horários'}</span>
+          {w.agendaEspecial ? <span className="w-agenda-especial">{w.agendaEspecial}</span> : <Horas lista={w.horarios} />}
+          {!w.agendaEspecial && <span className="w-agenda-origem">{w.horariosProprios ? 'próprios' : 'agenda padrão'}</span>}
+          {!w.agendaEspecial && !editando && (
             <button type="button" className="w-btn w-btn-link" disabled={ocHor} onClick={() => setEditando(true)} aria-label={`Editar horários de ${w.nome}`}>
               {ocHor ? 'Aplicando…' : 'Editar'}
             </button>
@@ -369,7 +369,7 @@ function Linha({ w, agora, ocupados, rodarAcao }: { w: EstadoWorker; agora: Date
         </div>
       </div>
 
-      {editando && (
+      {editando && !w.agendaEspecial && (
         <EditorHorarios
           titulo={`Horários de ${w.nome}`}
           inicial={w.horarios}

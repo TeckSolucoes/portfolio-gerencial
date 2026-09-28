@@ -9,3 +9,10 @@
 .jur-eventos-head{display:flex;justify-content:space-between;align-items:center;margin-top:16px}.jur-eventos-head h3{font-size:13px}.jur-eventos-head button{min-height:30px}.jur-sem-evento{margin-top:8px;color:var(--muted);font-size:12px}.jur-eventos{list-style:none;margin:8px 0 0;padding:0;border-top:1px solid var(--line)}.jur-eventos li{display:grid;grid-template-columns:90px 1fr;gap:10px;padding:10px 2px;border-bottom:1px solid var(--line)}.jur-eventos li>span{color:var(--muted);font-size:10px;text-transform:uppercase}.jur-eventos li.novo>span{color:var(--orange);font-weight:800}.jur-eventos strong,.jur-eventos small{display:block}.jur-eventos strong{font-size:12.5px}.jur-eventos small{margin-top:3px;color:var(--muted);font-size:10.5px}.jur-eventos a:hover{color:var(--blue)}
 @media(max-width:1000px){.jur-fontes{grid-template-columns:repeat(2,minmax(0,1fr))}.jur-dados{grid-template-columns:1fr 1fr}.jur-cadastro{grid-template-columns:1fr 1fr}.jur-cadastro>div{grid-column:1/-1}}
 @media(max-width:620px){.jur-head,.jur-empresa-head,.jur-termos{flex-direction:column;align-items:flex-start}.jur-termos small{margin-left:0;text-align:left}.jur-kpis,.jur-cadastro,.jur-dados,.jur-fontes{grid-template-columns:1fr}.jur-cadastro>*{grid-column:auto}.jur-eventos li{grid-template-columns:1fr;gap:3px}}
+
+/* Densidade visual compartilhada: mais empresas visíveis sem perder o resumo. */
+.jur-cards{grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px;margin-top:14px}
+.jur-card{min-height:190px;padding:12px;border-radius:11px}
+.jur-card-corpo{padding:11px 0}
+.jur-card-fontes{padding:8px 0}
+.jur-card footer{padding-top:8px}

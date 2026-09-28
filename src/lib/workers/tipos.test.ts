@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { estaVencido, lerHorarios, normalizarHorarios, proximaExecucao, proximoHorario, ultimoHorario } from './tipos';
+import { estaVencido, estaVencidoMensal, lerHorarios, normalizarHorarios, proximaExecucao, proximaExecucaoMensal, proximoHorario, proximoHorarioMensal, ultimoHorario, ultimoHorarioMensal } from './tipos';
 
 // Horários em Brasília (UTC-3): 08:00 BRT = 11:00Z, 13:00 BRT = 16:00Z, 19:00 BRT = 22:00Z.
 const t = (s: string) => new Date(s);
@@ -51,6 +51,16 @@ test('execução manual entre horários não impede o próximo horário', () => 
 test('um horário só por dia', () => {
   assert.equal(proximoHorario(['06:30'], t('2026-09-26T10:00:00Z')).toISOString(), '2026-09-27T09:30:00.000Z');
   assert.equal(ultimoHorario(['06:30'], t('2026-09-26T10:00:00Z')).toISOString(), '2026-09-26T09:30:00.000Z');
+});
+
+test('agenda mensal roda uma vez no dia configurado e aponta o mês seguinte', () => {
+  const antes = t('2026-09-20T10:59:00Z'); // 07:59 em Brasília
+  const depois = t('2026-09-20T11:01:00Z');
+  assert.equal(proximoHorarioMensal(20, '08:00', antes).toISOString(), '2026-09-20T11:00:00.000Z');
+  assert.equal(ultimoHorarioMensal(20, '08:00', depois).toISOString(), '2026-09-20T11:00:00.000Z');
+  assert.equal(estaVencidoMensal(t('2026-08-20T11:00:05Z'), 20, '08:00', depois), true);
+  assert.equal(estaVencidoMensal(t('2026-09-20T11:00:05Z'), 20, '08:00', depois), false);
+  assert.equal(proximaExecucaoMensal(t('2026-09-20T11:00:05Z'), 20, '08:00', depois).toISOString(), '2026-10-20T11:00:00.000Z');
 });
 
 test('normalizar: ordena, tira repetidos e valida', () => {

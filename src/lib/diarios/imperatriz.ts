@@ -12,7 +12,7 @@ const BASE = 'https://diariooficial.imperatriz.ma.gov.br';
 const TIMEOUT_MS = 60000;
 const CACHE_MS = 3600 * 1000;
 const NOME = 'Diário Oficial de Imperatriz';
-const UA = 'teck-portfolio/1.0 (monitor de atos de consignado)';
+const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/126 Safari/537.36';
 
 // A busca é por substring; "consignado" já pega "consignados".
 const TERMOS = ['consignado', 'consignatári', 'margem consign', 'desconto em folha'];
@@ -70,7 +70,7 @@ const CONVENIOS = ['PREF IMPERATRIZ MA'];
 const cache = new Map<string, { em: number; atos: AtoOficial[] }>();
 
 async function consultar(termos: string[], de: string, ate: string): Promise<ItemDiario[] | null> {
-  const headers = { 'User-Agent': UA };
+  const headers = { 'User-Agent': UA, Accept: 'text/html,application/xhtml+xml', 'Accept-Language': 'pt-BR,pt;q=0.9' };
   const pagina = await fetch(`${BASE}/publicacoes`, { headers, signal: AbortSignal.timeout(TIMEOUT_MS) });
   if (!pagina.ok) return null;
   const cookie = pagina.headers.getSetCookie().map((c) => c.split(';')[0]).join('; ');

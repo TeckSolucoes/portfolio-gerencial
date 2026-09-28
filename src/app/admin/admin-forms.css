@@ -24,8 +24,8 @@
 
 /* ---------- cartão + grid de formulário ---------- */
 .adm-card{
-  display:flex;flex-direction:column;gap:20px;background:var(--panel);border:1px solid var(--hair);
-  border-radius:16px;padding:22px 24px;margin-bottom:22px;
+  display:flex;flex-direction:column;gap:14px;background:var(--panel);border:1px solid var(--hair);
+  border-radius:12px;padding:15px 17px;margin-bottom:15px;
 }
 .adm-grid{display:grid;grid-template-columns:1fr;gap:18px 20px;align-items:start;}
 @media (min-width:720px){

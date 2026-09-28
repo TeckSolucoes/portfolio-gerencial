@@ -18,6 +18,7 @@ export const TOPICOS_NOTICIAS = [
   { id: 'bancos', nome: 'Bancos', consulta: 'bancos' },
   { id: 'investimentos', nome: 'Investimentos', consulta: 'investimentos' },
   { id: 'consignado', nome: 'Crédito consignado', consulta: 'crédito consignado' },
+  { id: 'bcb-normativos', nome: 'Banco Central · Normas e atualizações', consulta: 'site:bcb.gov.br ("Resolução BCB" OR "Instrução Normativa BCB" OR "Comunicado")' },
 ] as const;
 
 const noticiasWorkers: Worker[] = TOPICOS_NOTICIAS.map((t) => ({
@@ -89,7 +90,8 @@ const transparenciaWorkers: Worker[] = [
     nome: 'Transparência · Servidores federais (mapeamento mensal)',
     grupo: 'Transparência',
     descricao:
-      'Baixa o arquivo mensal oficial de servidores SIAPE do Portal da Transparência, compara com o mês anterior e monta a lista de novos que ainda não são clientes. Só roda de fato quando o Portal publica um mês novo.',
+      'Baixa o arquivo mensal oficial de servidores SIAPE, compara com o mês anterior e monta a lista de novos que ainda não são clientes. Execução automática mensal no dia 20.',
+    agendamentoMensal: { dia: 20, horario: '08:00' },
     limiteMs: 60 * 60_000, // arquivo de centenas de MB: download e leitura levam minutos
     executar: async () => {
       const rs = await atualizarMapeamento();

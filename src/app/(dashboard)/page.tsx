@@ -1,5 +1,4 @@
 import { Suspense } from 'react';
-import Link from 'next/link';
 import { auth } from '@/lib/auth';
 import { dataExtenso } from '@/lib/tempo';
 import { BLOCOS, Bolsa, BolsaSkeleton, BlocoNoticias, DiarioHome, DiarioHomeSkeleton, Indicadores, IndicadoresSkeleton, NoticiasSkeleton } from './secoes';
@@ -37,26 +36,6 @@ export default async function HomePage() {
           <Indicadores />
         </Suspense>
       </div>
-
-      <section className="acesso" aria-labelledby="h-acesso">
-        <h2 id="h-acesso" className="sec-titulo">Acesso rápido</h2>
-        <div className="atalhos">
-          {acesso && podeAcessar(acesso, 'relatorio') && <Link href="/relatorio" className="atalho t-azul">
-            <span className="atalho-nome">Relatório Gerencial</span>
-            <span className="atalho-desc">Metas, ranking e churn por equipe, com a leitura do dia.</span>
-            <span className="atalho-ir">
-              Abrir relatório <span aria-hidden="true">→</span>
-            </span>
-          </Link>}
-          {acesso && podeAcessar(acesso, 'monitoramento') && <Link href="/monitoramento" className="atalho t-laranja">
-            <span className="atalho-nome">Monitoramento</span>
-            <span className="atalho-desc">Alertas de propostas em convênios fora do padrão de cada equipe.</span>
-            <span className="atalho-ir">
-              Abrir monitoramento <span aria-hidden="true">→</span>
-            </span>
-          </Link>}
-        </div>
-      </section>
 
       {acesso && podeAcessar(acesso, 'diario_oficial') && <div className="sec-diario">
         <Suspense fallback={<DiarioHomeSkeleton />}>

@@ -83,3 +83,6 @@
 .diario .fontes ul{list-style:none;display:grid;gap:8px}
 .diario .fontes li{font-size:13px;color:var(--text)}
 .diario .fontes li span{display:block;font-size:12px;color:var(--muted);margin-top:2px}
+
+/* Padrão compacto do portal */
+.diario .kpis{gap:9px;margin-bottom:14px}.diario .kpi{padding:10px 12px 10px 16px;border-radius:11px}.diario .kpi-val{font-size:clamp(22px,2.5vw,28px)}.diario .atos{gap:9px}.diario .ato{padding:10px 12px 12px 16px;border-radius:11px}.diario .fontes{padding:10px 12px;margin-top:16px}
