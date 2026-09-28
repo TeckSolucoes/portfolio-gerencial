@@ -4,6 +4,7 @@ import { FONTES } from '../diarios';
 import { ibovespa, indicadores, noticias } from '../mercado';
 import { atualizarMapeamento } from '../transparencia/mapeamento';
 import { coletarCadastros, coletarMencoes, coletarSancoes } from '../juridico';
+import { normalizarChavePortal } from '../portalTransparencia';
 import type { Worker } from './tipos';
 
 // Fonte que respondeu vazio = coleta ok com 0 itens; fonte que não respondeu (null) = erro.
@@ -155,7 +156,7 @@ const juridicoWorkers: Worker[] = [
     grupo: 'Jurídico',
     descricao: 'Consulta CEIS e CNEP por CNPJ: 2 chamadas por empresa. Proteção interna de 120 chamadas/minuto, abaixo dos limites oficiais de 400/min durante o dia e 700/min entre 00h e 06h. Observação: a chave atual está vinculada ao responsável e ao e-mail pflendesjr@hotmail.com; substituir por uma credencial institucional.',
     limiteMs: 30 * 60_000,
-    pendencia: () => process.env.PORTAL_TRANSPARENCIA_API_KEY ? null : 'Falta PORTAL_TRANSPARENCIA_API_KEY no EasyPanel.',
+    pendencia: () => normalizarChavePortal(process.env.PORTAL_TRANSPARENCIA_API_KEY) ? null : 'Falta PORTAL_TRANSPARENCIA_API_KEY no EasyPanel.',
     executar: async () => {
       const itens = await coletarSancoes();
       return { itens, mensagem: `${itens} novas sanções`, dados: { itens } };

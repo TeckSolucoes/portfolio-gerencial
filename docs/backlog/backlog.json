@@ -1073,6 +1073,16 @@
           "data": "2026-09-28",
           "acao": "concluido",
           "nota": "Workers ganhou filtro horizontal por grupo com contadores e ação confirmada para limpar histórico, cache e resultados jurídicos da fonte, mantendo a rotina pronta para nova consulta. TypeScript, ESLint, 126 testes e build aprovados."
+        },
+        {
+          "data": "2026-09-28",
+          "acao": "pendente",
+          "nota": "Diagnóstico: a resposta CEIS era reduzida à mensagem genérica de indisponibilidade."
+        },
+        {
+          "data": "2026-09-28",
+          "acao": "concluido",
+          "nota": "Consulta CEIS/CNEP agora normaliza espaços e aspas acidentais da chave e informa o status seguro da falha: chave rejeitada, consulta inválida, limite excedido ou instabilidade do Portal. TypeScript, ESLint, 128 testes e build aprovados."
         }
       ],
       "concluidoEm": "2026-09-28"
