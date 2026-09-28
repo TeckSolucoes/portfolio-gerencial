@@ -419,7 +419,7 @@ Orientações completas: `docs/backlog/COMO-USAR.md`. Contexto do projeto: `docs
   - Pronto quando: CNPJs são cadastrados em tela e monitorados por rotinas independentes, configuráveis e sem identificadores fixos no código, com consulta cadastral, menções públicas, processos, licitações, sanções, estado por fonte e alertas não vistos.
   - Riscos: RSK-5, RSK-6
   - Notas: Primeira etapa cobre cadastro oficial, menções públicas e CEIS/CNEP. Pesquisa processual completa por parte e busca estruturada de fornecedores no PNCP dependem de conectores específicos das fontes.
-  - Concluído em 2026-09-28: Refino concluído: a tela exibe o registro e a data da consulta BrasilAPI, mostra razão social, nome fantasia e CNPJ usados nas buscas, e o worker CEIS/CNEP limita a cadência a 120 chamadas/minuto. O card registra que a credencial atual está vinculada ao e-mail pessoal informado e deve ser trocada por conta institucional. TypeScript, ESLint, 126 testes e build aprovados.
+  - Concluído em 2026-09-28: Tela de Workers corrigida para exibir Jurídico e derivar grupos das rotinas recebidas, evitando ocultar futuros grupos. TypeScript, ESLint e build de produção aprovados.
 
 ## Riscos
 
