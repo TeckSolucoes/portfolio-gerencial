@@ -31,6 +31,14 @@
 .workers .t-erro{--c:var(--red);--c-bg:#3A1A22}
 .workers .t-pausado{--c:var(--orange);--c-bg:#3A2A10}
 
+.workers .w-filtros{position:sticky;top:8px;z-index:10;display:flex;gap:7px;margin:0 0 18px;padding:8px;border:1px solid var(--line);border-radius:12px;background:rgba(11,20,36,.94);box-shadow:0 8px 24px rgba(0,0,0,.22);overflow-x:auto;scrollbar-width:thin;backdrop-filter:blur(12px)}
+.workers .w-filtros button{display:inline-flex;align-items:center;gap:7px;flex:none;min-height:36px;padding:0 12px;border:1px solid transparent;border-radius:8px;background:transparent;color:var(--muted);font:inherit;font-size:12px;font-weight:750;cursor:pointer}
+.workers .w-filtros button:hover{color:var(--text);background:var(--card)}
+.workers .w-filtros button.ativo{color:var(--ink);background:var(--blue);border-color:var(--blue)}
+.workers .w-filtros button span{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:rgba(140,162,186,.16);font-size:10px}
+.workers .w-filtros button.ativo span{background:rgba(11,20,36,.18)}
+.workers .w-filtros button:focus-visible{outline:2px solid #fff;outline-offset:2px}
+
 .workers .w-grupo{margin-bottom:22px}
 .workers .w-grupo h2{font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;display:flex;align-items:center;gap:8px}
 .workers .w-grupo h2 span{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:1px 8px;font-size:11px;letter-spacing:0}
@@ -73,6 +81,8 @@
 .workers .w-btn:hover:not(:disabled){background:#16273D;border-color:var(--blue)}
 .workers .w-btn-prim{background:var(--blue);border-color:var(--blue);color:var(--ink)}
 .workers .w-btn-prim:hover:not(:disabled){background:#7DD3FC;border-color:#7DD3FC}
+.workers .w-btn-perigo{color:#FCA5A5;border-color:#63303c}
+.workers .w-btn-perigo:hover:not(:disabled){color:#FECACA;background:#3A1A22;border-color:var(--red)}
 .workers .w-btn:disabled{opacity:.5;cursor:not-allowed}
 .workers .w-agenda{display:inline-flex;flex-wrap:wrap;align-items:center;gap:6px 8px;margin-left:auto;font-size:12px;color:var(--muted)}
 .workers .w-agenda-rot{font-weight:700;letter-spacing:.06em;text-transform:uppercase;font-size:11px}

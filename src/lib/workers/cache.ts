@@ -1,5 +1,5 @@
 import 'server-only';
-import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, rename, unlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 // Resultado de cada worker em arquivo (data/cache/<id>.json, no volume). É regenerável: se sumir,
@@ -27,4 +27,10 @@ export async function lerCache<T>(id: string): Promise<EntradaCache<T> | null> {
   } catch {
     return null;
   }
+}
+
+export async function apagarCache(id: string): Promise<void> {
+  await unlink(arquivo(id)).catch((error: NodeJS.ErrnoException) => {
+    if (error.code !== 'ENOENT') throw error;
+  });
 }

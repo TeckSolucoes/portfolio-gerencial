@@ -1063,6 +1063,16 @@
           "data": "2026-09-28",
           "acao": "concluido",
           "nota": "Tela de Workers corrigida para exibir Jurídico e derivar grupos das rotinas recebidas, evitando ocultar futuros grupos. TypeScript, ESLint e build de produção aprovados."
+        },
+        {
+          "data": "2026-09-28",
+          "acao": "pendente",
+          "nota": "Refino da demonstração: filtro por grupo e limpeza de histórico/resultados por worker."
+        },
+        {
+          "data": "2026-09-28",
+          "acao": "concluido",
+          "nota": "Workers ganhou filtro horizontal por grupo com contadores e ação confirmada para limpar histórico, cache e resultados jurídicos da fonte, mantendo a rotina pronta para nova consulta. TypeScript, ESLint, 126 testes e build aprovados."
         }
       ],
       "concluidoEm": "2026-09-28"

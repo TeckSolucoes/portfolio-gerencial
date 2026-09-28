@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { requireFuncionalidadeForAction, requireSessionForAction } from '@/lib/authz';
-import { definirAgendaPadrao, definirAtivo, definirHorarios, executarWorker } from '@/lib/workers/motor';
+import { definirAgendaPadrao, definirAtivo, definirHorarios, executarWorker, limparHistoricoWorker } from '@/lib/workers/motor';
 import { registrarAuditoria } from '@/lib/auditoria';
 
 export type ResultadoAcao = { ok: true; aviso?: string } | { ok: false; erro: string };
@@ -57,5 +57,15 @@ export async function mudarAgendaPadrao(horarios: string[]): Promise<ResultadoAc
     await registrarAuditoria(session.user, { acao: 'Agenda padrão alterada', rota: '/admin/workers', detalhes: horarios.join(', ') });
     revalidatePath('/admin/workers');
     return { ok: true };
+  });
+}
+
+export async function limparWorker(id: string): Promise<ResultadoAcao> {
+  return protegida(async (session) => {
+    await limparHistoricoWorker(id);
+    await registrarAuditoria(session.user, { acao: 'Histórico do worker limpo', rota: '/admin/workers', detalhes: id });
+    revalidatePath('/admin/workers');
+    revalidatePath('/juridico');
+    return { ok: true, aviso: 'Histórico e resultado removidos. O worker pode ser executado novamente.' };
   });
 }

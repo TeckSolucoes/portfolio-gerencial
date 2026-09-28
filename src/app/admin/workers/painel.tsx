@@ -3,12 +3,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { tempoRelativo } from '@/lib/tempo';
 import { HORARIOS_PADRAO, horarioValido, MAX_HORARIOS, type EstadoWorker, type GrupoWorker } from '@/lib/workers/tipos';
-import { alternarAtivo, executarAgora, mudarAgendaPadrao, mudarHorarios, type ResultadoAcao } from './actions';
+import { alternarAtivo, executarAgora, limparWorker, mudarAgendaPadrao, mudarHorarios, type ResultadoAcao } from './actions';
 import './workers.css';
 
 const POLL_MS = 4000;
 const ORDEM_GRUPOS: GrupoWorker[] = ['Notícias', 'Mercado', 'Diário Oficial', 'Transparência', 'Jurídico'];
 type Situacao = 'rodando' | 'pendente' | 'pausado' | 'erro' | 'ok' | 'nunca';
+type FiltroGrupo = GrupoWorker | 'Todos';
 const ROTULO_SITUACAO: Record<Situacao, string> = {
   rodando: 'Rodando',
   pendente: 'Aguardando configuração',
@@ -76,6 +77,7 @@ export function Painel({ inicial, padraoInicial, agoraInicial }: { inicial: Esta
   const visivel = useSyncExternalStore(assinarVisibilidade, abaVisivel, () => true);
   const [ocupados, setOcupados] = useState<Set<string>>(new Set());
   const [avisos, setAvisos] = useState<Aviso[]>([]);
+  const [grupoAtivo, setGrupoAtivo] = useState<FiltroGrupo>('Todos');
   // Diferença entre o relógio do servidor e o do navegador, pra contagem regressiva não depender do fuso/relógio local.
   // Começa em 0 e é acertada a cada resposta do servidor.
   const deslocamento = useRef(0);
@@ -166,12 +168,14 @@ export function Painel({ inicial, padraoInicial, agoraInicial }: { inicial: Esta
 
   // Deriva os grupos dos workers recebidos para que uma rotina nova nunca fique invisível
   // apenas porque seu grupo ainda não foi incluído na ordem preferencial da interface.
-  const porGrupo = [...new Set(workers.map((w) => w.grupo))]
+  const gruposDisponiveis = [...new Set(workers.map((w) => w.grupo))]
     .sort((a, b) => {
       const ia = ORDEM_GRUPOS.indexOf(a);
       const ib = ORDEM_GRUPOS.indexOf(b);
       return (ia < 0 ? Number.MAX_SAFE_INTEGER : ia) - (ib < 0 ? Number.MAX_SAFE_INTEGER : ib);
-    })
+    });
+  const porGrupo = gruposDisponiveis
+    .filter((grupo) => grupoAtivo === 'Todos' || grupo === grupoAtivo)
     .map((grupo) => ({ grupo, itens: workers.filter((w) => w.grupo === grupo) }));
   const agora = new Date(agoraMs);
 
@@ -206,6 +210,15 @@ export function Painel({ inicial, padraoInicial, agoraInicial }: { inicial: Esta
         <Kpi rotulo="Com erro" valor={kpis.erro} tom="erro" />
         <Kpi rotulo="Pausados ou aguardando" valor={kpis.parados} tom="pausado" />
       </dl>
+
+      <nav className="w-filtros" aria-label="Filtrar workers por grupo">
+        {(['Todos', ...gruposDisponiveis] as FiltroGrupo[]).map((grupo) => {
+          const quantidade = grupo === 'Todos' ? workers.length : workers.filter((w) => w.grupo === grupo).length;
+          return <button key={grupo} type="button" className={grupoAtivo === grupo ? 'ativo' : ''} aria-pressed={grupoAtivo === grupo} onClick={() => setGrupoAtivo(grupo)}>
+            {grupo}<span>{quantidade}</span>
+          </button>;
+        })}
+      </nav>
 
       <AgendaPadrao padrao={padrao} seguem={workers.filter((w) => !w.horariosProprios).length} ocupados={ocupados} rodarAcao={rodarAcao} />
 
@@ -251,6 +264,7 @@ function Linha({ w, agora, ocupados, rodarAcao }: { w: EstadoWorker; agora: Date
   const ocRun = ocupados.has(`${w.id}:run`);
   const ocAtivo = ocupados.has(`${w.id}:ativo`);
   const ocHor = ocupados.has(`${w.id}:hor`);
+  const ocLimpar = ocupados.has(`${w.id}:limpar`);
   const [editando, setEditando] = useState(false);
 
   let proxima = '—';
@@ -331,6 +345,17 @@ function Linha({ w, agora, ocupados, rodarAcao }: { w: EstadoWorker; agora: Date
           }
         >
           {ocAtivo ? 'Aplicando…' : w.ativo ? 'Pausar' : 'Ativar'}
+        </button>
+        <button
+          type="button"
+          className="w-btn w-btn-perigo"
+          disabled={w.rodando || ocLimpar}
+          onClick={() => {
+            if (!window.confirm(`Limpar o histórico e o resultado de "${w.nome}"? O worker continuará disponível para uma nova consulta.`)) return;
+            void rodarAcao(`${w.id}:limpar`, () => limparWorker(w.id), `Histórico de "${w.nome}" removido.`);
+          }}
+        >
+          {ocLimpar ? 'Limpando…' : 'Limpar histórico'}
         </button>
         <div className="w-agenda">
           <span className="w-agenda-rot">Horários</span>
