@@ -27,12 +27,14 @@
 .custos-page .custos-resumo span{display:block;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.08em}
 .custos-page .custos-resumo strong{display:block;margin-top:7px;font-size:24px}
 .custos-page .nota-paga{border-color:#276749;color:#bbf7d0;background:#10322a}
-.custos-page .custo-cadastro{margin-top:18px;padding:16px;border:1px solid var(--line);border-radius:14px;background:var(--card)}
-.custos-page .custo-cadastro summary{cursor:pointer;font-weight:700;color:var(--blue)}
-.custos-page .custo-form{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:16px;align-items:end}
+.custos-page .custo-cadastro-acao{display:flex;justify-content:flex-end;margin-top:18px}
+.custo-modal{width:min(760px,calc(100vw - 32px));max-height:calc(100vh - 32px);margin:auto;padding:0;border:1px solid #2b476b;border-radius:16px;background:#112036;color:#f0f8ff;box-shadow:0 24px 80px #000b;overflow:auto}.custo-modal::backdrop{background:#020817c7;backdrop-filter:blur(5px)}
+.custo-modal-painel{padding:22px}.custo-modal-painel>header{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;padding-bottom:16px;border-bottom:1px solid #1a2d45}.custo-modal-painel>header span{color:#38bdf8;font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}.custo-modal-painel>header h2{margin-top:4px;font-size:22px}.custo-modal-painel>header p{margin-top:5px;color:#9db0c7;font-size:12px}.custo-modal-fechar{width:36px;height:36px;border:1px solid #2b476b;border-radius:9px;background:#0d1a2c;color:#f0f8ff;font-size:24px;line-height:1;cursor:pointer}
+.custos-page .custo-form,.custo-modal .custo-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:18px;align-items:end}
 .custos-page .custo-form label{display:flex;flex-direction:column;gap:6px;color:var(--muted);font-size:12px}
-.custos-page :is(input,select){min-height:42px;padding:8px 10px;border:1px solid var(--line);border-radius:9px;background:var(--inner);color:var(--text);font:inherit;color-scheme:dark}
+.custos-page :is(input,select),.custo-modal :is(input,select){min-height:42px;padding:8px 10px;border:1px solid #1a2d45;border-radius:9px;background:#0d1a2c;color:#f0f8ff;font:inherit;color-scheme:dark}.custo-modal .custo-form label{display:flex;flex-direction:column;gap:6px;color:#9db0c7;font-size:12px}
 .custos-page .custo-descricao{grid-column:span 2}.custos-page .custo-check{flex-direction:row;align-items:center}.custos-page .custo-check input{min-height:auto}
+.custo-modal .custo-descricao{grid-column:span 2}.custo-modal .custo-check{flex-direction:row;align-items:center}.custo-modal .custo-check input{min-height:auto}.custo-modal .custo-modal-erro{grid-column:1/-1;color:#fca5a5;font-size:12px}.custo-modal .custo-form footer{display:flex;justify-content:flex-end;gap:10px;grid-column:1/-1;margin-top:4px;padding-top:16px;border-top:1px solid #1a2d45}
 .custos-page .custos-cadastros{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:18px}
 .custos-page .custo-registro{padding:18px;border:1px solid var(--line);border-radius:14px;background:linear-gradient(145deg,var(--card),var(--inner))}
 .custos-page .custo-registro.is-arquivado{opacity:.6}
@@ -40,4 +42,4 @@
 .custos-page .custo-acoes,.custos-page .custo-acoes form{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.custos-page .custo-acoes{margin-top:14px}.custos-page .custo-acoes input{min-height:38px}
 .custos-page .custo-historico{display:flex;flex-direction:column;gap:7px;margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
 .custos-page .custo-lancamento{display:grid;grid-template-columns:1fr 1fr auto auto;align-items:center;gap:10px;font-size:12px}.custos-page .custo-status{padding:3px 8px;border-radius:999px;font-style:normal}.custos-page .custo-status.pago{color:#bbf7d0;background:#10322a}.custos-page .custo-status.pendente{color:#fde7b8;background:#3a2a10}.custos-page .custo-link{border:0;background:none;color:var(--blue);cursor:pointer;font:inherit}
-@media(max-width:760px){.custos-page .custos-resumo,.custos-page .custos-cadastros,.custos-page .custo-form{grid-template-columns:1fr}.custos-page .custo-descricao{grid-column:auto}.custos-page .custo-lancamento{grid-template-columns:1fr auto}.custos-page .custo-lancamento form{grid-column:span 2}}
+@media(max-width:760px){.custos-page .custos-resumo,.custos-page .custos-cadastros,.custos-page .custo-form,.custo-modal .custo-form{grid-template-columns:1fr}.custos-page .custo-descricao,.custo-modal .custo-descricao{grid-column:auto}.custos-page .custo-lancamento{grid-template-columns:1fr auto}.custos-page .custo-lancamento form{grid-column:span 2}.custo-modal-painel{padding:18px}.custo-modal .custo-form footer{grid-column:auto}.custo-modal .custo-modal-erro{grid-column:auto}}

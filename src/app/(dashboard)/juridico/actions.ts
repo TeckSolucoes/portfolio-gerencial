@@ -54,6 +54,7 @@ export async function alternarCnpj(formData: FormData) {
   const empresa = await prisma.juridicoEmpresa.update({ where: { id }, data: { ativo } });
   await registrarAuditoria(session.user, { acao: ativo ? 'Monitoramento de CNPJ ativado' : 'Monitoramento de CNPJ pausado', rota: '/juridico', detalhes: empresa.cnpj });
   revalidatePath('/juridico');
+  revalidatePath(`/juridico/${id}`);
 }
 
 export async function marcarEventosVistos(formData: FormData) {
@@ -61,4 +62,5 @@ export async function marcarEventosVistos(formData: FormData) {
   const empresaId = String(formData.get('empresaId') ?? '');
   await prisma.juridicoEvento.updateMany({ where: empresaId ? { empresaId } : {}, data: { visto: true } });
   revalidatePath('/juridico');
+  if (empresaId) revalidatePath(`/juridico/${empresaId}`);
 }

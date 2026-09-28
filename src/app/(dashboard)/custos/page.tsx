@@ -1,7 +1,8 @@
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { requireFuncionalidadeForPage } from '@/lib/authz';
-import { arquivarCusto, alternarPagamento, cadastrarCusto, gerarCompetencia } from './actions';
+import { arquivarCusto, alternarPagamento, gerarCompetencia } from './actions';
+import { CadastroCustoModal } from './CadastroCustoModal';
 import '../institucional.css';
 
 const moeda = (centavos: number) => (centavos / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -32,18 +33,7 @@ export default async function CustosPage() {
     </section>
     <p className="nota nota-paga" role="note">Os custos iniciais de Claude, Codex e W-API já foram pagos e estão registrados no histórico de setembro de 2026.</p>
 
-    {podeGerenciar && <details className="custo-cadastro">
-      <summary>+ Cadastrar custo</summary>
-      <form action={cadastrarCusto} className="custo-form">
-        <label>Nome<input name="nome" required maxLength={80} /></label>
-        <label>Valor (R$)<input name="valor" required inputMode="decimal" placeholder="130,00" /></label>
-        <label>Periodicidade<select name="periodicidade" defaultValue="mensal"><option value="unico">Único</option><option value="mensal">Mensal</option><option value="anual">Anual</option></select></label>
-        <label>Competência<input name="competencia" type="month" defaultValue={competencia} required /></label>
-        <label className="custo-descricao">Descrição<input name="descricao" maxLength={240} /></label>
-        <label className="custo-check"><input name="pago" type="checkbox" /> Já foi pago</label>
-        <button className="btn btn-primary" type="submit">Salvar custo</button>
-      </form>
-    </details>}
+    {podeGerenciar && <CadastroCustoModal competencia={competencia} />}
 
     <section className="custos-cadastros" aria-label="Custos cadastrados">
       {custos.map((custo) => <article className={`custo-registro${custo.ativo ? '' : ' is-arquivado'}`} key={custo.id}>
