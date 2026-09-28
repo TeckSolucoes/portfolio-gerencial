@@ -109,6 +109,7 @@ export function Starfield() {
     }
 
     function handleMouseMove(e: MouseEvent) {
+      if (e.buttons !== 0) return;
       mx = (e.clientX / window.innerWidth - 0.5) * 2;
       my = (e.clientY / window.innerHeight - 0.5) * 2;
     }
@@ -127,5 +128,5 @@ export function Starfield() {
     };
   }, []);
 
-  return <canvas id="stars" ref={canvasRef} />;
+  return <canvas id="stars" ref={canvasRef} draggable={false} />;
 }

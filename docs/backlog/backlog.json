@@ -1,6 +1,6 @@
 {
   "projeto": "Portal Teck (Painel Executivo)",
-  "atualizadoEm": "2026-09-27",
+  "atualizadoEm": "2026-09-28",
   "legendaStatus": [
     "pendente",
     "em-andamento",
@@ -983,9 +983,19 @@
           "data": "2026-09-27",
           "acao": "concluido",
           "nota": "Revisão visual consolidada: cabeçalho reduzido para 64px, lateral para 60px recolhida e 220px aberta, ícones para 18px e itens para 40px. Conteúdo passou a ocupar a largura disponível, alinhado à esquerda e com abertura compacta e consistente. Administração foi removida do menu por ser apenas redirecionamento; Usuários, Metas e Workers permanecem diretos. Saiba Mais agora usa somente ícone de livro com rótulo acessível. TypeScript, ESLint e 118 testes aprovados."
+        },
+        {
+          "data": "2026-09-28",
+          "acao": "pendente",
+          "nota": ""
+        },
+        {
+          "data": "2026-09-28",
+          "acao": "concluido",
+          "nota": "A camada decorativa do login deixou de receber cliques, seleção ou arraste nativo; o canvas foi marcado como não arrastável e o parallax ignora movimentos enquanto algum botão do mouse está pressionado."
         }
       ],
-      "concluidoEm": "2026-09-27"
+      "concluidoEm": "2026-09-28"
     },
     {
       "id": "UX-7",
