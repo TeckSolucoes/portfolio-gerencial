@@ -2,27 +2,35 @@ import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
 import { requireFuncionalidadeForPage } from '@/lib/authz';
 import { formatarCnpj } from '@/lib/cnpj';
-import { termosMonitorados } from '@/lib/juridicoConsulta';
 import { CadastroCnpj } from './CadastroCnpj';
-import { alternarCnpj, marcarEventosVistos } from './actions';
 import './juridico.css';
 
 export const dynamic = 'force-dynamic';
 
-const quando = (data: Date | null) => data ? data.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }) : 'Ainda não consultado';
-const nomesFonte: Record<string, string> = { cadastro: 'Cadastro', internet: 'Internet', processos: 'Processos', licitacoes: 'Licitações', sancoes: 'Sanções' };
+const FONTES = ['cadastro', 'internet', 'processos', 'licitacoes', 'sancoes'];
+
+function Sino({ quantidade }: { quantidade: number }) {
+  return <span className={`jur-sino${quantidade ? ' ativo' : ''}`} aria-label={quantidade ? `${quantidade} alertas não vistos` : 'Sem alertas novos'}>
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" /></svg>
+    {quantidade > 0 && <b>{quantidade > 99 ? '99+' : quantidade}</b>}
+  </span>;
+}
 
 export default async function JuridicoPage() {
   await requireFuncionalidadeForPage('juridico');
   const empresas = await prisma.juridicoEmpresa.findMany({
     orderBy: { razaoSocial: 'asc' },
-    include: { fontes: { orderBy: { fonte: 'asc' } }, eventos: { orderBy: { encontradoEm: 'desc' }, take: 8 } },
+    include: {
+      fontes: { orderBy: { fonte: 'asc' } },
+      eventos: { where: { visto: false }, select: { id: true } },
+      _count: { select: { eventos: true } },
+    },
   });
   const totalEventos = await prisma.juridicoEvento.count();
-  const naoVistos = await prisma.juridicoEvento.count({ where: { visto: false } });
+  const naoVistos = empresas.reduce((total, empresa) => total + empresa.eventos.length, 0);
   return <div className="juridico">
     <header className="jur-head">
-      <div><p className="jur-kicker">Risco e inteligência corporativa</p><h1>Jurídico</h1><p>Cadastre os CNPJs do grupo e acompanhe alterações cadastrais, menções, processos, licitações e sanções.</p></div>
+      <div><p className="jur-kicker">Risco e inteligência corporativa</p><h1>Jurídico</h1><p>Visão geral dos CNPJs monitorados. Abra uma empresa para consultar seu histórico completo.</p></div>
       <Link href="/admin/workers" className="jur-worker-link">Configurar workers</Link>
     </header>
 
@@ -34,21 +42,23 @@ export default async function JuridicoPage() {
 
     <CadastroCnpj />
 
-    {empresas.length === 0 ? <section className="jur-vazio"><strong>Nenhum CNPJ cadastrado.</strong><p>Use o campo acima para começar. Os workers sempre leem esta lista; nenhum CNPJ fica fixo no código.</p></section> : <div className="jur-lista">
-      {empresas.map((empresa) => <article className={`jur-empresa${empresa.ativo ? '' : ' pausada'}`} key={empresa.id}>
-        <div className="jur-empresa-head">
-          <div><span className="jur-situacao">{empresa.situacaoCadastral ?? 'Situação não informada'}</span><h2>{empresa.razaoSocial}</h2><p>{empresa.nomeFantasia || formatarCnpj(empresa.cnpj)} · {formatarCnpj(empresa.cnpj)}</p></div>
-          <form action={alternarCnpj}><input type="hidden" name="id" value={empresa.id} /><input type="hidden" name="ativo" value={String(!empresa.ativo)} /><button>{empresa.ativo ? 'Pausar' : 'Ativar'}</button></form>
-        </div>
-        <dl className="jur-dados"><div><dt>Local</dt><dd>{[empresa.municipio, empresa.uf].filter(Boolean).join(' · ') || '—'}</dd></div><div><dt>Natureza</dt><dd>{empresa.naturezaJuridica || '—'}</dd></div><div><dt>Atividade principal</dt><dd>{empresa.atividadePrincipal || '—'}</dd></div><div><dt>Consulta cadastral</dt><dd>{quando(empresa.dadosAtualizadosEm)}<a className="jur-registro-link" href={`https://brasilapi.com.br/api/cnpj/v1/${empresa.cnpj}`} target="_blank" rel="noreferrer">Abrir registro na BrasilAPI</a></dd></div></dl>
-        <div className="jur-termos"><strong>Termos monitorados</strong><div>{termosMonitorados(empresa).map((termo) => <span key={termo}>{termo}</span>)}</div><small>Referência Google Alerts: razão social, nome fantasia e CNPJ.</small></div>
-        <div className="jur-fontes">{['cadastro', 'internet', 'processos', 'licitacoes', 'sancoes'].map((fonte) => {
-          const estado = empresa.fontes.find((f) => f.fonte === fonte);
-          return <div className={`jur-fonte ${estado?.status ?? 'pendente'}`} key={fonte}><span>{nomesFonte[fonte]}</span><strong>{estado?.status === 'ok' ? 'Monitorando' : estado?.status === 'erro' ? 'Falha' : 'Aguardando worker'}</strong><small>{estado?.mensagem ?? 'Sem execução registrada.'}</small>{estado && <small>Última consulta: {quando(estado.consultadoEm)}</small>}</div>;
-        })}</div>
-        <div className="jur-eventos-head"><h3>Últimos eventos</h3>{empresa.eventos.some((e) => !e.visto) && <form action={marcarEventosVistos}><input type="hidden" name="empresaId" value={empresa.id} /><button>Marcar como vistos</button></form>}</div>
-        {empresa.eventos.length === 0 ? <p className="jur-sem-evento">Nenhum evento encontrado até agora.</p> : <ul className="jur-eventos">{empresa.eventos.map((evento) => <li className={evento.visto ? '' : 'novo'} key={evento.id}><span>{evento.tipo}</span><div><strong>{evento.url ? <a href={evento.url} target="_blank" rel="noreferrer">{evento.titulo}</a> : evento.titulo}</strong><small>{evento.resumo} · encontrado em {quando(evento.encontradoEm)}</small></div></li>)}</ul>}
-      </article>)}
-    </div>}
+    {empresas.length === 0 ? <section className="jur-vazio"><strong>Nenhum CNPJ cadastrado.</strong><p>Use o campo acima para começar. Os workers sempre leem esta lista; nenhum CNPJ fica fixo no código.</p></section> : <section className="jur-cards" aria-label="Empresas monitoradas">
+      {empresas.map((empresa) => {
+        const falhas = empresa.fontes.filter((fonte) => fonte.status === 'erro').length;
+        const fontesOk = empresa.fontes.filter((fonte) => fonte.status === 'ok').length;
+        return <Link href={`/juridico/${empresa.id}`} className={`jur-card${empresa.ativo ? '' : ' pausada'}${empresa.eventos.length ? ' com-alerta' : ''}`} key={empresa.id}>
+          <div className="jur-card-topo"><span className={`jur-estado${empresa.ativo ? '' : ' pausado'}`}>{empresa.ativo ? 'Monitorando' : 'Pausado'}</span><Sino quantidade={empresa.eventos.length} /></div>
+          <div className="jur-card-corpo"><p>{empresa.nomeFantasia || 'Empresa do grupo'}</p><h2>{empresa.razaoSocial}</h2><span>{formatarCnpj(empresa.cnpj)}</span><small>{[empresa.municipio, empresa.uf].filter(Boolean).join(' · ') || 'Local não informado'}</small></div>
+          <div className="jur-card-fontes" aria-label="Estado das fontes">
+            {FONTES.map((fonte) => {
+              const estado = empresa.fontes.find((item) => item.fonte === fonte)?.status ?? 'pendente';
+              return <i className={estado} key={fonte} title={`${fonte}: ${estado}`} />;
+            })}
+            <span>{falhas ? `${falhas} fonte${falhas > 1 ? 's' : ''} com falha` : `${fontesOk}/${FONTES.length} fontes consultadas`}</span>
+          </div>
+          <footer><span>{empresa._count.eventos} evento{empresa._count.eventos === 1 ? '' : 's'}</span><strong>Abrir histórico <b aria-hidden="true">→</b></strong></footer>
+        </Link>;
+      })}
+    </section>}
   </div>;
 }

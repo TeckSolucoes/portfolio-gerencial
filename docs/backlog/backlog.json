@@ -506,9 +506,19 @@
           "data": "2026-09-27",
           "acao": "concluido",
           "nota": "Criada a aba NOC com permissão modular por perfil e usuário. O painel mostra saúde do banco, volume, backup detectado, agendador, workers, fontes, falhas e próximas execuções."
+        },
+        {
+          "data": "2026-09-28",
+          "acao": "pendente",
+          "nota": "Ajustar a posição do NOC na navegação."
+        },
+        {
+          "data": "2026-09-28",
+          "acao": "concluido",
+          "nota": "NOC fixado como último item do menu lateral e da lista de funcionalidades na gestão de acesso."
         }
       ],
-      "concluidoEm": "2026-09-27"
+      "concluidoEm": "2026-09-28"
     },
     {
       "id": "PRD-11",
@@ -911,9 +921,19 @@
           "data": "2026-09-27",
           "acao": "concluido",
           "nota": "Custos agora são cadastrados em tela com periodicidade única, mensal ou anual, competência, status pago/pendente, geração de lançamento e arquivamento. Claude, Codex e W-API foram migrados como já pagos, totalizando R$ 320,00. Build, testes e migração limpa aprovados."
+        },
+        {
+          "data": "2026-09-28",
+          "acao": "pendente",
+          "nota": "Refino de interação: abrir o cadastro de custos sem expandir o conteúdo da página."
+        },
+        {
+          "data": "2026-09-28",
+          "acao": "concluido",
+          "nota": "Cadastro de custos movido para modal com validação, estado de salvamento e mensagem de erro, mantendo a grade de custos visível ao fundo."
         }
       ],
-      "concluidoEm": "2026-09-27"
+      "concluidoEm": "2026-09-28"
     },
     {
       "id": "UX-5",
@@ -1083,6 +1103,16 @@
           "data": "2026-09-28",
           "acao": "concluido",
           "nota": "Consulta CEIS/CNEP agora normaliza espaços e aspas acidentais da chave e informa o status seguro da falha: chave rejeitada, consulta inválida, limite excedido ou instabilidade do Portal. TypeScript, ESLint, 128 testes e build aprovados."
+        },
+        {
+          "data": "2026-09-28",
+          "acao": "pendente",
+          "nota": "Refino visual: substituir a lista extensa de empresas por cards com alertas e histórico individual."
+        },
+        {
+          "data": "2026-09-28",
+          "acao": "concluido",
+          "nota": "Jurídico reorganizado em grade responsiva de cards, com sino e contador de alertas, estado das fontes e página individual com dados, termos, fontes e até 200 eventos do histórico."
         }
       ],
       "concluidoEm": "2026-09-28"

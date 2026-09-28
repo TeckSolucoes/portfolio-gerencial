@@ -278,7 +278,7 @@ Orientações completas: `docs/backlog/COMO-USAR.md`. Contexto do projeto: `docs
 - [x] **INF-7** Página de saúde do portal (workers, fontes, último backup)
   - impacto médio · esforço P · dono: IA · depende de: INF-5
   - Pronto quando: Rota de saúde e painel resumido para o ADM.
-  - Concluído em 2026-09-27: Criada a aba NOC com permissão modular por perfil e usuário. O painel mostra saúde do banco, volume, backup detectado, agendador, workers, fontes, falhas e próximas execuções.
+  - Concluído em 2026-09-28: NOC fixado como último item do menu lateral e da lista de funcionalidades na gestão de acesso.
 
 - [x] **DAD-6** Selic do Banco Central retornou data futura (anomalia da API)
   - impacto baixo · esforço P · dono: IA
@@ -297,7 +297,7 @@ Orientações completas: `docs/backlog/COMO-USAR.md`. Contexto do projeto: `docs
   - impacto alto · esforço médio · dono: produto + engenharia
   - Pronto quando: Custos podem ser cadastrados e arquivados em tela, com periodicidade e lançamentos por competência, status pago ou pendente e histórico mensal.
   - Notas: Os valores iniciais de Claude, Codex e W-API entram como custos únicos já pagos.
-  - Concluído em 2026-09-27: Custos agora são cadastrados em tela com periodicidade única, mensal ou anual, competência, status pago/pendente, geração de lançamento e arquivamento. Claude, Codex e W-API foram migrados como já pagos, totalizando R$ 320,00. Build, testes e migração limpa aprovados.
+  - Concluído em 2026-09-28: Cadastro de custos movido para modal com validação, estado de salvamento e mensagem de erro, mantendo a grade de custos visível ao fundo.
 
 - [x] **UX-5** Refinar navegação e grade de workers
   - impacto médio · esforço baixo · dono: frontend
@@ -321,7 +321,7 @@ Orientações completas: `docs/backlog/COMO-USAR.md`. Contexto do projeto: `docs
   - Pronto quando: CNPJs são cadastrados em tela e monitorados por rotinas independentes, configuráveis e sem identificadores fixos no código, com consulta cadastral, menções públicas, processos, licitações, sanções, estado por fonte e alertas não vistos.
   - Riscos: RSK-5, RSK-6
   - Notas: Primeira etapa cobre cadastro oficial, menções públicas e CEIS/CNEP. Pesquisa processual completa por parte e busca estruturada de fornecedores no PNCP dependem de conectores específicos das fontes.
-  - Concluído em 2026-09-28: Consulta CEIS/CNEP agora normaliza espaços e aspas acidentais da chave e informa o status seguro da falha: chave rejeitada, consulta inválida, limite excedido ou instabilidade do Portal. TypeScript, ESLint, 128 testes e build aprovados.
+  - Concluído em 2026-09-28: Jurídico reorganizado em grade responsiva de cards, com sino e contador de alertas, estado das fontes e página individual com dados, termos, fontes e até 200 eventos do histórico.
 
 ## Riscos
 
