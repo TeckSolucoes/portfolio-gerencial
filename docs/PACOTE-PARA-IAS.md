@@ -110,7 +110,7 @@ Orientações completas: `docs/backlog/COMO-USAR.md`. Contexto do projeto: `docs
 
 ## Resumo
 
-- Pendentes: 29 · Em andamento: 1 · Bloqueados: 8 · Concluídos: 12
+- Pendentes: 29 · Em andamento: 1 · Bloqueados: 8 · Concluídos: 13
 - Próximo item liberado: **INF-2** Snapshot manual do VPS/volume antes de qualquer limpeza
 
 ## Itens em aberto (do mais importante para o menos importante)
@@ -413,6 +413,13 @@ Orientações completas: `docs/backlog/COMO-USAR.md`. Contexto do projeto: `docs
   - Pronto quando: Campos de metas formatam a digitação em reais com pontos de milhar e vírgula decimal, preservando a validação no servidor.
   - Notas: Solicitado após revisão visual das telas administrativas.
   - Concluído em 2026-09-27: Máscara brasileira aplicada durante a digitação, com teclado numérico no celular, limite compatível com a validação existente e teste automatizado da formatação.
+
+- [x] **PRD-16** Monitoramento jurídico dos CNPJs do grupo
+  - impacto alto · esforço alto · dono: fullstack
+  - Pronto quando: CNPJs são cadastrados em tela e monitorados por rotinas independentes, configuráveis e sem identificadores fixos no código, com consulta cadastral, menções públicas, processos, licitações, sanções, estado por fonte e alertas não vistos.
+  - Riscos: RSK-5, RSK-6
+  - Notas: Primeira etapa cobre cadastro oficial, menções públicas e CEIS/CNEP. Pesquisa processual completa por parte e busca estruturada de fornecedores no PNCP dependem de conectores específicos das fontes.
+  - Concluído em 2026-09-28: Tela Jurídico criada com cadastro e validação de CNPJ, consulta cadastral, cinco workers independentes e configuráveis, estados por fonte, eventos não vistos, permissão modular e documentação em Saiba Mais. Nenhum CNPJ fica fixo no código. Validação: migrações SQLite aplicadas do zero, TypeScript, ESLint, 124 testes e build de produção aprovados.
 
 ## Riscos
 

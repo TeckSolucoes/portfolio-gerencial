@@ -1017,6 +1017,35 @@
         }
       ],
       "concluidoEm": "2026-09-27"
+    },
+    {
+      "id": "PRD-16",
+      "titulo": "Monitoramento jurídico dos CNPJs do grupo",
+      "ordem": 51,
+      "impacto": "alto",
+      "esforco": "alto",
+      "donoSugerido": "fullstack",
+      "dependeDe": [],
+      "riscos": [
+        "RSK-5",
+        "RSK-6"
+      ],
+      "criterioPronto": "CNPJs são cadastrados em tela e monitorados por rotinas independentes, configuráveis e sem identificadores fixos no código, com consulta cadastral, menções públicas, processos, licitações, sanções, estado por fonte e alertas não vistos.",
+      "notas": "Primeira etapa cobre cadastro oficial, menções públicas e CEIS/CNEP. Pesquisa processual completa por parte e busca estruturada de fornecedores no PNCP dependem de conectores específicos das fontes.",
+      "status": "concluido",
+      "historico": [
+        {
+          "data": "2026-09-28",
+          "acao": "em-andamento",
+          "nota": "Implementação iniciada por solicitação do usuário."
+        },
+        {
+          "data": "2026-09-28",
+          "acao": "concluido",
+          "nota": "Tela Jurídico criada com cadastro e validação de CNPJ, consulta cadastral, cinco workers independentes e configuráveis, estados por fonte, eventos não vistos, permissão modular e documentação em Saiba Mais. Nenhum CNPJ fica fixo no código. Validação: migrações SQLite aplicadas do zero, TypeScript, ESLint, 124 testes e build de produção aprovados."
+        }
+      ],
+      "concluidoEm": "2026-09-28"
     }
   ],
   "riscos": [

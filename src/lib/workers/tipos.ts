@@ -1,4 +1,4 @@
-export type GrupoWorker = 'Notícias' | 'Mercado' | 'Diário Oficial' | 'Transparência';
+export type GrupoWorker = 'Notícias' | 'Mercado' | 'Diário Oficial' | 'Transparência' | 'Jurídico';
 
 export interface ResultadoWorker {
   itens: number; // quantos registros a coleta trouxe

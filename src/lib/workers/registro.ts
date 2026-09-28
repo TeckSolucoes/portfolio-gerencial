@@ -3,6 +3,7 @@ import { atosDoDiarioOficial } from '../diarioOficial';
 import { FONTES } from '../diarios';
 import { ibovespa, indicadores, noticias } from '../mercado';
 import { atualizarMapeamento } from '../transparencia/mapeamento';
+import { coletarCadastros, coletarMencoes, coletarSancoes } from '../juridico';
 import type { Worker } from './tipos';
 
 // Fonte que respondeu vazio = coleta ok com 0 itens; fonte que não respondeu (null) = erro.
@@ -105,6 +106,62 @@ const transparenciaWorkers: Worker[] = [
   },
 ];
 
-export const WORKERS: Worker[] = [...noticiasWorkers, ...mercadoWorkers, ...diarioWorkers, ...transparenciaWorkers];
+// Cada rotina lê os CNPJs ativos cadastrados em /juridico. Nenhum CNPJ fica fixo no código.
+// São workers independentes para permitir ligar, desligar e agendar cada fonte em tela.
+const juridicoWorkers: Worker[] = [
+  {
+    id: 'juridico-cadastro',
+    nome: 'Jurídico · Cadastro dos CNPJs',
+    grupo: 'Jurídico',
+    descricao: 'Atualiza razão social, nome fantasia, situação e atividade cadastral via BrasilAPI/Minha Receita.',
+    executar: async () => {
+      const itens = await coletarCadastros();
+      return { itens, mensagem: `${itens} cadastros atualizados`, dados: { itens } };
+    },
+  },
+  {
+    id: 'juridico-internet',
+    nome: 'Jurídico · Menções na internet',
+    grupo: 'Jurídico',
+    descricao: 'Busca notícias e menções públicas pelo nome cadastrado de cada empresa.',
+    executar: async () => {
+      const itens = await coletarMencoes('internet');
+      return { itens, mensagem: `${itens} novas menções`, dados: { itens } };
+    },
+  },
+  {
+    id: 'juridico-processos',
+    nome: 'Jurídico · Processos e tribunais',
+    grupo: 'Jurídico',
+    descricao: 'Busca menções públicas envolvendo processos, tribunais e ações judiciais. Consulta processual completa exigirá conector próprio.',
+    executar: async () => {
+      const itens = await coletarMencoes('processos');
+      return { itens, mensagem: `${itens} novas menções processuais`, dados: { itens } };
+    },
+  },
+  {
+    id: 'juridico-licitacoes',
+    nome: 'Jurídico · Licitações e contratos',
+    grupo: 'Jurídico',
+    descricao: 'Busca menções públicas sobre licitações, pregões, contratos e PNCP pelo nome cadastrado.',
+    executar: async () => {
+      const itens = await coletarMencoes('licitacoes');
+      return { itens, mensagem: `${itens} novas menções de licitações`, dados: { itens } };
+    },
+  },
+  {
+    id: 'juridico-sancoes',
+    nome: 'Jurídico · Sanções CEIS/CNEP',
+    grupo: 'Jurídico',
+    descricao: 'Consulta CEIS e CNEP por CNPJ na API oficial do Portal da Transparência.',
+    pendencia: () => process.env.PORTAL_TRANSPARENCIA_API_KEY ? null : 'Falta PORTAL_TRANSPARENCIA_API_KEY no EasyPanel.',
+    executar: async () => {
+      const itens = await coletarSancoes();
+      return { itens, mensagem: `${itens} novas sanções`, dados: { itens } };
+    },
+  },
+];
+
+export const WORKERS: Worker[] = [...noticiasWorkers, ...mercadoWorkers, ...diarioWorkers, ...transparenciaWorkers, ...juridicoWorkers];
 
 export const workerPorId = (id: string) => WORKERS.find((w) => w.id === id);
