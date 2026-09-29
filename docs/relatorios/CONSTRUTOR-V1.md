@@ -53,4 +53,6 @@ Tempo: hora e dia de cadastro. Dimensões: gerente, equipe, operador, convênio,
 
 O relatório anterior e seu `evidencia.json` fixo foram removidos. Em falha de conexão, a tela informa o erro e não apresenta números simulados ou antigos.
 
+O acesso principal `/relatorio` mantém uma visão diária fixa com propostas, valores, taxa de integração, produção por hora, funil e ranking. Um seletor no topo alterna entre essa visão executiva e a montagem livre em `/relatorio/construtor`.
+
 O banco da Função nunca é varrido por inteiro: primeiro o Front V2 é filtrado por empresa e período; depois, somente os números encontrados são consultados na Função. O intervalo máximo é 92 dias, existe um teto adicional de 100 mil propostas no Front e `releases` é agregada antes do cruzamento para não duplicar valor.
