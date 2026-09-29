@@ -46,9 +46,11 @@ Tempo: hora e dia de cadastro. Dimensões: gerente, equipe, operador, convênio,
 
 1. Catálogo fechado e modelos padrão. **Entregue.**
 2. Consulta agregada por hora/dia no Front V2. **Entregue.**
-3. Leitura dos estados e valores da Função sincronizados no Front V2. **Entregue nesta primeira versão; conciliação direta entre as bases ainda será adicionada.**
+3. Conciliação direta de status, esteira e valor liberado com a Função por `NumeroProposta`. **Entregue em lotes de até 800 códigos vindos do recorte do Front V2.**
 4. Tela de seleção e prévia. **Entregue em `/relatorio/construtor`.**
 5. Persistência das visões e compartilhamento por perfil.
 6. Exportação Excel das agregações aprovadas.
 
 O relatório anterior e seu `evidencia.json` fixo foram removidos. Em falha de conexão, a tela informa o erro e não apresenta números simulados ou antigos.
+
+O banco da Função nunca é varrido por inteiro: primeiro o Front V2 é filtrado por empresa e período; depois, somente os números encontrados são consultados na Função. O intervalo máximo é 92 dias, existe um teto adicional de 100 mil propostas no Front e `releases` é agregada antes do cruzamento para não duplicar valor.

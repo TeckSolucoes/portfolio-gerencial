@@ -6,7 +6,7 @@ import { variaveisAusentes } from '@/lib/bases/politica';
 import { ROTULO_EMPRESA, type Empresa } from '@/lib/empresas';
 import { escolherEmpresa } from '@/lib/permissoes';
 import { CAMPOS_RELATORIO, campoRelatorio, type IdCampoRelatorio, type TipoGrafico, VISOES_PADRAO } from '@/lib/relatorio/construtor/catalogo';
-import { executarVisao, formatoMetrica, type PontoVisao } from '@/lib/relatorio/construtor/consulta';
+import { executarVisao, formatoMetrica, type PontoVisao, type ResultadoVisao } from '@/lib/relatorio/construtor/consulta';
 import { Grafico } from './Grafico';
 import './construtor.css';
 
@@ -37,11 +37,18 @@ export default async function ConstrutorRelatorioPage({ searchParams }: { search
   const camposMetrica = CAMPOS_RELATORIO.filter((c) => c.tipo === 'metrica');
 
   let pontos: PontoVisao[] = [];
+  let conciliacao: ResultadoVisao['conciliacao'] | null = null;
   let erro = '';
-  if (variaveisAusentes('front-v2').length) erro = 'A conexão do Front V2 ainda não está completa neste ambiente.';
+  const basesIncompletas = [
+    variaveisAusentes('front-v2').length ? 'Front V2' : '',
+    variaveisAusentes('funcao').length ? 'Função' : '',
+  ].filter(Boolean);
+  if (basesIncompletas.length) erro = `A conexão de ${basesIncompletas.join(' e ')} ainda não está completa neste ambiente.`;
   else {
     try {
-      pontos = await executarVisao({ empresa, inicio, fim, dimensao: grafico === 'indicador' ? null : dimensao, metrica, grafico });
+      const resultado = await executarVisao({ empresa, inicio, fim, dimensao: grafico === 'indicador' ? null : dimensao, metrica, grafico });
+      pontos = resultado.pontos;
+      conciliacao = resultado.conciliacao;
     } catch (e) {
       erro = e instanceof Error && /Período|data final|92 dias|Campo|Escolha|gráfico/.test(e.message) ? e.message : 'A fonte ao vivo não respondeu. Nenhum dado antigo foi exibido.';
     }
@@ -76,8 +83,15 @@ export default async function ConstrutorRelatorioPage({ searchParams }: { search
         <button type="submit">Gerar visão</button>
       </form>
 
+      {conciliacao && <aside className={`cv-reconcile ${conciliacao.ausentesFuncao || conciliacao.divergenciasStatus ? 'warning' : ''}`} aria-label="Conciliação das bases">
+        <strong>Front V2 × Função</strong>
+        <span>{conciliacao.propostasFront.toLocaleString('pt-BR')} propostas no recorte</span>
+        <span>{conciliacao.encontradasFuncao.toLocaleString('pt-BR')} de {conciliacao.enviadasFuncao.toLocaleString('pt-BR')} localizadas na Função</span>
+        <span>{conciliacao.ausentesFuncao.toLocaleString('pt-BR')} ausentes</span>
+        <span>{conciliacao.divergenciasStatus.toLocaleString('pt-BR')} status divergentes</span>
+      </aside>}
       {erro ? <div className="cv-alert" role="status">{erro}</div> : <section className="cv-result"><div className="cv-result-head"><div><span>Visão atual</span><h2>{nomeMetrica}{nomeDimensao ? ` por ${nomeDimensao.toLowerCase()}` : ''}</h2></div><small>{ROTULO_EMPRESA[empresa]} · {inicio.split('-').reverse().join('/')} a {fim.split('-').reverse().join('/')}</small></div><Grafico tipo={grafico} pontos={pontos} formato={formatoMetrica(metrica)} /></section>}
-      <p className="cv-source">Fonte ao vivo: Front V2, propostas enviadas à Função. Valores e estados da Função são os campos sincronizados na proposta. Nenhuma faixa simulada ou export antigo é exibido.</p>
+      <p className="cv-source">Fonte ao vivo: o Front V2 define o período, empresa e responsáveis; status, esteira e valor liberado são confirmados diretamente na Função por número da proposta, em lotes de até 800. Nenhuma varredura integral, faixa simulada ou export antigo é usado.</p>
     </main>
   );
 }

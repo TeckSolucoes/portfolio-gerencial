@@ -1,18 +1,21 @@
 import 'server-only';
 
 import type { RowDataPacket } from 'mysql2/promise';
-import { consultarFrontV2 } from '@/lib/bases/conexoes';
+import { consultarFrontV2, consultarFuncaoEmLotes } from '@/lib/bases/conexoes';
 import { campoRelatorio, validarVisao, type IdCampoRelatorio, type TipoGrafico } from './catalogo';
+import {
+  agregarConciliado,
+  resumirConciliacao,
+  type PontoConciliado,
+  type PropostaFrontRelatorio,
+  type PropostaFuncaoRelatorio,
+  type ResumoConciliacao,
+} from './conciliacao';
 
-interface LinhaBanco extends RowDataPacket {
-  rotulo: string | null;
-  valor: string | number | null;
-}
+interface LinhaFront extends RowDataPacket, PropostaFrontRelatorio {}
+interface LinhaFuncao extends RowDataPacket, PropostaFuncaoRelatorio {}
 
-export interface PontoVisao {
-  rotulo: string;
-  valor: number;
-}
+export type PontoVisao = PontoConciliado;
 
 export interface ConsultaVisao {
   dimensao: IdCampoRelatorio | null;
@@ -23,29 +26,13 @@ export interface ConsultaVisao {
   empresa: string;
 }
 
-const DIMENSOES: Record<string, string> = {
-  hora_cadastro: "DATE_FORMAT(data_cadastro, '%Y-%m-%d %H:00')",
-  dia_cadastro: 'DATE(data_cadastro)',
-  gerente: "COALESCE(NULLIF(TRIM(Gerente), ''), '(não informado)')",
-  equipe: "COALESCE(NULLIF(TRIM(Equipe), ''), '(não informado)')",
-  operador: "COALESCE(NULLIF(TRIM(Operador), ''), '(não informado)')",
-  convenio: "COALESCE(NULLIF(TRIM(convenio), ''), '(não informado)')",
-  produto: "COALESCE(NULLIF(TRIM(produto), ''), '(não informado)')",
-  modalidade: "COALESCE(NULLIF(TRIM(modalidade), ''), '(não informado)')",
-  status_front: "COALESCE(NULLIF(TRIM(status_front), ''), '(não informado)')",
-  status_funcao: "COALESCE(NULLIF(TRIM(Status_Funcao), ''), '(não informado)')",
-  esteira_funcao: "COALESCE(NULLIF(TRIM(Esteira_Funcao), ''), '(não informado)')",
-};
+export interface ResultadoVisao {
+  pontos: PontoVisao[];
+  conciliacao: ResumoConciliacao;
+}
 
-const numeroPtBr = (campo: string) => `CAST(REPLACE(REPLACE(COALESCE(${campo}, '0'), '.', ''), ',', '.') AS DECIMAL(20,2))`;
-
-const METRICAS: Record<string, string> = {
-  qtd_propostas: 'COUNT(DISTINCT id_front)',
-  valor_contratado: `SUM(${numeroPtBr('valor_contrato')})`,
-  valor_liberado: `SUM(${numeroPtBr('valor_liberacao')})`,
-  ticket_medio: `SUM(${numeroPtBr('valor_contrato')}) / NULLIF(COUNT(DISTINCT id_front), 0)`,
-  taxa_integracao: "100 * AVG(CASE WHEN UPPER(COALESCE(Status_Funcao, '')) = 'INTEGRADO' THEN 1 ELSE 0 END)",
-};
+const TAMANHO_LOTE_FUNCAO = 800;
+const LIMITE_PROPOSTAS_FRONT = 100_000;
 
 export function validarPeriodo(inicio: string, fim: string) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(inicio) || !/^\d{4}-\d{2}-\d{2}$/.test(fim)) throw new Error('Período inválido.');
@@ -56,38 +43,78 @@ export function validarPeriodo(inicio: string, fim: string) {
   if (dias > 91) throw new Error('Escolha um período de até 92 dias.');
 }
 
-export async function executarVisao(pedido: ConsultaVisao): Promise<PontoVisao[]> {
-  validarPeriodo(pedido.inicio, pedido.fim);
-  const { dimensao, metrica } = validarVisao(pedido.dimensao, pedido.metrica, pedido.grafico);
-  const expressaoMetrica = METRICAS[metrica.id];
-  if (!expressaoMetrica) throw new Error('Métrica ainda não disponível na fonte ao vivo.');
+const lotesDe = (itens: string[], tamanho: number) => {
+  const lotes: string[][] = [];
+  for (let i = 0; i < itens.length; i += tamanho) lotes.push(itens.slice(i, i + tamanho));
+  return lotes;
+};
+
+async function consultarRecorteFront(pedido: ConsultaVisao): Promise<LinhaFront[]> {
   const prefixoEquipe = pedido.empresa === 'AKRK' ? 'AKRK - %' : pedido.empresa === 'DIG' ? 'DIG - %' : '__sem_acesso__';
-
-  if (!dimensao) {
-    const linhas = await consultarFrontV2<LinhaBanco[]>(
-      `SELECT 'Total' AS rotulo, ${expressaoMetrica} AS valor
-       FROM \`db-atendimento\`.v_andamento_propostas
-       WHERE data_cadastro >= ? AND data_cadastro < DATE_ADD(?, INTERVAL 1 DAY)
-         AND Equipe LIKE ?`,
-      [pedido.inicio, pedido.fim, prefixoEquipe],
-    );
-    return [{ rotulo: 'Total', valor: Number(linhas[0]?.valor ?? 0) }];
-  }
-
-  const expressaoDimensao = DIMENSOES[dimensao.id];
-  if (!expressaoDimensao) throw new Error('Dimensão ainda não disponível na fonte ao vivo.');
-  const ordem = dimensao.tipo === 'tempo' ? 'rotulo ASC' : 'valor DESC, rotulo ASC';
-  const linhas = await consultarFrontV2<LinhaBanco[]>(
-    `SELECT ${expressaoDimensao} AS rotulo, ${expressaoMetrica} AS valor
+  const linhas = await consultarFrontV2<LinhaFront[]>(
+    `SELECT
+       id_front,
+       NULLIF(TRIM(cod_funcao), '') AS numero_proposta,
+       DATE_FORMAT(data_cadastro, '%Y-%m-%d %H:00') AS hora_cadastro,
+       DATE_FORMAT(data_cadastro, '%Y-%m-%d') AS dia_cadastro,
+       COALESCE(NULLIF(TRIM(Gerente), ''), '(não informado)') AS gerente,
+       COALESCE(NULLIF(TRIM(Equipe), ''), '(não informado)') AS equipe,
+       COALESCE(NULLIF(TRIM(Operador), ''), '(não informado)') AS operador,
+       COALESCE(NULLIF(TRIM(convenio), ''), '(não informado)') AS convenio,
+       COALESCE(NULLIF(TRIM(produto), ''), '(não informado)') AS produto,
+       COALESCE(NULLIF(TRIM(modalidade), ''), '(não informado)') AS modalidade,
+       COALESCE(NULLIF(TRIM(status_front), ''), '(não informado)') AS status_front,
+       NULLIF(TRIM(Status_Funcao), '') AS status_funcao_v2,
+       NULLIF(TRIM(Esteira_Funcao), '') AS esteira_funcao_v2,
+       valor_contrato
      FROM \`db-atendimento\`.v_andamento_propostas
      WHERE data_cadastro >= ? AND data_cadastro < DATE_ADD(?, INTERVAL 1 DAY)
        AND Equipe LIKE ?
-     GROUP BY ${expressaoDimensao}
-     ORDER BY ${ordem}
-     LIMIT 50`,
+     LIMIT ${LIMITE_PROPOSTAS_FRONT + 1}`,
     [pedido.inicio, pedido.fim, prefixoEquipe],
   );
-  return linhas.map((linha) => ({ rotulo: String(linha.rotulo ?? '(não informado)'), valor: Number(linha.valor ?? 0) }));
+  if (linhas.length > LIMITE_PROPOSTAS_FRONT) throw new Error('O período retornou mais de 100 mil propostas. Reduza o intervalo.');
+  return linhas;
+}
+
+async function consultarSomentePropostasDaFuncao(numeros: string[]): Promise<LinhaFuncao[]> {
+  const consultas = lotesDe([...new Set(numeros)].filter(Boolean), TAMANHO_LOTE_FUNCAO).map((lote) => {
+    const marcadores = lote.map(() => '?').join(', ');
+    return {
+      sql: `WITH liberacoes AS (
+              SELECT NumeroProposta, SUM(Valor) AS valor_liberado
+              FROM releases
+              WHERE deleted_at IS NULL AND NumeroProposta IN (${marcadores})
+              GROUP BY NumeroProposta
+            )
+            SELECT
+              p.NumeroProposta,
+              p.SituacaoPropostaEsteira AS status_funcao_raw,
+              f.SituacaoEsteira AS status_funcao,
+              COALESCE(NULLIF(f.last_activity_description, ''), NULLIF(f.Descricao, ''), f.SituacaoEsteira) AS esteira_funcao,
+              COALESCE(l.valor_liberado, 0) AS valor_liberado
+            FROM proposals p
+            LEFT JOIN function_mat_information f
+              ON f.NumeroProposta = p.NumeroProposta AND f.deleted_at IS NULL
+            LEFT JOIN liberacoes l ON l.NumeroProposta = p.NumeroProposta
+            WHERE p.deleted_at IS NULL AND p.NumeroProposta IN (${marcadores})`,
+      parametros: [...lote, ...lote],
+    };
+  });
+  if (!consultas.length) return [];
+  return consultarFuncaoEmLotes<LinhaFuncao>(consultas);
+}
+
+export async function executarVisao(pedido: ConsultaVisao): Promise<ResultadoVisao> {
+  validarPeriodo(pedido.inicio, pedido.fim);
+  const { dimensao, metrica } = validarVisao(pedido.dimensao, pedido.metrica, pedido.grafico);
+  const front = await consultarRecorteFront(pedido);
+  const numeros = front.map((linha) => String(linha.numero_proposta ?? '').trim()).filter(Boolean);
+  const funcao = await consultarSomentePropostasDaFuncao(numeros);
+  return {
+    pontos: agregarConciliado(front, funcao, (dimensao?.id as IdCampoRelatorio | undefined) ?? null, metrica.id as IdCampoRelatorio),
+    conciliacao: resumirConciliacao(front, funcao),
+  };
 }
 
 export const formatoMetrica = (id: string): 'numero' | 'moeda' | 'percentual' => {
