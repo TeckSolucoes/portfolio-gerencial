@@ -11,7 +11,7 @@ Portal interno (Next.js 16 App Router, TypeScript, Prisma 7 + SQLite via better-
 - Variáveis de ambiente relevantes: `DATABASE_URL`, `NEXTAUTH_SECRET`, `NEXTAUTH_URL`, reCAPTCHA (`NEXT_PUBLIC_RECAPTCHA_SITE_KEY`, `RECAPTCHA_SECRET_KEY`), opcional `PORTAL_SERVIDORES_URL`. `PORTAL_TRANSPARENCIA_CHAVE` **não é mais usada** (guardar a chave: volta nas sanções).
 
 ## Mapa do código
-- `src/lib/relatorio/` motor do relatório (casos, lote, pagou/morreu/jornada); `evidencia.json` = retrato fixo do export do Front (31/07–18/09).
+- `src/lib/relatorio/construtor/` catálogo e consulta parametrizada do Relatório Gerencial ao Front V2; `/relatorio` abre o construtor com dados reais e sem fallback estático.
 - `src/lib/monitoramento/` detector (INÉDITO/RARO/PICO) sobre `evidencia.json`.
 - `src/lib/diarios/` um adaptador por diário (MA, TO, SP, PB, MG, SP capital, Imperatriz) + `diarioOficial.ts` (DOU).
 - `src/lib/workers/` agendador (`instrumentation.ts` liga no boot), registro, motor, cache em `data/cache/`, horários 08:00/13:00/19:00 (Brasília).

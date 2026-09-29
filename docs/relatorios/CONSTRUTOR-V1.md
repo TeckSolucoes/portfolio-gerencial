@@ -44,10 +44,11 @@ Tempo: hora e dia de cadastro. Dimensões: gerente, equipe, operador, convênio,
 
 ## Entregas
 
-1. Catálogo fechado e modelos padrão.
-2. Consulta agregada por hora/dia no Front V2.
-3. Conciliação de status e valor com a Função.
-4. Tela de seleção e prévia.
+1. Catálogo fechado e modelos padrão. **Entregue.**
+2. Consulta agregada por hora/dia no Front V2. **Entregue.**
+3. Leitura dos estados e valores da Função sincronizados no Front V2. **Entregue nesta primeira versão; conciliação direta entre as bases ainda será adicionada.**
+4. Tela de seleção e prévia. **Entregue em `/relatorio/construtor`.**
 5. Persistência das visões e compartilhamento por perfil.
 6. Exportação Excel das agregações aprovadas.
 
+O relatório anterior e seu `evidencia.json` fixo foram removidos. Em falha de conexão, a tela informa o erro e não apresenta números simulados ou antigos.
