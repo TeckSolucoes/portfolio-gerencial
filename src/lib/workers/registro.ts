@@ -6,6 +6,7 @@ import { atualizarMapeamento } from '../transparencia/mapeamento';
 import { coletarCadastros, coletarMencoes, coletarSancoes } from '../juridico';
 import { normalizarChavePortal } from '../portalTransparencia';
 import type { Worker } from './tipos';
+import { validarSaudeBases } from '../bases/saude';
 
 // Fonte que respondeu vazio = coleta ok com 0 itens; fonte que não respondeu (null) = erro.
 const naoNulo = <T,>(v: T | null, fonte: string): T => {
@@ -109,6 +110,25 @@ const transparenciaWorkers: Worker[] = [
   },
 ];
 
+const integracaoWorkers: Worker[] = [
+  {
+    id: 'bases-saude',
+    nome: 'Bases · Função, Front V1 e Front V2',
+    grupo: 'Integrações',
+    descricao: 'Confere as três conexões em modo somente leitura, sem consultar CPF, nomes ou linhas de clientes.',
+    executar: async () => {
+      const resultados = await validarSaudeBases();
+      const falhas = resultados.filter((r) => !r.ok);
+      if (falhas.length) throw new Error(`Falha em: ${falhas.map((r) => r.base).join(', ')}.`);
+      return {
+        itens: resultados.length,
+        mensagem: resultados.map((r) => `${r.base}: ${r.latenciaMs} ms`).join(' · '),
+        dados: resultados,
+      };
+    },
+  },
+];
+
 // Cada rotina lê os CNPJs ativos cadastrados em /juridico. Nenhum CNPJ fica fixo no código.
 // São workers independentes para permitir ligar, desligar e agendar cada fonte em tela.
 const juridicoWorkers: Worker[] = [
@@ -166,6 +186,6 @@ const juridicoWorkers: Worker[] = [
   },
 ];
 
-export const WORKERS: Worker[] = [...noticiasWorkers, ...mercadoWorkers, ...diarioWorkers, ...transparenciaWorkers, ...juridicoWorkers];
+export const WORKERS: Worker[] = [...noticiasWorkers, ...mercadoWorkers, ...diarioWorkers, ...transparenciaWorkers, ...juridicoWorkers, ...integracaoWorkers];
 
 export const workerPorId = (id: string) => WORKERS.find((w) => w.id === id);

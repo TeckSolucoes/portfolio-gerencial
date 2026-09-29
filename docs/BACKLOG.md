@@ -1,6 +1,6 @@
 # Backlog — Portal Teck (Painel Executivo)
 
-Atualizado em 2026-09-28. **Gerado por `node scripts/backlog.mjs render` a partir de `docs/backlog/backlog.json`: não edite este arquivo à mão.**
+Atualizado em 2026-09-29. **Gerado por `node scripts/backlog.mjs render` a partir de `docs/backlog/backlog.json`: não edite este arquivo à mão.**
 
 **Ao terminar um item, marque como concluído** (obrigatório, no mesmo PR do trabalho):
 
@@ -12,7 +12,7 @@ Orientações completas: `docs/backlog/COMO-USAR.md`. Contexto do projeto: `docs
 
 ## Resumo
 
-- Pendentes: 29 · Em andamento: 1 · Bloqueados: 8 · Concluídos: 13
+- Pendentes: 28 · Em andamento: 2 · Bloqueados: 7 · Concluídos: 14
 - Próximo item liberado: **INF-2** Snapshot manual do VPS/volume antes de qualquer limpeza
 
 ## Itens em aberto (do mais importante para o menos importante)
@@ -104,12 +104,6 @@ Orientações completas: `docs/backlog/COMO-USAR.md`. Contexto do projeto: `docs
   - Pronto quando: TOTP obrigatório para superadmin, com códigos de recuperação; teste do fluxo.
   - Notas: NextAuth v5 credentials + bcrypt hoje.
 
-- [ ] **DEC-8** Acesso ao Front e ao CCNET ao vivo
-  - impacto alto · esforço M · dono: usuário
-  - Pronto quando: URL do Front; para o CCNET, relatório com intervalo de datas ou usuário somente leitura de banco (não há API).
-  - Riscos: RSK-6
-  - Notas: Desbloqueia PRD-7, PRD-11, PRD-12, DAD-1 e DAD-2. Credenciais nunca no chat.
-
 - [ ] **PRD-5** Sanções do grupo (CEIS, CNEP, leniência) por CNPJ + scorecard de promotora
   - impacto médio · esforço M · dono: IA · depende de: DEC-7 · **aguarda dependências**
   - Pronto quando: Worker diário consulta os CNPJs do grupo e parceiros; alerta de sanção nova; lista de CNPJs editável pelo ADM.
@@ -137,35 +131,35 @@ Orientações completas: `docs/backlog/COMO-USAR.md`. Contexto do projeto: `docs
   - Pronto quando: Lista de CNPJs entregue (AKRK, DIG, Capital Consig, ABC Card e parceiros).
 
 - [!] **PRD-11** Relatório diário automático com os 5 e-mails (Geral + 4 gerentes) e PDF
-  - impacto alto · esforço G · dono: IA · depende de: DEC-8, PRD-2
+  - impacto alto · esforço G · dono: IA · depende de: ~~DEC-8~~, PRD-2
   - Pronto quando: Job diário monta o relatório do dia com dados ao vivo, valida contra as regras (prova de 17/09) e envia 5 e-mails; nunca repete o dia anterior; avisa se o acesso falhar.
   - Riscos: RSK-9, RSK-6
   - Notas: Regras completas no documento do usuário (caso = CPF+tipo+produto, fim do caso, taxa de morte). Envio só com aprovação explícita e endereços reais.
   - Bloqueado: depende de outros itens
 
 - [!] **PRD-7** Qualidade da originação: padrão de erro, SLA por etapa, reinserção com troca de equipe, duplicidade
-  - impacto médio · esforço G · dono: IA · depende de: DEC-8
+  - impacto médio · esforço G · dono: IA · depende de: ~~DEC-8~~
   - Pronto quando: Painel de motivos de reprovação por equipe e operador, tempo por etapa e alerta de reinserção suspeita.
   - Riscos: RSK-9
   - Notas: 'Padrão de erro' ainda não foi definido pelo usuário.
   - Bloqueado: depende de outros itens
 
 - [!] **DAD-1** Fechar a divergência de 'morreu' contra a prova (290 x 289)
-  - impacto médio · esforço M · dono: IA · depende de: DEC-8
+  - impacto médio · esforço M · dono: IA · depende de: ~~DEC-8~~
   - Pronto quando: Geral 17/09 bate 289/464/55 e Reprovado Front/CCNET/Cancelado 89/126/19 com a esteira real do CCNET.
   - Riscos: RSK-9
   - Notas: Hoje a esteira é inferida do status do Front (adaptarFront.ts); sobram 2 casos sem explicação.
   - Bloqueado: depende de outros itens
 
 - [!] **DAD-2** Cancelados de ontem por data real, lista nominal dos que morreram sem reinserir, taxa de morte exata
-  - impacto médio · esforço M · dono: IA · depende de: DEC-8
+  - impacto médio · esforço M · dono: IA · depende de: ~~DEC-8~~
   - Pronto quando: Seções hoje marcadas 'indisponível' passam a mostrar dado real.
   - Riscos: RSK-9
   - Notas: A tela Canceladas e Integradas do CCNET traz a data do evento; paginação da grade é instável.
   - Bloqueado: depende de outros itens
 
 - [!] **PRD-12** Monitoramento por promotora no Função (caso Quero Mais / Gov. PI)
-  - impacto médio · esforço M · dono: IA · depende de: DEC-8
+  - impacto médio · esforço M · dono: IA · depende de: ~~DEC-8~~
   - Pronto quando: Detector (src/lib/monitoramento/detectar.ts) rodando por promotora com 90 dias de dados reais do Função; caso Quero Mais detectado.
   - Riscos: RSK-5
   - Notas: Grade do CCNET tem Corban, Convênio, Tabela, Valor, Situação e Origem, sem CPF.
@@ -184,12 +178,11 @@ Orientações completas: `docs/backlog/COMO-USAR.md`. Contexto do projeto: `docs
   - Notas: SP capital tem CKAN aberto; estado de SP e demais precisam de pesquisa. O federal usa o arquivo mensal Servidores SIAPE.
   - Bloqueado: depende de outros itens
 
-- [!] **PRD-10** Construtor de relatórios/BI (campos, gráficos padrão, Excel) cruzando Front e CCNET
-  - impacto alto · esforço G · dono: IA · depende de: DEC-8
+- [~] **PRD-10** Construtor de relatórios/BI (campos, gráficos padrão, Excel) cruzando Front e CCNET
+  - impacto alto · esforço G · dono: IA · depende de: ~~DEC-8~~
   - Pronto quando: Decisão entre Metabase e construtor próprio; camada de campos aprovada (nada de SQL livre); banco somente leitura; acesso por perfil.
   - Riscos: RSK-6, RSK-7
   - Notas: Metabase não cruza dois bancos: cópia local dos dados é necessária de qualquer forma.
-  - Bloqueado: depende de outros itens
 
 - [ ] **PRD-13** Margem real por cliente via averbadora/convênio, com consentimento
   - impacto médio · esforço G · dono: usuário + IA · depende de: DEC-2 · **aguarda dependências**
@@ -256,6 +249,13 @@ Orientações completas: `docs/backlog/COMO-USAR.md`. Contexto do projeto: `docs
   - Pronto quando: Tabela de auditoria; eventos gravados em planilha, upload de base, mudança de usuário/meta; tela de consulta para superadmin.
   - Riscos: RSK-1, RSK-7
   - Concluído em 2026-09-27: Tabela aditiva de auditoria criada; acessos, login, logout, exportação nominal, upload de base e alterações de usuários, metas e workers são registrados. A lista de usuários mostra a última latitude/longitude autorizada e o ícone de histórico abre consulta paginada exclusiva do superadmin. TypeScript, ESLint, 117 testes da aplicação, 5 testes do backlog, comparação migrações/schema, runner SQLite e build de produção aprovados.
+
+- [x] **DEC-8** Acesso ao Front e ao CCNET ao vivo
+  - impacto alto · esforço M · dono: usuário
+  - Pronto quando: URL do Front; para o CCNET, relatório com intervalo de datas ou usuário somente leitura de banco (não há API).
+  - Riscos: RSK-6
+  - Notas: Desbloqueia PRD-7, PRD-11, PRD-12, DAD-1 e DAD-2. Credenciais nunca no chat.
+  - Concluído em 2026-09-29: Acessos read-only validados no EasyPanel: Função via SSL, Front V1 direto e Front V2 por túnel SSH. Conectores protegidos e worker de saúde adicionados; nenhuma credencial ou PII foi versionada.
 
 - [x] **DAD-5** Normalizar nomes de convênio (SÃO x SAO e variações)
   - impacto médio · esforço P · dono: IA
