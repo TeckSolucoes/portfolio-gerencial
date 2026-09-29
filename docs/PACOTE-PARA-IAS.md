@@ -246,7 +246,7 @@ Orientações completas: `docs/backlog/COMO-USAR.md`. Contexto do projeto: `docs
   - impacto médio · esforço M · dono: IA · depende de: ~~DEC-8~~
   - Pronto quando: Geral 17/09 bate 289/464/55 e Reprovado Front/CCNET/Cancelado 89/126/19 com a esteira real do CCNET.
   - Riscos: RSK-9
-  - Notas: Hoje a esteira é inferida do status do Front (adaptarFront.ts); sobram 2 casos sem explicação.
+  - Notas: A esteira agora é conciliada ao vivo com a Função em aoVivo.ts; falta repetir a prova histórica de 17/09 para fechar a divergência.
   - Bloqueado: depende de outros itens
 
 - [!] **DAD-2** Cancelados de ontem por data real, lista nominal dos que morreram sem reinserir, taxa de morte exata

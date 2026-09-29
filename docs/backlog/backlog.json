@@ -587,7 +587,7 @@
       "riscos": [
         "RSK-9"
       ],
-      "notas": "Hoje a esteira é inferida do status do Front (adaptarFront.ts); sobram 2 casos sem explicação."
+      "notas": "A esteira agora é conciliada ao vivo com a Função em aoVivo.ts; falta repetir a prova histórica de 17/09 para fechar a divergência."
     },
     {
       "id": "DAD-2",

@@ -176,62 +176,6 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(24px,3vw,32px);lin
 }
 .btn-ghost:hover{border-color:var(--violet);color:var(--text);background:var(--panel-2);}
 
-/* ---------- home view ---------- */
-.grouprow{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:34px;margin-bottom:38px;padding:24px 28px;border:1px solid var(--hair);border-radius:16px;background:var(--panel);}
-.grouprow-total{display:flex;flex-direction:column;gap:7px;padding-right:34px;border-right:1px solid var(--hair);}
-.grouprow-total .gl{font-family:var(--mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-faint);}
-.grouprow-total .gv{font-family:var(--display);font-size:40px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums;}
-.grouprow-breakdown{display:flex;gap:30px;flex-wrap:wrap;}
-.gb-item{display:flex;align-items:center;gap:10px;}
-.gb-item .d{width:9px;height:9px;border-radius:50%;flex:none;}
-.gb-item .d.good{background:var(--good);}
-.gb-item .d.warn{background:var(--warn);}
-.gb-item .d.bad{background:var(--bad);}
-.gb-item .gtext{display:flex;flex-direction:column;gap:2px;}
-.gb-item .gv{font-family:var(--display);font-size:19px;font-weight:600;line-height:1;font-variant-numeric:tabular-nums;}
-.gb-item .gl{font-family:var(--mono);font-size:9.5px;letter-spacing:.6px;text-transform:uppercase;color:var(--text-faint);}
-
-.companies{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;}
-.company-card{
-  text-align:left;background:var(--panel);border:1px solid var(--hair);border-radius:12px;padding:17px 18px 15px;cursor:pointer;
-  transition:border-color .18s, transform .18s; position:relative; overflow:hidden;
-  display:flex;flex-direction:column;height:100%;
-}
-.company-card:hover{border-color:var(--hair-strong);transform:translateY(-2px);}
-.company-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;}
-.company-card.tone-violet::before{background:var(--violet);}
-.company-card.tone-ember::before{background:var(--ember);}
-.company-card.tone-teal::before{background:var(--teal);}
-.company-card.tone-rose::before{background:var(--rose);}
-.company-card.tone-sky::before{background:var(--sky);}
-.company-card .ctag{
-  display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;
-  padding:5px 10px;border-radius:100px;margin-bottom:16px;
-}
-.company-card.tone-violet .ctag{background:var(--violet-soft);color:var(--violet-strong);}
-.company-card.tone-ember .ctag{background:var(--ember-soft);color:var(--ember-strong);}
-.company-card.tone-teal .ctag{background:var(--teal-soft);color:var(--teal-strong);}
-.company-card.tone-rose .ctag{background:var(--rose-soft);color:var(--rose-strong);}
-.company-card.tone-sky .ctag{background:var(--sky-soft);color:var(--sky-strong);}
-.company-card h2{font-family:var(--display);font-size:21px;font-weight:600;margin:0 0 6px;}
-.company-card .ctagline{color:var(--text-dim);font-size:13px;line-height:1.45;margin:0 0 14px;max-width:380px;}
-.company-bar{display:flex;width:100%;height:6px;border-radius:100px;overflow:hidden;background:var(--hair);margin-bottom:14px;}
-.company-bar .seg{display:block;height:100%;}
-.company-bar .seg.ok{background:var(--good);}
-.company-bar .seg.attention{background:var(--warn);}
-.company-bar .seg.blocked{background:var(--bad);}
-.company-breakdown{display:flex;gap:18px;margin-bottom:18px;flex-wrap:wrap;}
-.cb-item{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:12px;color:var(--text-dim);}
-.cb-item .d{width:7px;height:7px;border-radius:50%;}
-.cb-item .d.ok{background:var(--good);}
-.cb-item .d.attention{background:var(--warn);}
-.cb-item .d.blocked{background:var(--bad);}
-.company-card .cta{
-  font-family:var(--mono);font-size:11px;letter-spacing:.5px;color:var(--text-dim);display:flex;align-items:center;gap:7px;
-  margin-top:auto;padding-top:14px;align-self:flex-end;
-}
-.company-card:hover .cta{color:var(--violet-strong);}
-
 /* ---------- company view ---------- */
 .toprow{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;flex-wrap:wrap;margin-bottom:26px;}
 .filters{display:flex;gap:8px;flex-wrap:wrap;}
@@ -304,7 +248,6 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(24px,3vw,32px);lin
   .user-name{display:none;}
   .header-right{width:100%;justify-content:flex-start;}
   main{padding:30px 20px 70px;}
-  .grouprow{gap:18px;padding:18px;}
 }
 
 /* ============================================================
