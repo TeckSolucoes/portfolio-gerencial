@@ -29,9 +29,9 @@
   --sky:#5b9fe8;
   --sky-strong:#8fbdf0;
   --sky-soft:rgba(91,159,232,0.16);
-  --display: var(--font-unbounded), 'Arial Black', sans-serif;
-  --body: var(--font-manrope), system-ui, -apple-system, sans-serif;
-  --mono: var(--font-fragment-mono), ui-monospace, monospace;
+  --display:'Arial Black','Segoe UI',system-ui,sans-serif;
+  --body:'Segoe UI',system-ui,-apple-system,sans-serif;
+  --mono:'Cascadia Mono','Segoe UI Mono',ui-monospace,monospace;
 }
 *{box-sizing:border-box;}
 html,body{margin:0;padding:0;}
