@@ -1,77 +1,510 @@
+import { requireFuncionalidadeForPage } from '@/lib/authz';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { carregarAcesso } from '@/lib/acesso';
-import { requireFuncionalidadeForPage } from '@/lib/authz';
-import { variaveisAusentes } from '@/lib/bases/politica';
-import { ROTULO_EMPRESA, type Empresa } from '@/lib/empresas';
-import { escolherEmpresa } from '@/lib/permissoes';
-import { executarPainelFixo, type PainelFixo } from '@/lib/relatorio/construtor/consulta';
-import { Grafico } from './construtor/Grafico';
-import './construtor/construtor.css';
+import { ROTULO_EMPRESA } from '@/lib/empresas';
+import type { Empresa } from '@/lib/empresas';
+import { metaDoMes } from '@/lib/metas';
+import { escolherEmpresa, podeVerAba } from '@/lib/permissoes';
+import type { Relatorio, Tipo } from '@/lib/relatorio/types';
+import { carregarRelatorioAoVivo } from '@/lib/relatorio/aoVivo';
+import { RelatorioLista } from './RelatorioLista';
+import { RelatorioLote } from './RelatorioLote';
+import { RelatorioNav } from './RelatorioNav';
+import './relatorio.css';
 
+const ABAS = [
+  { escopo: 'Geral', rotulo: 'Geral' },
+  { escopo: 'Luana Cosme', rotulo: 'Luana' },
+  { escopo: 'Adriano Monteiro', rotulo: 'Adriano' },
+  { escopo: 'Daniel Mansur', rotulo: 'Daniel' },
+  { escopo: 'Marcos Mota', rotulo: 'Marcos' },
+];
+
+const MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+const NAO = '—';
 const hojeSp = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
-const horarioSp = () => new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(new Date());
-const moeda = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 2 });
-const numero = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 });
-const percentual = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 1 });
 
-export default async function RelatorioPage({ searchParams }: { searchParams: Promise<{ empresa?: string; data?: string }> }) {
+const brl = (n: number | null | undefined) => (n == null ? NAO : 'R$ ' + n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+const num = (n: number | null | undefined) => (n == null ? NAO : n.toLocaleString('pt-BR'));
+const pct = (f: number | null | undefined, casas = 1) => (f == null ? NAO : `${(f * 100).toLocaleString('pt-BR', { minimumFractionDigits: casas, maximumFractionDigits: casas })}%`);
+const dm = (ymd: string) => ymd.split('-').reverse().slice(0, 2).join('/');
+const razao = (parte: number | undefined, todo: number | undefined) => (parte == null || !todo ? null : parte / todo);
+const larg = (parte: number, todo: number) => (todo > 0 ? Math.max(0, Math.min(100, (100 * parte) / todo)) : 0);
+
+function Kpi({ cls, tom, rotulo, valor, meta, tag, children }: { cls: string; tom: string; rotulo: string; valor: string; meta?: string; tag?: string; children?: React.ReactNode }) {
+  return (
+    <div className={`kpi ${cls}`}>
+      <div className={`lab t-${tom}`}>
+        {rotulo}
+        {tag && <span className="tag">{tag}</span>}
+      </div>
+      <div className={`val t-${tom}`}>{valor}</div>
+      {meta !== undefined && <div className="meta">{meta}</div>}
+      {children}
+    </div>
+  );
+}
+
+function Aviso({ titulo, texto, seletor }: { titulo: string; texto: string; seletor?: React.ReactNode }) {
+  return (
+    <div className="relatorio">
+      {seletor}
+      <p className="rel-aviso" role="status">
+        <b>{titulo}</b> {texto}
+      </p>
+    </div>
+  );
+}
+
+function SeletorEmpresa({ empresas, atual, data }: { empresas: Empresa[]; atual: Empresa; data?: string }) {
+  if (empresas.length < 2) return null;
+  return (
+    <nav className="tabs no-print" aria-label="Empresa do relatório">
+      {empresas.map((e) => (
+        <Link key={e} href={`/relatorio?empresa=${e}${data ? `&data=${data}` : ''}`} className={`tab ${e === atual ? 'active' : ''}`} aria-current={e === atual ? 'page' : undefined}>
+          {ROTULO_EMPRESA[e]}
+        </Link>
+      ))}
+      <span className="tab-note">Empresa</span>
+    </nav>
+  );
+}
+
+export default async function RelatorioPage({ searchParams }: { searchParams: Promise<{ escopo?: string; empresa?: string; data?: string }> }) {
   await requireFuncionalidadeForPage('relatorio');
   const acesso = await carregarAcesso();
   if (!acesso) redirect('/login');
-  if (!acesso.empresas.length) return <main className="construtor"><div className="cv-alert">Nenhuma empresa está liberada para este usuário.</div></main>;
-
-  const p = await searchParams;
-  const empresa = escolherEmpresa(acesso, p.empresa) as Empresa;
-  const data = p.data ?? hojeSp();
-  const basesIncompletas = [
-    variaveisAusentes('front-v2').length ? 'Front V2' : '',
-    variaveisAusentes('funcao').length ? 'Função' : '',
-  ].filter(Boolean);
-  let painel: PainelFixo | null = null;
-  let erro = basesIncompletas.length ? `A conexão de ${basesIncompletas.join(' e ')} ainda não está completa neste ambiente.` : '';
-  if (!erro) {
-    try {
-      painel = await executarPainelFixo({ empresa, inicio: data, fim: data });
-    } catch (e) {
-      erro = e instanceof Error && /Período|data final|92 dias|100 mil/.test(e.message)
-        ? e.message
-        : 'As fontes ao vivo não responderam. Nenhum dado antigo foi exibido.';
-    }
+  if (acesso.empresas.length === 0) {
+    return <Aviso titulo="Você ainda não tem empresa liberada." texto="Peça ao administrador." />;
   }
 
-  return <main className="construtor relatorio-fixo">
-    <nav className="cv-mode" aria-label="Tipo de relatório">
-      <Link href={`/relatorio?empresa=${empresa}&data=${data}`} className="active">Relatório diário</Link>
-      <Link href={`/relatorio/construtor?empresa=${empresa}&inicio=${data}&fim=${data}`}>Montar relatório</Link>
-    </nav>
-    <header className="cv-head">
-      <div><p className="cv-kicker">Relatório Gerencial · visão fixa</p><h1>Relatório diário — {ROTULO_EMPRESA[empresa]} · Geral</h1><p>Resumo executivo diário com dados conciliados entre Front V2 e Função.</p></div>
-      <div className="cv-live"><i />Atualizado às {horarioSp()}</div>
-    </header>
+  const { escopo: pedido, empresa: empresaPedida, data } = await searchParams;
+  const empresa = escolherEmpresa(acesso, empresaPedida)!;
+  const seletor = <SeletorEmpresa empresas={acesso.empresas} atual={empresa} data={data} />;
 
-    <div className="cv-fixed-filters">
-      {acesso.empresas.length > 1 && <nav className="cv-company" aria-label="Empresa">{acesso.empresas.map((e) => <Link key={e} href={`/relatorio?empresa=${e}&data=${data}`} className={e === empresa ? 'active' : ''}>{ROTULO_EMPRESA[e]}</Link>)}</nav>}
-      <form method="get"><input type="hidden" name="empresa" value={empresa} /><label><span>Data do relatório</span><input type="date" name="data" defaultValue={data} required /></label><button type="submit">Atualizar</button></form>
+  // Só as abas permitidas existem daqui em diante: o gerente nunca recebe Geral nem a turma de outro.
+  const abasVisiveis = ABAS.filter((a) => podeVerAba(acesso, a.escopo));
+  const aba = abasVisiveis.find((a) => a.escopo === pedido) ?? abasVisiveis[0];
+  if (!aba) {
+    return <Aviso titulo="Nenhuma visão do relatório está liberada para você." texto="Peça ao administrador." seletor={seletor} />;
+  }
+  const escopo = aba.escopo;
+
+  const ref = data && /^\d{4}-\d{2}-\d{2}$/.test(data) ? data : hojeSp();
+  let r: Partial<Relatorio> & Pick<Relatorio, 'kpis'>;
+  try {
+    r = await carregarRelatorioAoVivo(empresa, ref, escopo);
+  } catch {
+    return <Aviso titulo="As bases ao vivo não responderam." texto="Tente novamente em instantes; nenhum dado antigo foi exibido." seletor={seletor} />;
+  }
+  const k = r.kpis;
+
+  const [ano, mesRef, diaRef] = ref.split('-').map(Number);
+  const dRef = dm(ref);
+  const ontem = new Date(Date.UTC(ano, mesRef - 1, diaRef - 1));
+  const dOntem = `${String(ontem.getUTCDate()).padStart(2, '0')}/${String(ontem.getUTCMonth() + 1).padStart(2, '0')}`;
+  const mesNome = MESES[mesRef - 1];
+
+  const oficial = await metaDoMes([empresa], ref.slice(0, 7));
+  const pagosValor = k.pagosMes.valor;
+  const metaOficial = oficial && {
+    valor: oficial.valor,
+    falta: Math.max(0, Math.round((oficial.valor - pagosValor) * 100) / 100),
+    faltaPct: oficial.valor > 0 ? Math.max(0, (oficial.valor - pagosValor) / oficial.valor) : null,
+    parcial: oficial.faltando.length > 0,
+  };
+  const meta = metaOficial ?? r.meta;
+  const doGerente = escopo !== 'Geral';
+  const clientes = r.clientes;
+  const rp = r.rankingPagos;
+  const nr = r.novaReinserida;
+  const diaNr = nr?.dia ?? { novas: k.novas, reinseridas: k.reinseridas };
+  const mesNr = nr?.mes ?? null;
+  const equipesExc = r.excecaoEquipes ?? [];
+  const churn = r.churn;
+  const lista = r.lista ?? [];
+  const loteDia = r.loteDia ?? [];
+  const canal = r.canalMes;
+
+  const faltando = [
+    !clientes && 'Clientes',
+    !meta && 'Meta',
+    !rp && 'Ranking dos pagos',
+    !nr && 'Nova ou reinserida (mês)',
+    !r.excecaoEquipes && 'Exceção por equipe',
+    !churn && 'Churn',
+    !r.lista && 'Lista de não reinseridos',
+    k.canceladosOntem == null && 'Cancelados ontem (depende do CCNET ao vivo)',
+  ].filter(Boolean) as string[];
+
+  const excDiaPct = razao(k.excecaoDia.valor, k.total.valor);
+  const pagosExcPct = r.meta?.pagosExcecaoPct ?? razao(k.pagosExcecaoMes.qtd, k.pagosMes.qtd);
+  const totalCanal = (t: Tipo) => canal?.[t];
+  const maxExc = Math.max(1, ...equipesExc.map((e) => e.vendeu.valor));
+  const totalNrDia = diaNr.novas.qtd + diaNr.reinseridas.qtd;
+  const totalNrMes = mesNr ? mesNr.novas.qtd + mesNr.reinseridas.qtd : 0;
+
+  return (
+    <div className="relatorio">
+      <nav className="cv-mode no-print" aria-label="Tipo de relatório">
+        <Link href={`/relatorio?empresa=${empresa}&data=${ref}`} className="active">Relatório diário</Link>
+        <Link href={`/relatorio/construtor?empresa=${empresa}&inicio=${ref}&fim=${ref}`}>Montar relatório</Link>
+      </nav>
+      <div className="badge-prova live" role="note">
+        <span className="live-dot" /> Dados reais · Front V2 × Função
+        <small>
+          Referência {dRef}/{ano} · ontem {dOntem}
+          {` · mês 01–${dRef}`} · caso = CPF+tipo+produto · Meta = {metaOficial ? 'OFICIAL' : 'MODELO'} · Cliente da casa = grão CPF
+        </small>
+        <small>
+          O Front V2 define o recorte comercial; status e esteira são confirmados na Função pelas propostas encontradas.
+        </small>
+      </div>
+
+      <div className="rel-head">
+        <div>
+          <h1>
+            Relatório diário — {ROTULO_EMPRESA[empresa]} · {aba.rotulo}
+          </h1>
+          <div className="sub">
+            War room · {dRef}/{ano} · {escopo === 'Geral' ? 'Front V2 × Função' : `equipe de ${aba.rotulo}`}
+          </div>
+        </div>
+        <div className="ref">REF: {dRef}/{ano}</div>
+      </div>
+
+      {seletor}
+
+      <nav className="tabs no-print" aria-label="Escopo do relatório">
+        {abasVisiveis.map((a) => (
+          <Link key={a.escopo} href={`/relatorio?empresa=${empresa}&escopo=${encodeURIComponent(a.escopo)}&data=${ref}`} className={`tab ${a.escopo === escopo ? 'active' : ''}`} aria-current={a.escopo === escopo ? 'page' : undefined}>
+            {a.rotulo}
+          </Link>
+        ))}
+        {abasVisiveis.length > 1 && <span className="tab-note">Geral = todos · abas = filtro por gerente</span>}
+      </nav>
+
+      <form className="rel-date no-print" method="get">
+        <input type="hidden" name="empresa" value={empresa} />
+        <input type="hidden" name="escopo" value={escopo} />
+        <label>Data do relatório <input type="date" name="data" defaultValue={ref} /></label>
+        <button type="submit">Atualizar</button>
+      </form>
+
+      <RelatorioNav />
+
+      {faltando.length > 0 && (
+        <p className="rel-aviso no-print" role="status">
+          <b>Informação indisponível:</b> {faltando.join(' · ')}. Mostrada como {NAO}; nenhum número é estimado.
+        </p>
+      )}
+
+      <section className="sec" id="sec-clientes">
+        <div className="sec-h">Clientes</div>
+        <div className="sec-s">Grão CPF · da casa = já teve qualquer contrato no grupo · novo = 1ª proposta do CPF · independente de nova/reinserida</div>
+        <div className="grid-cli">
+          <Kpi cls="bg-casa" tom="green" rotulo="Cliente da casa · dia" valor={brl(clientes?.casaDia.valor)} meta={clientes ? `${num(clientes.casaDia.qtd)} propostas · ${num(clientes.casaDia.cpfs)} CPF` : NAO} />
+          <Kpi cls="bg-novo" tom="blue" rotulo="Cliente novo · dia" valor={brl(clientes?.novoDia.valor)} meta={clientes ? `${num(clientes.novoDia.qtd)} propostas` : NAO} />
+          <Kpi cls="bg-casames" tom="purple" rotulo="Cliente da casa · mês" valor={brl(clientes?.casaMes.valor)} meta={clientes ? `${num(clientes.casaMes.qtd)} propostas · ${num(clientes.casaMes.cpfs)} CPF` : NAO} />
+        </div>
+      </section>
+
+      <section className="sec" id="sec-vendas">
+        <div className="sec-h">Vendas</div>
+        <div className="sec-s">Nove cartões · propostas do dia {dRef} (exceto cancelados ontem/mês)</div>
+        <div className="grid9">
+          <Kpi cls="bg-total" tom="blue" rotulo="Total do dia" valor={brl(k.total.valor)} meta={`${num(k.total.qtd)} operações`} />
+          <Kpi cls="bg-novas" tom="green" rotulo="Vendas novas" valor={brl(k.novas.valor)} meta={`${num(k.novas.qtd)} · 1ª proposta do caso`} />
+          <Kpi cls="bg-reins" tom="purple" rotulo="Reinseridas" valor={brl(k.reinseridas.valor)} meta={`${num(k.reinseridas.qtd)} · mesmo caso, proposta nova`} />
+          <Kpi cls="bg-exc" tom="orange" rotulo="Exceção do dia" valor={brl(k.excecaoDia.valor)} meta={`${num(k.excecaoDia.qtd)} propostas · ${pct(excDiaPct)} do dia`} />
+          <Kpi cls="bg-front" tom="red" rotulo="Front" valor={brl(k.front.valor)} meta={`${num(k.front.qtd)} propostas`} />
+          <Kpi cls="bg-ccnet" tom="blue" rotulo="CCNET" valor={brl(k.ccnet.valor)} meta={`${num(k.ccnet.qtd)} propostas`} />
+          <Kpi cls="bg-canc" tom="red" rotulo="Cancelados ontem" valor={brl(k.canceladosOntem?.valor)} meta={k.canceladosOntem ? `${num(k.canceladosOntem.qtd)} · ${dOntem}` : 'indisponível · depende do CCNET ao vivo'} />
+          <Kpi cls="bg-cancm" tom="white" rotulo="Cancelados do mês" valor={brl(k.canceladosMes.valor)} meta={`${num(k.canceladosMes.qtd)} propostas`} />
+          <Kpi cls="bg-front" tom="white" rotulo="Cancelados %" valor={pct(k.canceladosMesPct)} meta={`${num(k.canceladosMes.qtd)} de ${num(k.vendasMes.qtd)} no mês`} />
+        </div>
+      </section>
+
+      <section className="sec" id="sec-mes">
+        <div className="sec-h">MÊS</div>
+        <div className="sec-s">
+          Propostas cadastradas em {mesNome}/{ano} até {dRef} · cancelamento = Status Front “Cancelada”
+        </div>
+        <div className="grid4">
+          <Kpi cls="bg-total" tom="blue" rotulo="Vendas do mês" valor={brl(k.vendasMes.valor)} meta={`${num(k.vendasMes.qtd)} propostas · ${mesNome}`} />
+          <Kpi cls="bg-cancm" tom="white" rotulo="Cancelados do mês" valor={brl(k.canceladosMes.valor)} meta={`${num(k.canceladosMes.qtd)} propostas canceladas`} />
+          <Kpi cls="bg-ccnet" tom="blue" rotulo="Vendas geral" valor={brl(k.vendasGeral.valor)} meta={`${num(k.vendasGeral.qtd)} propostas · janela de 92 dias`} />
+          <Kpi cls="bg-front" tom="white" rotulo="Cancelados geral" valor={brl(k.canceladosGeral.valor)} meta={`${num(k.canceladosGeral.qtd)} propostas · janela de 92 dias`} />
+        </div>
+      </section>
+
+      <section className="sec" id="sec-meta">
+        <div className="sec-h">
+          Meta <span className="tag">{metaOficial ? 'OFICIAL' : 'MODELO'}</span>
+        </div>
+        <div className="sec-s">
+          {metaOficial ? `Meta oficial de ${ROTULO_EMPRESA[empresa]} em ${mesNome}` : 'Meta é número de modelo'} · pagos vêm das bases ao vivo
+          {doGerente && ` · a meta é a da empresa inteira (ainda não há meta por gerente); os pagos são só da equipe de ${aba.rotulo}`}
+          {metaOficial?.parcial && ` · parcial: sem meta cadastrada para: ${oficial!.faltando.join(', ')}`}
+        </div>
+        <div className="grid4">
+          <Kpi
+            cls="bg-total"
+            tom="blue"
+            rotulo="Meta"
+            tag={metaOficial ? (metaOficial.parcial ? 'OFICIAL · PARCIAL' : 'OFICIAL') : 'MODELO'}
+            valor={brl(meta?.valor)}
+            meta={metaOficial ? (metaOficial.parcial ? `sem meta cadastrada para: ${oficial!.faltando.join(', ')}` : `meta de ${ROTULO_EMPRESA[empresa]}`) : meta ? 'trocar quando a meta oficial chegar' : 'meta ainda não informada'}
+          />
+          <Kpi cls="bg-novas" tom="green" rotulo="Pagos" valor={brl(k.pagosMes.valor)} meta={`${num(k.pagosMes.qtd)} propostas · ${mesNome}`} />
+          <Kpi cls="bg-exc" tom="orange" rotulo="Pagos exceção" valor={brl(k.pagosExcecaoMes.valor)} meta={`${num(k.pagosExcecaoMes.qtd)} propostas · ${pct(pagosExcPct)} dos pagos`} />
+          {doGerente ? (
+            <Kpi cls="bg-canc" tom="red" rotulo="Falta" valor="—" meta="a meta é da empresa; o que falta só faz sentido no Geral" />
+          ) : (
+            <Kpi cls="bg-canc" tom="red" rotulo="Falta" valor={brl(meta?.falta)} meta={meta ? `${pct(meta.faltaPct)} para a meta` : NAO} />
+          )}
+        </div>
+      </section>
+
+      <section className="sec" id="sec-ranking">
+        <div className="sec-h">Ranking dos pagos</div>
+        <div className="sec-s">Entre propostas Integradas do mês · 4º cartão = gerente</div>
+        <div className="grid4">
+          {(
+            [
+              ['bg-ccnet', 'blue', 'Ranking Convênio', rp?.convenio],
+              ['bg-reins', 'purple', 'Ranking Produto', rp?.produto],
+              ['bg-exc', 'orange', 'Ranking Equipe', rp?.equipe],
+              ['bg-novas', 'green', 'Ranking Gerente', rp?.gerente],
+            ] as const
+          ).map(([cls, tom, rotulo, item]) => (
+            <div key={rotulo} className={`kpi ${cls} rank`}>
+              <div className={`lab t-${tom}`}>{rotulo}</div>
+              <div className={`nome t-${tom}`}>{item?.nome ?? NAO}</div>
+              <div className="subv">{item ? `${brl(item.valor)} · ${pct(item.pct)} dos pagos` : NAO}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="sec">
+        <div className="sec-h">Nova ou reinserida</div>
+        <div className="sec-s">Verde = 1ª proposta do caso · Roxo = mesmo CPF+tipo+produto com proposta nova</div>
+        <div className="card bars">
+          {(
+            [
+              [`Dia ${dRef}`, diaNr, totalNrDia],
+              [mesNome.charAt(0).toUpperCase() + mesNome.slice(1), mesNr, totalNrMes],
+            ] as const
+          ).map(([titulo, par, total]) => (
+            <div key={titulo} className="bar-block">
+              <div className="lbl">
+                <b>{titulo}</b>
+                <span className="muted">{par ? `${num(total)} propostas` : NAO}</span>
+              </div>
+              <div className="bar-track" role="img" aria-label={par ? `${titulo}: ${par.novas.qtd} novas e ${par.reinseridas.qtd} reinseridas` : `${titulo}: indisponível`}>
+                {par && (
+                  <>
+                    <i className="nova" style={{ width: `${larg(par.novas.qtd, total)}%` }} />
+                    <i className="reins" style={{ width: `${larg(par.reinseridas.qtd, total)}%` }} />
+                  </>
+                )}
+              </div>
+              <div className="bar-leg">
+                <span>
+                  <b className="t-green">{par ? `${num(par.novas.qtd)} novas` : NAO}</b> · {brl(par?.novas.valor)}
+                </span>
+                <span>
+                  <b className="t-purple">{par ? `${num(par.reinseridas.qtd)} reinseridas` : NAO}</b> · {brl(par?.reinseridas.valor)}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="sec" id="sec-excecao">
+        <div className="sec-h">Exceção vendida</div>
+        <div className="sec-s">Política FRONT EXCEÇÃO · laranja = vendido · verde = já pagou</div>
+        <div className="card">
+          <div className="exc-sum">
+            <div className="box">
+              <div className="lab muted" style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.06em' }}>
+                DIA {dRef}
+              </div>
+              <div className="v t-orange">{brl(k.excecaoDia.valor)}</div>
+              <div className="muted" style={{ fontSize: 11 }}>
+                {num(k.excecaoDia.qtd)} propostas · {pct(excDiaPct)} do dia
+              </div>
+            </div>
+            <div className="box">
+              <div className="lab muted" style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.06em' }}>
+                VENDIDO NO MÊS
+              </div>
+              <div className="v t-orange">{brl(k.excecaoMes.valor)}</div>
+              <div className="muted" style={{ fontSize: 11 }}>
+                {num(k.excecaoMes.qtd)} propostas
+              </div>
+            </div>
+            <div className="box">
+              <div className="lab muted" style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.06em' }}>
+                PAGOS DO MÊS
+              </div>
+              <div className="v t-green">{brl(k.pagosExcecaoMes.valor)}</div>
+              <div className="muted" style={{ fontSize: 11 }}>
+                {num(k.pagosExcecaoMes.qtd)} de {num(k.pagosMes.qtd)} · {pct(pagosExcPct)}
+              </div>
+            </div>
+          </div>
+          {!r.excecaoEquipes && <div className="missing muted" style={{ fontSize: 12 }}>Detalhe por equipe indisponível nas bases atuais.</div>}
+          {equipesExc.map((e) => (
+            <div key={e.equipe} className="eq-row">
+              <div className="top">
+                <span>
+                  <b>{e.equipe}</b>
+                </span>
+                <span className="muted">
+                  {num(e.vendeu.qtd)} vendeu · {num(e.pagou.qtd)} pagou
+                </span>
+              </div>
+              <div className="eq-bars" role="img" aria-label={`${e.equipe}: vendeu ${brl(e.vendeu.valor)}, pagou ${brl(e.pagou.valor)}`}>
+                <div className="h">
+                  <i style={{ width: `${larg(e.vendeu.valor, maxExc)}%`, background: 'var(--orange)' }} />
+                </div>
+                <div className="h">
+                  <i style={{ width: `${larg(e.pagou.valor, maxExc)}%`, background: 'var(--green)' }} />
+                </div>
+                <div className="vals">
+                  <span className="t-orange">{brl(e.vendeu.valor)}</span>
+                  <span className="t-green">{e.pagou.valor > 0 ? brl(e.pagou.valor) : NAO}</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="sec" id="sec-canal">
+        <div className="sec-h">Por canal · {mesNome}</div>
+        <div className="sec-s">A taxa é só de quem já fechou. Jornada ainda não entra.</div>
+        <div className="grid3 canal">
+          {(
+            [
+              ['Novo', 'canal-novo'],
+              ['Compra', 'canal-compra'],
+              ['Adiantamento', 'canal-adiant'],
+            ] as const
+          ).map(([t, cls]) => {
+            const c = totalCanal(t);
+            return (
+              <div key={t} className={`box ${cls}`}>
+                <div className="hd">
+                  <span className="name">{t}</span>
+                  <span className="rate">{pct(c?.taxaMorte)}</span>
+                </div>
+                <div className="hint">{num(c?.casos)} casos · % que morreu entre os que fecharam</div>
+                <div className="trio">
+                  <div>
+                    <div className="n t-green">{num(c?.pagou)}</div>
+                    <div className="l">Pagou</div>
+                  </div>
+                  <div>
+                    <div className="n t-red">{num(c?.morreu)}</div>
+                    <div className="l">Morreu</div>
+                  </div>
+                  <div>
+                    <div className="n t-blue">{num(c?.jornada)}</div>
+                    <div className="l">Jornada</div>
+                  </div>
+                </div>
+                <div className="ft">
+                  <span className="t-orange">Front {num(c?.mortesFront)}</span> · <span className="t-blue">CCNET {num(c?.mortesCcnet)}</span> <span className="muted">(morreu)</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      <section className="sec" id="sec-churn">
+        <div className="sec-h">Churn</div>
+        <div className="sec-s">Caso que morreu · CPF+tipo+produto · não é a pessoa</div>
+        <div className="churn-wrap">
+          <div className="churn-kpis">
+            <div className="box ch-nao">
+              <div className="lab">Não voltou</div>
+              <div className="v t-red">{num(churn?.naoVoltou)}</div>
+              <div className="s">{churn ? `${pct(churn.naoVoltouPct, 0)} dos casos do mês` : NAO}</div>
+            </div>
+            <div className="box ch-voltou">
+              <div className="lab">Voltou e morreu</div>
+              <div className="v t-orange">{num(churn?.voltouMorreu)}</div>
+              <div className="s">Reinseriu e a nova também morreu</div>
+            </div>
+            <div className="box ch-fechou">
+              <div className="lab">Dos que fecharam</div>
+              <div className="v t-red">{pct(churn?.taxa, 0)}</div>
+              <div className="s">{churn ? `${num(churn.morreram)} morreu de ${num(churn.fecharam)}` : NAO}</div>
+            </div>
+          </div>
+          <div className="muted" style={{ fontSize: 11, marginBottom: 6 }}>
+            Equipes com maior morreu / (pagou+morreu)
+          </div>
+          {(churn?.equipes ?? []).map((e) => (
+            <div key={e.equipe} className="churn-bar">
+              <span className="nm">{e.equipe}</span>
+              <div className="tr" role="img" aria-label={`${e.equipe}: ${pct(e.taxa, 0)}`}>
+                <i style={{ width: `${larg(e.taxa, 1)}%` }} />
+              </div>
+              <span className="pc">{pct(e.taxa, 0)}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <RelatorioLista linhas={lista} />
+
+      <RelatorioLote dias={loteDia} resumo={r.resumoMes ?? null} />
+
+      <section className="sec">
+        <div className="sec-h">Onde está a venda do dia</div>
+        <div className="sec-s">FRONT por Status Front (sem código) · CCNET por Esteira Função (com código)</div>
+        <div className="grid2">
+          <div className="board front">
+            <div className="bh">
+              <span>FRONT</span>
+              <span>{brl(k.front.valor)}</span>
+            </div>
+            <div className="bs">Ainda no Front · {num(k.front.qtd)} propostas</div>
+            {(r.etapasFront ?? []).map((e) => (
+              <div key={e.chave} className="row">
+                <span className="st">{e.chave}</span>
+                <span className="nv">
+                  {num(e.qtd)} · {brl(e.valor)}
+                </span>
+              </div>
+            ))}
+          </div>
+          <div className="board ccnet">
+            <div className="bh">
+              <span>CCNET</span>
+              <span>{brl(k.ccnet.valor)}</span>
+            </div>
+            <div className="bs">Auditoria aprovou · {num(k.ccnet.qtd)} propostas</div>
+            {(r.etapasCcnet ?? []).map((e) => (
+              <div key={e.chave} className="row">
+                <span className="st">{e.chave}</span>
+                <span className="nv">
+                  {num(e.qtd)} · {brl(e.valor)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <p className="footnote">Fonte: Front V2 conciliado com Função · janela móvel de até 92 dias · {metaOficial ? 'Meta oficial' : 'Meta MODELO (não é meta oficial)'} · Gerentes filtrados por texto LUANA/ADRIANO/DANIEL/MARCOS</p>
     </div>
-
-    {painel && <aside className={`cv-reconcile ${painel.conciliacao.ausentesFuncao || painel.conciliacao.divergenciasStatus ? 'warning' : ''}`} aria-label="Conciliação das bases">
-      <strong>Front V2 × Função</strong><span>{painel.conciliacao.encontradasFuncao.toLocaleString('pt-BR')} de {painel.conciliacao.enviadasFuncao.toLocaleString('pt-BR')} propostas localizadas</span><span>{painel.conciliacao.ausentesFuncao.toLocaleString('pt-BR')} ausentes</span><span>{painel.conciliacao.divergenciasStatus.toLocaleString('pt-BR')} divergências</span>
-    </aside>}
-    {erro && <div className="cv-alert" role="status">{erro}</div>}
-    {painel && <>
-      <section className="cv-kpis" aria-label="Indicadores do dia">
-        <article><span>Propostas</span><strong>{numero.format(painel.propostas)}</strong><small>Front V2</small></article>
-        <article><span>Valor contratado</span><strong>{moeda.format(painel.valorContratado)}</strong><small>Front V2</small></article>
-        <article><span>Valor liberado</span><strong>{moeda.format(painel.valorLiberado)}</strong><small>Função</small></article>
-        <article><span>Taxa de integração</span><strong>{percentual.format(painel.taxaIntegracao)}%</strong><small>Função</small></article>
-      </section>
-      <section className="cv-fixed-grid">
-        <article className="cv-result"><div className="cv-result-head"><div><span>Ritmo do dia</span><h2>Propostas por hora</h2></div></div><Grafico tipo="linha" pontos={painel.propostasPorHora} formato="numero" /></article>
-        <article className="cv-result"><div className="cv-result-head"><div><span>Situação atual</span><h2>Funil da Função</h2></div></div><Grafico tipo="barras" pontos={painel.funilFuncao} formato="numero" /></article>
-        <article className="cv-result cv-wide"><div className="cv-result-head"><div><span>Produção</span><h2>Ranking de equipes por valor contratado</h2></div></div><Grafico tipo="barras" pontos={painel.rankingEquipes} formato="moeda" /></article>
-      </section>
-    </>}
-    <p className="cv-source">O Front V2 define o recorte comercial; a Função confirma status, esteira e valor liberado somente para as propostas desse dia.</p>
-  </main>;
+  );
 }
