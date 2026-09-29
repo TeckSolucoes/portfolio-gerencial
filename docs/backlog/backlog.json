@@ -666,26 +666,31 @@
     {
       "id": "PRD-10",
       "ordem": 35,
-      "titulo": "Construtor de relatórios/BI (campos, gráficos padrão, Excel) cruzando Front e CCNET",
+      "titulo": "Relatório Supervisão (indicadores e filtros a definir)",
       "tema": "Produto",
       "impacto": "alto",
       "esforco": "G",
-      "status": "em-andamento",
+      "status": "bloqueado",
       "dependeDe": [
         "DEC-8"
       ],
       "donoSugerido": "IA",
-      "criterioPronto": "Decisão entre Metabase e construtor próprio; camada de campos aprovada (nada de SQL livre); banco somente leitura; acesso por perfil.",
+      "criterioPronto": "Indicadores, filtros, responsáveis e regras da visão de supervisão definidos e aprovados; dados somente leitura; acesso por perfil.",
       "riscos": [
         "RSK-6",
         "RSK-7"
       ],
-      "notas": "Metabase não cruza dois bancos: cópia local dos dados é necessária de qualquer forma.",
+      "notas": "O construtor personalizado foi retirado por decisão do dono. A rota e a permissão do Relatório Supervisão foram criadas; o conteúdo será definido em conversa posterior.",
       "historico": [
         {
           "data": "2026-09-29",
           "acao": "em-andamento",
           "nota": ""
+        },
+        {
+          "data": "2026-09-29",
+          "acao": "bloqueado",
+          "nota": "Aguardando definição dos indicadores e filtros do Relatório Supervisão; o construtor personalizado foi retirado por decisão do dono."
         }
       ]
     },

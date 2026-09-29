@@ -1,13 +1,11 @@
 import 'server-only';
 
 import type { RowDataPacket } from 'mysql2/promise';
-import { consultarFrontV2 } from '@/lib/bases/conexoes';
+import { consultarFrontV2, consultarFuncaoEmLotes } from '@/lib/bases/conexoes';
 import type { Empresa } from '@/lib/empresas';
 import { normalizarProduto } from './casos';
 import { escopoGerente, montarRelatorio } from './relatorio';
 import type { Proposta, Relatorio } from './types';
-import { consultarSomentePropostasDaFuncao } from './construtor/consulta';
-import { numeroPtBr } from './construtor/conciliacao';
 
 interface LinhaDiaria extends RowDataPacket {
   id_front: string | number;
@@ -31,13 +29,58 @@ interface LinhaDiaria extends RowDataPacket {
   data_cancelamento: string | null;
 }
 
+interface LinhaFuncao extends RowDataPacket {
+  NumeroProposta: string;
+  status_funcao_raw: string | null;
+  status_funcao: string | null;
+  esteira_funcao: string | null;
+  valor_liberado: string | number | null;
+}
+
 const LIMITE = 50_000;
+const TAMANHO_LOTE_FUNCAO = 800;
 const semAcento = (valor: unknown) => String(valor ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toUpperCase();
+const numeroPtBr = (valor: string | number | null | undefined) => {
+  if (typeof valor === 'number') return Number.isFinite(valor) ? valor : 0;
+  const texto = String(valor ?? '').trim().replace(/^R\$\s*/, '');
+  if (!texto) return 0;
+  const numero = Number(texto.includes(',') ? texto.replace(/\./g, '').replace(',', '.') : texto);
+  return Number.isFinite(numero) ? numero : 0;
+};
 const inicioDaJanela = (ref: string) => {
   const data = new Date(`${ref}T00:00:00Z`);
   data.setUTCDate(data.getUTCDate() - 91);
   return data.toISOString().slice(0, 10);
 };
+
+async function consultarPropostasDaFuncao(numeros: string[]): Promise<LinhaFuncao[]> {
+  const unicos = [...new Set(numeros.map((numero) => numero.trim()).filter(Boolean))];
+  const consultas = [];
+  for (let i = 0; i < unicos.length; i += TAMANHO_LOTE_FUNCAO) {
+    const lote = unicos.slice(i, i + TAMANHO_LOTE_FUNCAO);
+    const marcadores = lote.map(() => '?').join(', ');
+    consultas.push({
+      sql: `WITH liberacoes AS (
+              SELECT NumeroProposta, SUM(Valor) AS valor_liberado
+              FROM releases
+              WHERE deleted_at IS NULL AND NumeroProposta IN (${marcadores})
+              GROUP BY NumeroProposta
+            )
+            SELECT p.NumeroProposta,
+              p.SituacaoPropostaEsteira AS status_funcao_raw,
+              f.SituacaoEsteira AS status_funcao,
+              COALESCE(NULLIF(f.last_activity_description, ''), NULLIF(f.Descricao, ''), f.SituacaoEsteira) AS esteira_funcao,
+              COALESCE(l.valor_liberado, 0) AS valor_liberado
+            FROM proposals p
+            LEFT JOIN function_mat_information f
+              ON f.NumeroProposta = p.NumeroProposta AND f.deleted_at IS NULL
+            LEFT JOIN liberacoes l ON l.NumeroProposta = p.NumeroProposta
+            WHERE p.deleted_at IS NULL AND p.NumeroProposta IN (${marcadores})`,
+      parametros: [...lote, ...lote],
+    });
+  }
+  return consultas.length ? consultarFuncaoEmLotes<LinhaFuncao>(consultas) : [];
+}
 
 export async function carregarRelatorioAoVivo(empresa: Empresa, ref: string, escopo: string): Promise<Relatorio> {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(ref)) throw new Error('Data inválida.');
@@ -78,7 +121,7 @@ export async function carregarRelatorioAoVivo(empresa: Empresa, ref: string, esc
   if (linhas.length > LIMITE) throw new Error('O recorte ultrapassou 50 mil propostas. Reduza a janela do relatório.');
 
   const numeros = [...new Set(linhas.map((linha) => String(linha.numero ?? '').trim()).filter(Boolean))];
-  const funcao = await consultarSomentePropostasDaFuncao(numeros);
+  const funcao = await consultarPropostasDaFuncao(numeros);
   const porNumero = new Map(funcao.map((linha) => [String(linha.NumeroProposta ?? '').trim(), linha]));
   const propostas: Proposta[] = [];
 

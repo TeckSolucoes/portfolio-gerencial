@@ -1,5 +1,6 @@
 export const FUNCIONALIDADES = [
   { chave: 'relatorio', nome: 'Relatório Gerencial', rota: '/relatorio' },
+  { chave: 'relatorio_supervisao', nome: 'Relatório Supervisão', rota: '/relatorio-supervisao' },
   { chave: 'monitoramento', nome: 'Monitoramento', rota: '/monitoramento' },
   { chave: 'diario_oficial', nome: 'Diário Oficial', rota: '/diario-oficial' },
   { chave: 'transparencia', nome: 'Transparência', rota: '/transparencia' },
