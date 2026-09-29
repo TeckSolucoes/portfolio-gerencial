@@ -65,8 +65,12 @@ export default async function ConstrutorRelatorioPage({ searchParams }: { search
 
   return (
     <main className="construtor">
+      <nav className="cv-mode" aria-label="Tipo de relatório">
+        <Link href={`/relatorio?empresa=${empresa}&data=${fim}`}>Relatório diário</Link>
+        <Link href={`/relatorio/construtor?empresa=${empresa}&inicio=${inicio}&fim=${fim}&dimensao=${dimensao}&metrica=${metrica}&grafico=${grafico}`} className="active">Montar relatório</Link>
+      </nav>
       <header className="cv-head">
-        <div><p className="cv-kicker">Relatório Gerencial · dados reais</p><h1>Relatório diário — {ROTULO_EMPRESA[empresa]} · Geral</h1><p>Selecione campos aprovados e gere uma visão agregada do Front V2 com os estados devolvidos pela Função.</p></div>
+        <div><p className="cv-kicker">Relatório Gerencial · montagem livre</p><h1>Montar relatório — {ROTULO_EMPRESA[empresa]}</h1><p>Selecione campos aprovados e gere uma visão agregada do Front V2 com os estados devolvidos pela Função.</p></div>
         <div className="cv-live"><i />Atualizado às {horarioSp()}</div>
       </header>
 
