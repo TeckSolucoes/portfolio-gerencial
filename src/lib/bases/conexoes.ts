@@ -34,6 +34,33 @@ async function consultarDireto<T extends RowDataPacket[]>(base: 'funcao' | 'fron
 export const consultarFuncao = <T extends RowDataPacket[]>(sql: string, parametros: unknown[] = []) =>
   consultarDireto<T>('funcao', sql, parametros);
 
+export async function consultarFuncaoEmLotes<T extends RowDataPacket>(
+  consultas: Array<{ sql: string; parametros: unknown[] }>,
+): Promise<T[]> {
+  for (const consulta of consultas) validarConsultaLeitura(consulta.sql);
+  exigirConfiguracao('funcao');
+  const conexao = await mysql.createConnection({
+    host: process.env.FUNCAO_DB_HOST,
+    port: Number(process.env.FUNCAO_DB_PORT || 3306),
+    user: process.env.FUNCAO_DB_USER,
+    password: process.env.FUNCAO_DB_PASSWORD,
+    database: process.env.FUNCAO_DB_NAME,
+    ssl: { rejectUnauthorized: false },
+    connectTimeout: 12_000,
+    multipleStatements: false,
+  });
+  try {
+    const acumulado: T[] = [];
+    for (const consulta of consultas) {
+      const [linhas] = await conexao.query<T[]>(consulta.sql, consulta.parametros);
+      acumulado.push(...linhas);
+    }
+    return acumulado;
+  } finally {
+    await conexao.end();
+  }
+}
+
 export const consultarFrontV1 = <T extends RowDataPacket[]>(sql: string, parametros: unknown[] = []) =>
   consultarDireto<T>('front-v1', sql, parametros);
 
