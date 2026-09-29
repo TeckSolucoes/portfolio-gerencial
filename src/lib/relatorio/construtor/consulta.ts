@@ -14,6 +14,7 @@ import {
 
 interface LinhaFront extends RowDataPacket, PropostaFrontRelatorio {}
 interface LinhaFuncao extends RowDataPacket, PropostaFuncaoRelatorio {}
+interface LinhaAgregada extends RowDataPacket { rotulo: string | null; valor: string | number | null }
 
 export type PontoVisao = PontoConciliado;
 
@@ -28,7 +29,7 @@ export interface ConsultaVisao {
 
 export interface ResultadoVisao {
   pontos: PontoVisao[];
-  conciliacao: ResumoConciliacao;
+  conciliacao: ResumoConciliacao | null;
 }
 
 export interface PainelFixo {
@@ -44,6 +45,24 @@ export interface PainelFixo {
 
 const TAMANHO_LOTE_FUNCAO = 800;
 const LIMITE_PROPOSTAS_FRONT = 100_000;
+
+const DIMENSOES_FRONT: Partial<Record<IdCampoRelatorio, string>> = {
+  hora_cadastro: "DATE_FORMAT(base.data_cadastro, '%Y-%m-%d %H:00')",
+  dia_cadastro: 'DATE(base.data_cadastro)',
+  gerente: "COALESCE(NULLIF(TRIM(base.gerente), ''), '(não informado)')",
+  equipe: "COALESCE(NULLIF(TRIM(base.equipe), ''), '(não informado)')",
+  operador: "COALESCE(NULLIF(TRIM(base.operador), ''), '(não informado)')",
+  convenio: "COALESCE(NULLIF(TRIM(base.convenio), ''), '(não informado)')",
+  produto: "COALESCE(NULLIF(TRIM(base.produto), ''), '(não informado)')",
+  modalidade: "COALESCE(NULLIF(TRIM(base.modalidade), ''), '(não informado)')",
+  status_front: "COALESCE(NULLIF(TRIM(base.status_front), ''), '(não informado)')",
+};
+
+const METRICAS_FRONT: Partial<Record<IdCampoRelatorio, string>> = {
+  qtd_propostas: 'COUNT(base.id_front)',
+  valor_contratado: 'SUM(base.valor_contrato)',
+  ticket_medio: 'SUM(base.valor_contrato) / NULLIF(COUNT(base.id_front), 0)',
+};
 
 export function validarPeriodo(inicio: string, fim: string) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(inicio) || !/^\d{4}-\d{2}-\d{2}$/.test(fim)) throw new Error('Período inválido.');
@@ -64,23 +83,29 @@ async function consultarRecorteFront(pedido: ConsultaVisao): Promise<LinhaFront[
   const prefixoEquipe = pedido.empresa === 'AKRK' ? 'AKRK - %' : pedido.empresa === 'DIG' ? 'DIG - %' : '__sem_acesso__';
   const linhas = await consultarFrontV2<LinhaFront[]>(
     `SELECT
-       id_front,
-       NULLIF(TRIM(cod_funcao), '') AS numero_proposta,
-       DATE_FORMAT(data_cadastro, '%Y-%m-%d %H:00') AS hora_cadastro,
-       DATE_FORMAT(data_cadastro, '%Y-%m-%d') AS dia_cadastro,
-       COALESCE(NULLIF(TRIM(Gerente), ''), '(não informado)') AS gerente,
-       COALESCE(NULLIF(TRIM(Equipe), ''), '(não informado)') AS equipe,
-       COALESCE(NULLIF(TRIM(Operador), ''), '(não informado)') AS operador,
-       COALESCE(NULLIF(TRIM(convenio), ''), '(não informado)') AS convenio,
-       COALESCE(NULLIF(TRIM(produto), ''), '(não informado)') AS produto,
-       COALESCE(NULLIF(TRIM(modalidade), ''), '(não informado)') AS modalidade,
-       COALESCE(NULLIF(TRIM(status_front), ''), '(não informado)') AS status_front,
-       NULLIF(TRIM(Status_Funcao), '') AS status_funcao_v2,
-       NULLIF(TRIM(Esteira_Funcao), '') AS esteira_funcao_v2,
-       valor_contrato
-     FROM \`db-atendimento\`.v_andamento_propostas
-     WHERE data_cadastro >= ? AND data_cadastro < DATE_ADD(?, INTERVAL 1 DAY)
-       AND Equipe LIKE ?
+       ap.id AS id_front,
+       NULLIF(TRIM(ap.codigoPropostaExterna), '') AS numero_proposta,
+       DATE_FORMAT(ap.created_at, '%Y-%m-%d %H:00') AS hora_cadastro,
+       DATE_FORMAT(ap.created_at, '%Y-%m-%d') AS dia_cadastro,
+       COALESCE(NULLIF(TRIM(t.Gerente), ''), '(não informado)') AS gerente,
+       COALESCE(NULLIF(TRIM(t.Equipe), ''), '(não informado)') AS equipe,
+       COALESCE(NULLIF(TRIM(t.Operador), ''), '(não informado)') AS operador,
+       COALESCE(NULLIF(TRIM(cf.nome_convenio), ''), '(não informado)') AS convenio,
+       COALESCE(NULLIF(TRIM(pd.descricao), ''), '(não informado)') AS produto,
+       COALESCE(NULLIF(TRIM(md.nome), ''), '(não informado)') AS modalidade,
+       COALESCE(NULLIF(TRIM(ap.status), ''), '(não informado)') AS status_front,
+       NULLIF(TRIM(ap.fStatus), '') AS status_funcao_v2,
+       NULLIF(TRIM(ap.fEsteira), '') AS esteira_funcao_v2,
+       COALESCE(ap.valorTotalContratado, 0) / 100 AS valor_contrato
+     FROM \`db-atendimento\`.v_tab_atendimento t
+     JOIN \`db-atendimento\`.atendimento_propostas ap ON ap.id = t.id_front
+     LEFT JOIN \`db-empresa\`.v_convenio_formatado cf ON cf.id_convenio = ap.convenio
+     LEFT JOIN \`db-empresa\`.produtos pd ON pd.id = ap.tipoOperacao
+     LEFT JOIN \`db-tabela\`.tabela_simulacao ts ON ts.id = ap.tabela
+     LEFT JOIN \`db-tabela\`.tabela_simulacao_modalidade md ON md.id = ts.idModalidade
+     WHERE ap.created_at >= ? AND ap.created_at < DATE_ADD(?, INTERVAL 1 DAY)
+       AND t.Equipe LIKE ? AND ap.deleted_at IS NULL
+     GROUP BY ap.id
      LIMIT ${LIMITE_PROPOSTAS_FRONT + 1}`,
     [pedido.inicio, pedido.fim, prefixoEquipe],
   );
@@ -88,7 +113,7 @@ async function consultarRecorteFront(pedido: ConsultaVisao): Promise<LinhaFront[
   return linhas;
 }
 
-async function consultarSomentePropostasDaFuncao(numeros: string[]): Promise<LinhaFuncao[]> {
+export async function consultarSomentePropostasDaFuncao(numeros: string[]): Promise<LinhaFuncao[]> {
   const consultas = lotesDe([...new Set(numeros)].filter(Boolean), TAMANHO_LOTE_FUNCAO).map((lote) => {
     const marcadores = lote.map(() => '?').join(', ');
     return {
@@ -119,6 +144,40 @@ async function consultarSomentePropostasDaFuncao(numeros: string[]): Promise<Lin
 export async function executarVisao(pedido: ConsultaVisao): Promise<ResultadoVisao> {
   validarPeriodo(pedido.inicio, pedido.fim);
   const { dimensao, metrica } = validarVisao(pedido.dimensao, pedido.metrica, pedido.grafico);
+  const expressaoMetrica = METRICAS_FRONT[metrica.id as IdCampoRelatorio];
+  const expressaoDimensao = dimensao ? DIMENSOES_FRONT[dimensao.id as IdCampoRelatorio] : null;
+  if (expressaoMetrica && (!dimensao || expressaoDimensao)) {
+    const prefixoEquipe = pedido.empresa === 'AKRK' ? 'AKRK - %' : pedido.empresa === 'DIG' ? 'DIG - %' : '__sem_acesso__';
+    const rotulo = expressaoDimensao ?? "'Total'";
+    const agrupamento = expressaoDimensao ? `GROUP BY ${expressaoDimensao}` : '';
+    const ordem = expressaoDimensao
+      ? (dimensao?.tipo === 'tempo' ? 'ORDER BY rotulo ASC' : 'ORDER BY valor DESC, rotulo ASC')
+      : '';
+    const linhas = await consultarFrontV2<LinhaAgregada[]>(
+      `SELECT ${rotulo} AS rotulo, ${expressaoMetrica} AS valor
+       FROM (
+         SELECT ap.id AS id_front, ap.created_at AS data_cadastro,
+           t.Gerente AS gerente, t.Equipe AS equipe, t.Operador AS operador,
+           cf.nome_convenio AS convenio, pd.descricao AS produto, md.nome AS modalidade,
+           ap.status AS status_front, COALESCE(ap.valorTotalContratado, 0) / 100 AS valor_contrato
+         FROM \`db-atendimento\`.v_tab_atendimento t
+         JOIN \`db-atendimento\`.atendimento_propostas ap ON ap.id = t.id_front
+         LEFT JOIN \`db-empresa\`.v_convenio_formatado cf ON cf.id_convenio = ap.convenio
+         LEFT JOIN \`db-empresa\`.produtos pd ON pd.id = ap.tipoOperacao
+         LEFT JOIN \`db-tabela\`.tabela_simulacao ts ON ts.id = ap.tabela
+         LEFT JOIN \`db-tabela\`.tabela_simulacao_modalidade md ON md.id = ts.idModalidade
+         WHERE ap.created_at >= ? AND ap.created_at < DATE_ADD(?, INTERVAL 1 DAY)
+           AND t.Equipe LIKE ? AND ap.deleted_at IS NULL
+         GROUP BY ap.id
+       ) base
+       ${agrupamento} ${ordem} LIMIT 50`,
+      [pedido.inicio, pedido.fim, prefixoEquipe],
+    );
+    return {
+      pontos: linhas.map((linha) => ({ rotulo: String(linha.rotulo ?? '(não informado)'), valor: Number(linha.valor ?? 0) })),
+      conciliacao: null,
+    };
+  }
   const front = await consultarRecorteFront(pedido);
   const numeros = front.map((linha) => String(linha.numero_proposta ?? '').trim()).filter(Boolean);
   const funcao = await consultarSomentePropostasDaFuncao(numeros);
