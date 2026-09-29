@@ -12,6 +12,7 @@ import { RelatorioLista } from './RelatorioLista';
 import { RelatorioLote } from './RelatorioLote';
 import { RelatorioNav } from './RelatorioNav';
 import './relatorio.css';
+import './construtor/construtor.css';
 
 const ABAS = [
   { escopo: 'Geral', rotulo: 'Geral' },
@@ -24,6 +25,11 @@ const ABAS = [
 const MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
 const NAO = '—';
 const hojeSp = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+const ultimoDiaFechado = () => {
+  const data = new Date(`${hojeSp()}T00:00:00Z`);
+  data.setUTCDate(data.getUTCDate() - 1);
+  return data.toISOString().slice(0, 10);
+};
 
 const brl = (n: number | null | undefined) => (n == null ? NAO : 'R$ ' + n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
 const num = (n: number | null | undefined) => (n == null ? NAO : n.toLocaleString('pt-BR'));
@@ -62,7 +68,7 @@ function SeletorEmpresa({ empresas, atual, data }: { empresas: Empresa[]; atual:
   return (
     <nav className="tabs no-print" aria-label="Empresa do relatório">
       {empresas.map((e) => (
-        <Link key={e} href={`/relatorio?empresa=${e}${data ? `&data=${data}` : ''}`} className={`tab ${e === atual ? 'active' : ''}`} aria-current={e === atual ? 'page' : undefined}>
+        <Link key={e} href={`/relatorio?gerar=1&empresa=${e}${data ? `&data=${data}` : ''}`} className={`tab ${e === atual ? 'active' : ''}`} aria-current={e === atual ? 'page' : undefined}>
           {ROTULO_EMPRESA[e]}
         </Link>
       ))}
@@ -71,7 +77,7 @@ function SeletorEmpresa({ empresas, atual, data }: { empresas: Empresa[]; atual:
   );
 }
 
-export default async function RelatorioPage({ searchParams }: { searchParams: Promise<{ escopo?: string; empresa?: string; data?: string }> }) {
+export default async function RelatorioPage({ searchParams }: { searchParams: Promise<{ escopo?: string; empresa?: string; data?: string; gerar?: string }> }) {
   await requireFuncionalidadeForPage('relatorio');
   const acesso = await carregarAcesso();
   if (!acesso) redirect('/login');
@@ -79,9 +85,12 @@ export default async function RelatorioPage({ searchParams }: { searchParams: Pr
     return <Aviso titulo="Você ainda não tem empresa liberada." texto="Peça ao administrador." />;
   }
 
-  const { escopo: pedido, empresa: empresaPedida, data } = await searchParams;
+  const { escopo: pedido, empresa: empresaPedida, data, gerar } = await searchParams;
   const empresa = escolherEmpresa(acesso, empresaPedida)!;
-  const seletor = <SeletorEmpresa empresas={acesso.empresas} atual={empresa} data={data} />;
+  // O relatório diário abre em D-1: o dia corrente ainda está em formação e
+  // costumava aparecer como uma tela inteira de zeros antes do fechamento.
+  const ref = data && /^\d{4}-\d{2}-\d{2}$/.test(data) ? data : ultimoDiaFechado();
+  const seletor = <SeletorEmpresa empresas={acesso.empresas} atual={empresa} data={ref} />;
 
   // Só as abas permitidas existem daqui em diante: o gerente nunca recebe Geral nem a turma de outro.
   const abasVisiveis = ABAS.filter((a) => podeVerAba(acesso, a.escopo));
@@ -91,7 +100,36 @@ export default async function RelatorioPage({ searchParams }: { searchParams: Pr
   }
   const escopo = aba.escopo;
 
-  const ref = data && /^\d{4}-\d{2}-\d{2}$/.test(data) ? data : hojeSp();
+  if (gerar !== '1') {
+    return (
+      <main className="construtor relatorio-escolha">
+        <header className="cv-head">
+          <div><p className="cv-kicker">Relatório Gerencial</p><h1>Escolha o relatório</h1><p>Defina o tipo e os filtros antes de consultar as bases.</p></div>
+        </header>
+        <section className="cv-choice-grid">
+          <article className="cv-choice active">
+            <div><span>Visão completa</span><h2>Relatório diário</h2><p>Casos, vendas, metas, ranking, churn e andamento entre Front V2 e Função.</p></div>
+            <form method="get" className="cv-choice-form">
+              <input type="hidden" name="gerar" value="1" />
+              {acesso.empresas.length === 1
+                ? <input type="hidden" name="empresa" value={empresa} />
+                : <label><span>Empresa</span><select name="empresa" defaultValue={empresa}>{acesso.empresas.map((item) => <option key={item} value={item}>{ROTULO_EMPRESA[item]}</option>)}</select></label>}
+              <label><span>Data</span><input type="date" name="data" defaultValue={ref} required /></label>
+              {abasVisiveis.length === 1
+                ? <input type="hidden" name="escopo" value={escopo} />
+                : <label><span>Visão</span><select name="escopo" defaultValue={escopo}>{abasVisiveis.map((item) => <option key={item.escopo} value={item.escopo}>{item.rotulo}</option>)}</select></label>}
+              <button type="submit">Gerar relatório</button>
+            </form>
+          </article>
+          <article className="cv-choice">
+            <div><span>Visão personalizada</span><h2>Montar relatório</h2><p>Escolha período, dimensão, métrica e formato do gráfico antes de consultar.</p></div>
+            <Link className="cv-choice-link" href={`/relatorio/construtor?empresa=${empresa}`}>Configurar campos</Link>
+          </article>
+        </section>
+      </main>
+    );
+  }
+
   let r: Partial<Relatorio> & Pick<Relatorio, 'kpis'>;
   try {
     r = await carregarRelatorioAoVivo(empresa, ref, escopo);
@@ -148,8 +186,9 @@ export default async function RelatorioPage({ searchParams }: { searchParams: Pr
   return (
     <div className="relatorio">
       <nav className="cv-mode no-print" aria-label="Tipo de relatório">
-        <Link href={`/relatorio?empresa=${empresa}&data=${ref}`} className="active">Relatório diário</Link>
-        <Link href={`/relatorio/construtor?empresa=${empresa}&inicio=${ref}&fim=${ref}`}>Montar relatório</Link>
+        <Link href="/relatorio">Escolher relatório</Link>
+        <Link href={`/relatorio?gerar=1&empresa=${empresa}&data=${ref}&escopo=${encodeURIComponent(escopo)}`} className="active">Relatório diário</Link>
+        <Link href={`/relatorio/construtor?empresa=${empresa}`}>Montar relatório</Link>
       </nav>
       <div className="badge-prova live" role="note">
         <span className="live-dot" /> Dados reais · Front V2 × Função
@@ -178,7 +217,7 @@ export default async function RelatorioPage({ searchParams }: { searchParams: Pr
 
       <nav className="tabs no-print" aria-label="Escopo do relatório">
         {abasVisiveis.map((a) => (
-          <Link key={a.escopo} href={`/relatorio?empresa=${empresa}&escopo=${encodeURIComponent(a.escopo)}&data=${ref}`} className={`tab ${a.escopo === escopo ? 'active' : ''}`} aria-current={a.escopo === escopo ? 'page' : undefined}>
+          <Link key={a.escopo} href={`/relatorio?gerar=1&empresa=${empresa}&escopo=${encodeURIComponent(a.escopo)}&data=${ref}`} className={`tab ${a.escopo === escopo ? 'active' : ''}`} aria-current={a.escopo === escopo ? 'page' : undefined}>
             {a.rotulo}
           </Link>
         ))}
@@ -186,6 +225,7 @@ export default async function RelatorioPage({ searchParams }: { searchParams: Pr
       </nav>
 
       <form className="rel-date no-print" method="get">
+        <input type="hidden" name="gerar" value="1" />
         <input type="hidden" name="empresa" value={empresa} />
         <input type="hidden" name="escopo" value={escopo} />
         <label>Data do relatório <input type="date" name="data" defaultValue={ref} /></label>

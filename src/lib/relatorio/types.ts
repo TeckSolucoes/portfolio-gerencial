@@ -1,4 +1,4 @@
-export type Produto = 'Benefício' | 'Crédito' | 'Empréstimo' | 'Adiantamento';
+export type Produto = 'Benefício' | 'Crédito' | 'Empréstimo' | 'Adiantamento' | 'Não informado';
 export type Tipo = 'Novo' | 'Compra' | 'Adiantamento';
 export type Desfecho = 'Pagou' | 'Morreu' | 'Jornada';
 export type Fim = 'Cancelado' | 'Reprovado CCNET' | 'Reprovado Front';

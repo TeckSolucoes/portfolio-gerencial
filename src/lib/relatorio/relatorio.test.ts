@@ -44,6 +44,8 @@ test('tipo: Adiantamento vence a modalidade; depois Compra; depois Novo', () => 
   assert.equal(normalizarProduto('Cartão de Crédito'), 'Crédito');
   assert.equal(normalizarProduto('Adiantamento Salarial'), 'Adiantamento');
   assert.equal(normalizarProduto('Cartão Benefício'), 'Benefício');
+  assert.equal(normalizarProduto('Cartão consignado'), 'Crédito');
+  assert.equal(normalizarProduto('Produto recém-cadastrado'), 'Não informado');
 });
 
 test('CPF: só dígitos, completa zeros à esquerda, rejeita vazio e excesso', () => {

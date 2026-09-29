@@ -84,7 +84,6 @@ export async function carregarRelatorioAoVivo(empresa: Empresa, ref: string, esc
 
   for (const linha of linhas) {
     const produto = normalizarProduto(String(linha.produto ?? ''));
-    if (!produto) continue;
     const numero = String(linha.numero ?? '').trim();
     const atual = porNumero.get(numero);
     const statusFuncao = semAcento(atual?.status_funcao ?? linha.status_funcao_v2);
