@@ -2,6 +2,7 @@ import 'server-only';
 
 import type { RowDataPacket } from 'mysql2/promise';
 import { consultarFrontV2, consultarFuncaoEmLotes } from '@/lib/bases/conexoes';
+import { criarCache } from '@/lib/cache/memoria';
 import type { Empresa } from '@/lib/empresas';
 import { normalizarProduto } from './casos';
 import { escopoGerente, montarRelatorio } from './relatorio';
@@ -53,6 +54,16 @@ const inicioDaJanela = (ref: string) => {
   return data.toISOString().slice(0, 10);
 };
 
+// A consulta ao Front V2 + Função é cara (rede, dezenas de lotes na Função) e o resultado não muda
+// pela aba (Geral/gerente): guardamos as propostas por (empresa, dia) e cada aba só filtra em
+// memória (montarRelatorio, barato). Container de vida longa, então isso vale entre requisições e
+// entre usuários diferentes olhando o mesmo dia — sem isso, cada clique de aba repetia tudo.
+const TTL_DIA_FECHADO_MS = 60 * 60 * 1000; // dia encerrado não deveria mudar; ainda assim atualiza de hora em hora
+const TTL_HOJE_MS = 3 * 60 * 1000; // dia corrente ainda em formação: reconsulta com mais frequência
+const cachePropostas = criarCache<Proposta[]>();
+
+const hojeSp = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(new Date());
+
 async function consultarPropostasDaFuncao(numeros: string[]): Promise<LinhaFuncao[]> {
   const unicos = [...new Set(numeros.map((numero) => numero.trim()).filter(Boolean))];
   const consultas = [];
@@ -82,8 +93,7 @@ async function consultarPropostasDaFuncao(numeros: string[]): Promise<LinhaFunca
   return consultas.length ? consultarFuncaoEmLotes<LinhaFuncao>(consultas) : [];
 }
 
-export async function carregarRelatorioAoVivo(empresa: Empresa, ref: string, escopo: string): Promise<Relatorio> {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(ref)) throw new Error('Data inválida.');
+async function buscarPropostasAoVivo(empresa: Empresa, ref: string): Promise<Proposta[]> {
   const prefixoEquipe = empresa === 'AKRK' ? 'AKRK - %' : empresa === 'DIG' ? 'DIG - %' : '__sem_acesso__';
   const linhas = await consultarFrontV2<LinhaDiaria[]>(
     `SELECT
@@ -163,5 +173,12 @@ export async function carregarRelatorioAoVivo(empresa: Empresa, ref: string, esc
     });
   }
 
+  return propostas;
+}
+
+export async function carregarRelatorioAoVivo(empresa: Empresa, ref: string, escopo: string): Promise<Relatorio> {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(ref)) throw new Error('Data inválida.');
+  const ttl = ref === hojeSp() ? TTL_HOJE_MS : TTL_DIA_FECHADO_MS;
+  const propostas = await cachePropostas.obter(`${empresa}:${ref}`, ttl, () => buscarPropostasAoVivo(empresa, ref));
   return montarRelatorio(propostas, ref, escopo === 'Geral' ? null : escopoGerente(escopo));
 }
