@@ -46,7 +46,10 @@ export interface Consolidado {
 // Cada fonte falha sozinha: uma fora do ar não derruba as outras. atos = [] com todas
 // indisponíveis é distinguível pelo status (ninguém confunde "sem ato" com "sem resposta").
 async function consultar(periodo: 'semana' | 'mes' | 'ano'): Promise<Consolidado> {
-  const [dou, ...estaduais] = await Promise.all([atosDoDiarioOficial(periodo), ...FONTES.map((f) => comLimite(f.buscar(periodo), LIMITE_POR_FONTE_MS))]);
+  const [dou, ...estaduais] = await Promise.all([
+    comLimite(atosDoDiarioOficial(periodo), LIMITE_POR_FONTE_MS),
+    ...FONTES.map((f) => comLimite(f.buscar(periodo), LIMITE_POR_FONTE_MS)),
+  ]);
 
   const resultados: { id: string; nome: string; atos: AtoOficial[] | null }[] = [
     { id: 'dou', nome: 'Diário Oficial da União', atos: dou },
