@@ -1,6 +1,6 @@
 {
   "projeto": "Portal Teck (Painel Executivo)",
-  "atualizadoEm": "2026-09-28",
+  "atualizadoEm": "2026-09-29",
   "legendaStatus": [
     "pendente",
     "em-andamento",
@@ -330,14 +330,27 @@
       "tema": "Decisão",
       "impacto": "alto",
       "esforco": "M",
-      "status": "pendente",
+      "status": "concluido",
       "dependeDe": [],
       "donoSugerido": "usuário",
       "criterioPronto": "URL do Front; para o CCNET, relatório com intervalo de datas ou usuário somente leitura de banco (não há API).",
       "riscos": [
         "RSK-6"
       ],
-      "notas": "Desbloqueia PRD-7, PRD-11, PRD-12, DAD-1 e DAD-2. Credenciais nunca no chat."
+      "notas": "Desbloqueia PRD-7, PRD-11, PRD-12, DAD-1 e DAD-2. Credenciais nunca no chat.",
+      "historico": [
+        {
+          "data": "2026-09-28",
+          "acao": "em-andamento",
+          "nota": ""
+        },
+        {
+          "data": "2026-09-29",
+          "acao": "concluido",
+          "nota": "Acessos read-only validados no EasyPanel: Função via SSL, Front V1 direto e Front V2 por túnel SSH. Conectores protegidos e worker de saúde adicionados; nenhuma credencial ou PII foi versionada."
+        }
+      ],
+      "concluidoEm": "2026-09-29"
     },
     {
       "id": "PRD-5",
@@ -657,7 +670,7 @@
       "tema": "Produto",
       "impacto": "alto",
       "esforco": "G",
-      "status": "bloqueado",
+      "status": "em-andamento",
       "dependeDe": [
         "DEC-8"
       ],
@@ -667,7 +680,14 @@
         "RSK-6",
         "RSK-7"
       ],
-      "notas": "Metabase não cruza dois bancos: cópia local dos dados é necessária de qualquer forma."
+      "notas": "Metabase não cruza dois bancos: cópia local dos dados é necessária de qualquer forma.",
+      "historico": [
+        {
+          "data": "2026-09-29",
+          "acao": "em-andamento",
+          "nota": ""
+        }
+      ]
     },
     {
       "id": "PRD-13",

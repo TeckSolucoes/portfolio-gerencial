@@ -7,7 +7,7 @@ import { alternarAtivo, executarAgora, limparWorker, mudarAgendaPadrao, mudarHor
 import './workers.css';
 
 const POLL_MS = 4000;
-const ORDEM_GRUPOS: GrupoWorker[] = ['Notícias', 'Mercado', 'Diário Oficial', 'Transparência', 'Jurídico'];
+const ORDEM_GRUPOS: GrupoWorker[] = ['Notícias', 'Mercado', 'Diário Oficial', 'Transparência', 'Jurídico', 'Integrações'];
 type Situacao = 'rodando' | 'pendente' | 'pausado' | 'erro' | 'ok' | 'nunca';
 type FiltroGrupo = GrupoWorker | 'Todos';
 const ROTULO_SITUACAO: Record<Situacao, string> = {
