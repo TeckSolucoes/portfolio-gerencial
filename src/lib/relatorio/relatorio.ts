@@ -39,6 +39,7 @@ const ROTULO_PRODUTO: Record<Proposta['produto'], string> = {
   Benefício: 'Cartão benefício',
   Empréstimo: 'Empréstimo',
   Adiantamento: 'Adiantamento',
+  'Não informado': 'Não informado',
 };
 
 export const META_MODELO = 8_000_000;

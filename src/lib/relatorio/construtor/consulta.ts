@@ -32,17 +32,6 @@ export interface ResultadoVisao {
   conciliacao: ResumoConciliacao | null;
 }
 
-export interface PainelFixo {
-  conciliacao: ResumoConciliacao;
-  propostas: number;
-  valorContratado: number;
-  valorLiberado: number;
-  taxaIntegracao: number;
-  propostasPorHora: PontoVisao[];
-  funilFuncao: PontoVisao[];
-  rankingEquipes: PontoVisao[];
-}
-
 const TAMANHO_LOTE_FUNCAO = 800;
 const LIMITE_PROPOSTAS_FRONT = 100_000;
 
@@ -184,25 +173,6 @@ export async function executarVisao(pedido: ConsultaVisao): Promise<ResultadoVis
   return {
     pontos: agregarConciliado(front, funcao, (dimensao?.id as IdCampoRelatorio | undefined) ?? null, metrica.id as IdCampoRelatorio),
     conciliacao: resumirConciliacao(front, funcao),
-  };
-}
-
-export async function executarPainelFixo(pedido: Pick<ConsultaVisao, 'empresa' | 'inicio' | 'fim'>): Promise<PainelFixo> {
-  validarPeriodo(pedido.inicio, pedido.fim);
-  const consultaBase: ConsultaVisao = { ...pedido, dimensao: null, metrica: 'qtd_propostas', grafico: 'indicador' };
-  const front = await consultarRecorteFront(consultaBase);
-  const numeros = front.map((linha) => String(linha.numero_proposta ?? '').trim()).filter(Boolean);
-  const funcao = await consultarSomentePropostasDaFuncao(numeros);
-  const indicador = (metrica: IdCampoRelatorio) => agregarConciliado(front, funcao, null, metrica)[0]?.valor ?? 0;
-  return {
-    conciliacao: resumirConciliacao(front, funcao),
-    propostas: indicador('qtd_propostas'),
-    valorContratado: indicador('valor_contratado'),
-    valorLiberado: indicador('valor_liberado'),
-    taxaIntegracao: indicador('taxa_integracao'),
-    propostasPorHora: agregarConciliado(front, funcao, 'hora_cadastro', 'qtd_propostas'),
-    funilFuncao: agregarConciliado(front, funcao, 'status_funcao', 'qtd_propostas'),
-    rankingEquipes: agregarConciliado(front, funcao, 'equipe', 'valor_contratado'),
   };
 }
 

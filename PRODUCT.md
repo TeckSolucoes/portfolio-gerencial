@@ -51,7 +51,7 @@ O portal combina dados internos das operações da Teck com fontes públicas e r
 
 - Contexto consolidado do produto em `docs/CONTEXTO.md`.
 - Regras, prioridades e decisões em `docs/BACKLOG.md`, `docs/backlog/backlog.json` e `docs/PACOTE-PARA-IAS.md`.
-- Regras atuais do relatório em `src/lib/relatorio/` e evidência histórica em `src/lib/relatorio/evidencia.json`.
+- Regras atuais do relatório em `src/lib/relatorio/`; os números são carregados ao vivo do Front V2 e conciliados com a Função.
 - Estrutura persistida do portal em `prisma/schema.prisma`.
 - Implementação atual de navegação, páginas, permissões, workers e integrações em `src/`.
 - Não há autorização para inventar clientes, depoimentos, resultados comerciais ou indicadores ausentes das fontes reais.

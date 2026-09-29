@@ -37,6 +37,7 @@ COPY package.json package-lock.json ./
 RUN npm ci
 
 COPY . .
+RUN mkdir -p public
 
 # NEXT_PUBLIC_* precisa existir no momento do build (não é lido em runtime —
 # o Next grava o valor direto no JS enviado ao navegador), diferente das

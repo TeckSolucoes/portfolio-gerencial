@@ -2,14 +2,15 @@ import type { Caso, Descartada, Desfecho, Etapa, Fim, Produto, Proposta, Tipo } 
 
 const semAcento = (s: string) => s.normalize('NFD').replace(/\p{Diacritic}/gu, '').toUpperCase().trim();
 
-// O Front usa nomes longos ("Cartão de Crédito", "Adiantamento Salarial"); o relatório usa 4 rótulos.
-export function normalizarProduto(bruto: string): Produto | null {
+// O Front usa nomes longos e legados. Registros novos não podem desaparecer do
+// total quando o cadastro traz um rótulo ainda não mapeado.
+export function normalizarProduto(bruto: string): Produto {
   const p = semAcento(bruto);
   if (p.includes('ADIANT')) return 'Adiantamento';
   if (p.includes('BENEFICIO')) return 'Benefício';
-  if (p.includes('CREDITO')) return 'Crédito';
-  if (p.includes('EMPRESTIMO')) return 'Empréstimo';
-  return null;
+  if (p.includes('CREDITO') || p.includes('CARTAO') || p.includes('SAQUE')) return 'Crédito';
+  if (p.includes('EMPRESTIMO') || p.includes('PORTABIL') || p.includes('REFIN')) return 'Empréstimo';
+  return 'Não informado';
 }
 
 export function tipoDe(produto: Produto, modalidade: string): Tipo {

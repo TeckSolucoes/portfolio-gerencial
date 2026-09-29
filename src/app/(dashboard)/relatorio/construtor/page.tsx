@@ -16,7 +16,7 @@ const GRAFICOS: { id: TipoGrafico; nome: string }[] = [
 
 const hojeSp = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
 const horarioSp = () => new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(new Date());
-type Parametros = { empresa?: string; inicio?: string; fim?: string; dimensao?: string; metrica?: string; grafico?: string; modelo?: string };
+type Parametros = { empresa?: string; inicio?: string; fim?: string; dimensao?: string; metrica?: string; grafico?: string; modelo?: string; gerar?: string };
 
 export default async function ConstrutorRelatorioPage({ searchParams }: { searchParams: Promise<Parametros> }) {
   await requireFuncionalidadeForPage('relatorio');
@@ -35,16 +35,17 @@ export default async function ConstrutorRelatorioPage({ searchParams }: { search
   const fim = p.fim ?? hoje;
   const camposDimensao = CAMPOS_RELATORIO.filter((c) => c.tipo !== 'metrica');
   const camposMetrica = CAMPOS_RELATORIO.filter((c) => c.tipo === 'metrica');
+  const solicitado = p.gerar === '1' || Boolean(modelo);
 
   let pontos: PontoVisao[] = [];
   let conciliacao: ResultadoVisao['conciliacao'] | null = null;
   let erro = '';
-  const basesIncompletas = [
+  const basesIncompletas = solicitado ? [
     variaveisAusentes('front-v2').length ? 'Front V2' : '',
     variaveisAusentes('funcao').length ? 'Função' : '',
-  ].filter(Boolean);
+  ].filter(Boolean) : [];
   if (basesIncompletas.length) erro = `A conexão de ${basesIncompletas.join(' e ')} ainda não está completa neste ambiente.`;
-  else {
+  else if (solicitado) {
     try {
       const resultado = await executarVisao({ empresa, inicio, fim, dimensao: grafico === 'indicador' ? null : dimensao, metrica, grafico });
       pontos = resultado.pontos;
@@ -66,8 +67,8 @@ export default async function ConstrutorRelatorioPage({ searchParams }: { search
   return (
     <main className="construtor">
       <nav className="cv-mode" aria-label="Tipo de relatório">
-        <Link href={`/relatorio?empresa=${empresa}&data=${fim}`}>Relatório diário</Link>
-        <Link href={`/relatorio/construtor?empresa=${empresa}&inicio=${inicio}&fim=${fim}&dimensao=${dimensao}&metrica=${metrica}&grafico=${grafico}`} className="active">Montar relatório</Link>
+        <Link href="/relatorio">Escolher relatório</Link>
+        <Link href={`/relatorio/construtor?empresa=${empresa}`} className="active">Montar relatório</Link>
       </nav>
       <header className="cv-head">
         <div><p className="cv-kicker">Relatório Gerencial · montagem livre</p><h1>Montar relatório — {ROTULO_EMPRESA[empresa]}</h1><p>Selecione campos aprovados e gere uma visão agregada do Front V2 com os estados devolvidos pela Função.</p></div>
@@ -75,9 +76,10 @@ export default async function ConstrutorRelatorioPage({ searchParams }: { search
       </header>
 
       {acesso.empresas.length > 1 && <nav className="cv-company" aria-label="Empresa">{acesso.empresas.map((e) => <Link key={e} href={`/relatorio/construtor?empresa=${e}&inicio=${inicio}&fim=${fim}&dimensao=${dimensao}&metrica=${metrica}&grafico=${grafico}`} className={e === empresa ? 'active' : ''}>{ROTULO_EMPRESA[e]}</Link>)}</nav>}
-      <section className="cv-presets" aria-label="Visões prontas">{VISOES_PADRAO.map((v) => <Link key={v.id} href={`/relatorio/construtor?empresa=${empresa}&inicio=${inicio}&fim=${fim}&modelo=${v.id}`} className={p.modelo === v.id ? 'active' : ''}>{v.nome}</Link>)}</section>
+      <section className="cv-presets" aria-label="Visões prontas">{VISOES_PADRAO.map((v) => <Link key={v.id} href={`/relatorio/construtor?gerar=1&empresa=${empresa}&inicio=${inicio}&fim=${fim}&modelo=${v.id}`} className={p.modelo === v.id ? 'active' : ''}>{v.nome}</Link>)}</section>
 
       <form className="cv-builder" method="get">
+        <input type="hidden" name="gerar" value="1" />
         <input type="hidden" name="empresa" value={empresa} />
         <label><span>De</span><input type="date" name="inicio" defaultValue={inicio} required /></label>
         <label><span>Até</span><input type="date" name="fim" defaultValue={fim} required /></label>
@@ -94,7 +96,11 @@ export default async function ConstrutorRelatorioPage({ searchParams }: { search
         <span>{conciliacao.ausentesFuncao.toLocaleString('pt-BR')} ausentes</span>
         <span>{conciliacao.divergenciasStatus.toLocaleString('pt-BR')} status divergentes</span>
       </aside>}
-      {erro ? <div className="cv-alert" role="status">{erro}</div> : <section className="cv-result"><div className="cv-result-head"><div><span>Visão atual</span><h2>{nomeMetrica}{nomeDimensao ? ` por ${nomeDimensao.toLowerCase()}` : ''}</h2></div><small>{ROTULO_EMPRESA[empresa]} · {inicio.split('-').reverse().join('/')} a {fim.split('-').reverse().join('/')}</small></div><Grafico tipo={grafico} pontos={pontos} formato={formatoMetrica(metrica)} /></section>}
+      {!solicitado
+        ? <div className="cv-empty">Configure os campos acima e clique em <strong>Gerar visão</strong>.</div>
+        : erro
+          ? <div className="cv-alert" role="status">{erro}</div>
+          : <section className="cv-result"><div className="cv-result-head"><div><span>Visão atual</span><h2>{nomeMetrica}{nomeDimensao ? ` por ${nomeDimensao.toLowerCase()}` : ''}</h2></div><small>{ROTULO_EMPRESA[empresa]} · {inicio.split('-').reverse().join('/')} a {fim.split('-').reverse().join('/')}</small></div><Grafico tipo={grafico} pontos={pontos} formato={formatoMetrica(metrica)} /></section>}
       <p className="cv-source">Fonte ao vivo: o Front V2 define o período, empresa e responsáveis; status, esteira e valor liberado são confirmados diretamente na Função por número da proposta, em lotes de até 800. Nenhuma varredura integral, faixa simulada ou export antigo é usado.</p>
     </main>
   );

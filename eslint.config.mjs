@@ -18,6 +18,11 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
     "src/generated/**",
+    // Ferramentas locais de apoio não fazem parte do produto nem do Git.
+    ".agents/**",
+    ".codex/**",
+    ".impeccable/**",
+    "graphify-out/**",
   ]),
 ]);
 
