@@ -23,6 +23,7 @@ export async function Header({ sidebar = false }: { sidebar?: boolean }) {
   if (sidebar && user) {
     const items: NavigationItem[] = [{ href: '/', label: 'Início', icon: 'home', exact: true }];
     if (acesso && temEmpresa && podeAcessar(acesso, 'relatorio')) items.push({ href: '/relatorio', label: 'Relatório Gerencial', icon: 'report' });
+    if (acesso && temEmpresa && podeAcessar(acesso, 'relatorio_supervisao')) items.push({ href: '/relatorio-supervisao', label: 'Relatório Supervisão', icon: 'supervision' });
     if (acesso && temEmpresa && podeAcessar(acesso, 'monitoramento')) items.push({ href: '/monitoramento', label: 'Monitoramento', icon: 'radar' });
     if (acesso && podeAcessar(acesso, 'diario_oficial')) items.push({ href: '/diario-oficial', label: 'Diário Oficial', icon: 'news' });
     if (acesso && podeAcessar(acesso, 'transparencia')) items.push({ href: '/transparencia', label: 'Transparência', icon: 'people' });
@@ -58,6 +59,11 @@ export async function Header({ sidebar = false }: { sidebar?: boolean }) {
         {acesso && temEmpresa && podeAcessar(acesso, 'relatorio') && (
           <Link href="/relatorio" className="admin-link">
             Relatório Gerencial
+          </Link>
+        )}
+        {acesso && temEmpresa && podeAcessar(acesso, 'relatorio_supervisao') && (
+          <Link href="/relatorio-supervisao" className="admin-link">
+            Relatório Supervisão
           </Link>
         )}
         {acesso && temEmpresa && podeAcessar(acesso, 'monitoramento') && (

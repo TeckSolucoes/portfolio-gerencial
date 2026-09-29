@@ -17,7 +17,7 @@ Portal interno (Next.js 16 App Router, TypeScript, Prisma 7 + SQLite via better-
 - Variáveis de ambiente relevantes: `DATABASE_URL`, `NEXTAUTH_SECRET`, `NEXTAUTH_URL`, reCAPTCHA (`NEXT_PUBLIC_RECAPTCHA_SITE_KEY`, `RECAPTCHA_SECRET_KEY`), opcional `PORTAL_SERVIDORES_URL`. `PORTAL_TRANSPARENCIA_CHAVE` **não é mais usada** (guardar a chave: volta nas sanções).
 
 ## Mapa do código
-- `src/lib/relatorio/construtor/` catálogo e consulta parametrizada do Relatório Gerencial: o Front V2 define o recorte e a Função confirma status, esteira e valor liberado por `NumeroProposta`; `/relatorio` mostra a visão diária fixa e `/relatorio/construtor` permite montar outras visões, ambas sem fallback estático.
+- `/relatorio` mantém o relatório diário fixo, com recorte do Front V2 e confirmação de status e esteira na Função por `NumeroProposta`, sem fallback estático. `/relatorio-supervisao` foi criada como funcionalidade separada e aguarda a definição dos indicadores.
 - `src/lib/monitoramento/` detector (INÉDITO/RARO/PICO) sobre `evidencia.json`.
 - `src/lib/diarios/` um adaptador por diário (MA, TO, SP, PB, MG, SP capital, Imperatriz) + `diarioOficial.ts` (DOU).
 - `src/lib/workers/` agendador (`instrumentation.ts` liga no boot), registro, motor, cache em `data/cache/`, horários 08:00/13:00/19:00 (Brasília).
@@ -110,7 +110,7 @@ Orientações completas: `docs/backlog/COMO-USAR.md`. Contexto do projeto: `docs
 
 ## Resumo
 
-- Pendentes: 28 · Em andamento: 2 · Bloqueados: 7 · Concluídos: 14
+- Pendentes: 28 · Em andamento: 1 · Bloqueados: 8 · Concluídos: 14
 - Próximo item liberado: **INF-2** Snapshot manual do VPS/volume antes de qualquer limpeza
 
 ## Itens em aberto (do mais importante para o menos importante)
@@ -276,11 +276,12 @@ Orientações completas: `docs/backlog/COMO-USAR.md`. Contexto do projeto: `docs
   - Notas: SP capital tem CKAN aberto; estado de SP e demais precisam de pesquisa. O federal usa o arquivo mensal Servidores SIAPE.
   - Bloqueado: depende de outros itens
 
-- [~] **PRD-10** Construtor de relatórios/BI (campos, gráficos padrão, Excel) cruzando Front e CCNET
+- [!] **PRD-10** Relatório Supervisão (indicadores e filtros a definir)
   - impacto alto · esforço G · dono: IA · depende de: ~~DEC-8~~
-  - Pronto quando: Decisão entre Metabase e construtor próprio; camada de campos aprovada (nada de SQL livre); banco somente leitura; acesso por perfil.
+  - Pronto quando: Indicadores, filtros, responsáveis e regras da visão de supervisão definidos e aprovados; dados somente leitura; acesso por perfil.
   - Riscos: RSK-6, RSK-7
-  - Notas: Metabase não cruza dois bancos: cópia local dos dados é necessária de qualquer forma.
+  - Notas: O construtor personalizado foi retirado por decisão do dono. A rota e a permissão do Relatório Supervisão foram criadas; o conteúdo será definido em conversa posterior.
+  - Bloqueado: Aguardando definição dos indicadores e filtros do Relatório Supervisão; o construtor personalizado foi retirado por decisão do dono.
 
 - [ ] **PRD-13** Margem real por cliente via averbadora/convênio, com consentimento
   - impacto médio · esforço G · dono: usuário + IA · depende de: DEC-2 · **aguarda dependências**

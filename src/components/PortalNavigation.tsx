@@ -8,7 +8,7 @@ import './PortalNavigation.css';
 export type NavigationItem = {
   href: string;
   label: string;
-  icon: 'home' | 'report' | 'radar' | 'news' | 'people' | 'info' | 'costs' | 'settings' | 'users' | 'target' | 'workers' | 'noc' | 'legal';
+  icon: 'home' | 'report' | 'supervision' | 'radar' | 'news' | 'people' | 'info' | 'costs' | 'settings' | 'users' | 'target' | 'workers' | 'noc' | 'legal';
   exact?: boolean;
   secondary?: boolean;
 };
@@ -17,6 +17,7 @@ function Icon({ name }: { name: NavigationItem['icon'] | 'menu' | 'close' | 'log
   const paths = {
     home: <><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z" /></>,
     report: <><path d="M4 3v17h17M8 16v-4m5 4V8m5 8V5" /></>,
+    supervision: <><path d="M3 20V10m6 10V4m6 16v-7m6 7V7" /><path d="M2 20h20" /></>,
     radar: <><circle cx="12" cy="12" r="9" /><path d="M16 8a6 6 0 1 0 2 5M12 12l7-7" /><circle cx="12" cy="12" r="1" /></>,
     news: <><rect x="4" y="3" width="16" height="18" rx="2" /><path d="M8 7h8M8 11h8M8 15h3m3 0h2M8 18h3m3 0h2" /></>,
     people: <><circle cx="9" cy="8" r="3" /><path d="M3 21v-3a6 6 0 0 1 12 0v3m2-16a3 3 0 0 1 0 6m2 10v-3a6 6 0 0 0-2-4" /></>,
