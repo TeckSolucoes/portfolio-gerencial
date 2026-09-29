@@ -1,10 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Script from 'next/script';
 import { signIn } from 'next-auth/react';
 import { PasswordField } from './PasswordField';
+
+// router.push() não avisa quando a navegação termina; sem isso, se a home demorar (rede ruim,
+// base lenta), o botão ficava "Entrando…" travado pra sempre, sem erro e sem como tentar de novo.
+const LIMITE_NAVEGACAO_MS = 15_000;
 
 // Vazio até o usuário gerar uma chave em recaptcha admin (ver .env.example)
 // — nesse meio tempo o widget nem renderiza, login segue funcionando sem captcha.
@@ -20,6 +24,11 @@ export function LoginForm() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => () => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+  }, []);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -50,6 +59,13 @@ export function LoginForm() {
 
     router.push('/');
     router.refresh();
+
+    // Se em 15s o login ainda estiver nesta tela (navegação travou), devolve o controle ao
+    // usuário em vez de deixar "Entrando…" girando pra sempre sem explicação nem saída.
+    timeoutRef.current = setTimeout(() => {
+      setLoading(false);
+      setError('Isso está demorando mais que o esperado. Tente novamente.');
+    }, LIMITE_NAVEGACAO_MS);
   }
 
   function handleForgotClick(e: React.MouseEvent<HTMLAnchorElement>) {

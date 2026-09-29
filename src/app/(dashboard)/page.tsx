@@ -14,8 +14,22 @@ async function Saudacao() {
   return <>Bem-vindo{nome ? `, ${nome}` : ''}</>;
 }
 
-export default async function HomePage() {
+// Isolado num componente à parte, em Suspense próprio: assim a checagem de acesso (banco) não
+// atrasa o resto da home, que já tem tudo em Suspense — antes ficava num `await` solto no topo
+// de HomePage, na frente de qualquer streaming, então qualquer lentidão travava a página inteira.
+async function SecaoDiario() {
   const acesso = await carregarAcesso();
+  if (!acesso || !podeAcessar(acesso, 'diario_oficial')) return null;
+  return (
+    <div className="sec-diario">
+      <Suspense fallback={<DiarioHomeSkeleton />}>
+        <DiarioHome />
+      </Suspense>
+    </div>
+  );
+}
+
+export default function HomePage() {
   return (
     <div className="home">
       <section className="abertura" aria-label="Boas-vindas">
@@ -37,11 +51,9 @@ export default async function HomePage() {
         </Suspense>
       </div>
 
-      {acesso && podeAcessar(acesso, 'diario_oficial') && <div className="sec-diario">
-        <Suspense fallback={<DiarioHomeSkeleton />}>
-          <DiarioHome />
-        </Suspense>
-      </div>}
+      <Suspense fallback={null}>
+        <SecaoDiario />
+      </Suspense>
 
       <h2 className="sec-titulo sec-noticias">Notícias</h2>
       <div className="blocos">

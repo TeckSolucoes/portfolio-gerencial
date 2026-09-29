@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { Header } from '@/components/Header';
@@ -13,7 +14,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   return (
     <div className="app portal-app">
-      <Header sidebar />
+      <Suspense fallback={null}>
+        <Header sidebar />
+      </Suspense>
       <main id="portal-content" tabIndex={-1}>
         <AuditTracker />
         {children}
