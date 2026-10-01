@@ -23,7 +23,7 @@ const comLimite = <T,>(p: Promise<T>, ms: number): Promise<T> =>
 export async function executarWorker(id: string, origem: 'agendado' | 'manual'): Promise<'executado' | 'ja-rodando' | 'inexistente' | 'pendente'> {
   const w = workerPorId(id);
   if (!w) return 'inexistente';
-  if (w.pendencia?.()) return 'pendente';
+  if (await w.pendencia?.()) return 'pendente';
   if (rodando().has(id)) return 'ja-rodando';
   rodando().add(id);
 
@@ -78,6 +78,11 @@ export async function agendaPadrao(): Promise<string[]> {
   return (await configs()).padrao;
 }
 
+async function pendenciasDosWorkers() {
+  const lista = await Promise.all(WORKERS.map(async (w) => [w.id, (await w.pendencia?.()) ?? null] as const));
+  return new Map(lista);
+}
+
 // Última execução de cada worker numa consulta só (mais rápido que uma por worker).
 async function ultimas() {
   const linhas = await prisma.workerExecucao.findMany({ orderBy: { iniciadoEm: 'desc' }, take: WORKERS.length * 8 });
@@ -91,15 +96,15 @@ async function ultimas() {
 }
 
 export async function estadoDosWorkers(): Promise<EstadoWorker[]> {
-  const [cfg, { porWorker, sucesso }] = await Promise.all([configs(), ultimas()]);
+  const [cfg, { porWorker, sucesso }, pendencias] = await Promise.all([configs(), ultimas(), pendenciasDosWorkers()]);
   const agora = new Date();
   return WORKERS.map((w) => {
-    const ativo = cfg.porId.get(w.id)?.ativo ?? true;
+    const ativo = cfg.porId.get(w.id)?.ativo ?? w.ativoPadrao ?? true;
     const agenda = cfg.agendaDe(w.id);
     const mensal = w.agendamentoMensal;
     const horarios = mensal ? [mensal.horario] : agenda.horarios;
     const u = porWorker.get(w.id) ?? null;
-    const pendencia = w.pendencia?.() ?? null;
+    const pendencia = pendencias.get(w.id) ?? null;
     const rodandoAgora = rodando().has(w.id) || u?.status === 'rodando';
     return {
       id: w.id,
@@ -171,10 +176,10 @@ export async function definirAgendaPadrao(horarios: string[]) {
 }
 
 async function rodada() {
-  const [cfg, { porWorker }] = await Promise.all([configs(), ultimas()]);
+  const [cfg, { porWorker }, pendencias] = await Promise.all([configs(), ultimas(), pendenciasDosWorkers()]);
   const agora = new Date();
   const vencidos: Worker[] = WORKERS.filter((w) => {
-    if (!(cfg.porId.get(w.id)?.ativo ?? true) || w.pendencia?.() || rodando().has(w.id)) return false;
+    if (!(cfg.porId.get(w.id)?.ativo ?? w.ativoPadrao ?? true) || pendencias.get(w.id) || rodando().has(w.id)) return false;
     const ultimo = porWorker.get(w.id)?.iniciadoEm ?? null;
     return w.agendamentoMensal
       ? estaVencidoMensal(ultimo, w.agendamentoMensal.dia, w.agendamentoMensal.horario, agora)

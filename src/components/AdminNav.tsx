@@ -15,6 +15,9 @@ export function AdminNav({ role }: { role: Role }) {
           <Link href="/admin/workers" className="btn-ghost">
             Workers
           </Link>
+          <Link href="/admin/whatsapp" className="btn-ghost">
+            WhatsApp
+          </Link>
         </>
       )}
       <Link href="/" className="btn-ghost admin-nav-link-muted">

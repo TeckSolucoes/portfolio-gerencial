@@ -5,21 +5,16 @@ import { carregarAcesso } from '@/lib/acesso';
 import { ROTULO_EMPRESA } from '@/lib/empresas';
 import type { Empresa } from '@/lib/empresas';
 import { metaDoMes } from '@/lib/metas';
-import { escolherEmpresa, podeVerAba } from '@/lib/permissoes';
+import { escolherEmpresa, podeAcessar, podeVerAba } from '@/lib/permissoes';
 import type { Relatorio, Tipo } from '@/lib/relatorio/types';
 import { carregarRelatorioAoVivo } from '@/lib/relatorio/aoVivo';
+import { ABAS } from '@/lib/relatorio/abas';
 import { RelatorioLista } from './RelatorioLista';
 import { RelatorioLote } from './RelatorioLote';
 import { RelatorioNav } from './RelatorioNav';
+import { EnviarWhatsapp } from './EnviarWhatsapp';
+import { lerConfigWhatsapp } from '@/lib/whatsapp/envio';
 import './relatorio.css';
-
-const ABAS = [
-  { escopo: 'Geral', rotulo: 'Geral' },
-  { escopo: 'Luana Cosme', rotulo: 'Luana' },
-  { escopo: 'Adriano Monteiro', rotulo: 'Adriano' },
-  { escopo: 'Daniel Mansur', rotulo: 'Daniel' },
-  { escopo: 'Marcos Mota', rotulo: 'Marcos' },
-];
 
 const MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
 const NAO = '—';
@@ -113,7 +108,7 @@ export default async function RelatorioPage({ searchParams }: { searchParams: Pr
   const dOntem = `${String(ontem.getUTCDate()).padStart(2, '0')}/${String(ontem.getUTCMonth() + 1).padStart(2, '0')}`;
   const mesNome = MESES[mesRef - 1];
 
-  const oficial = await metaDoMes([empresa], ref.slice(0, 7));
+  const [oficial, whats] = await Promise.all([metaDoMes([empresa], ref.slice(0, 7)), podeAcessar(acesso, 'whatsapp') ? lerConfigWhatsapp() : null]);
   const pagosValor = k.pagosMes.valor;
   const metaOficial = oficial && {
     valor: oficial.valor,
@@ -188,12 +183,15 @@ export default async function RelatorioPage({ searchParams }: { searchParams: Pr
         {abasVisiveis.length > 1 && <span className="tab-note">Geral = todos · abas = filtro por gerente</span>}
       </nav>
 
-      <form className="rel-date no-print" method="get">
-        <input type="hidden" name="empresa" value={empresa} />
-        <input type="hidden" name="escopo" value={escopo} />
-        <label>Data do relatório <input type="date" name="data" defaultValue={ref} /></label>
-        <button type="submit">Atualizar</button>
-      </form>
+      <div className="rel-acoes no-print">
+        <form className="rel-date" method="get">
+          <input type="hidden" name="empresa" value={empresa} />
+          <input type="hidden" name="escopo" value={escopo} />
+          <label>Data do relatório <input type="date" name="data" defaultValue={ref} /></label>
+          <button type="submit">Atualizar</button>
+        </form>
+        {whats && <EnviarWhatsapp empresa={empresa} escopo={escopo} rotulo={aba.rotulo} data={ref} destinatarios={whats.destinatarios.length} />}
+      </div>
 
       <RelatorioNav />
 

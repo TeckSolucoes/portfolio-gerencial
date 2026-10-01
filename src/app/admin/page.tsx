@@ -10,5 +10,6 @@ export default async function AdminIndex() {
   if (acesso.perfil === 'superadmin') redirect('/admin/settings/users');
   if (podeAcessar(acesso, 'metas')) redirect('/admin/metas');
   if (podeAcessar(acesso, 'workers')) redirect('/admin/workers');
+  if (podeAcessar(acesso, 'whatsapp')) redirect('/admin/whatsapp');
   redirect('/');
 }
