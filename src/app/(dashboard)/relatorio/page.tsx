@@ -235,8 +235,8 @@ export default async function RelatorioPage({ searchParams }: { searchParams: Pr
         <div className="grid4">
           <Kpi cls="bg-total" tom="blue" rotulo="Vendas do mês" valor={brl(k.vendasMes.valor)} meta={`${num(k.vendasMes.qtd)} propostas · ${mesNome}`} />
           <Kpi cls="bg-cancm" tom="white" rotulo="Cancelados do mês" valor={brl(k.canceladosMes.valor)} meta={`${num(k.canceladosMes.qtd)} propostas canceladas`} />
-          <Kpi cls="bg-ccnet" tom="blue" rotulo="Vendas geral" valor={brl(k.vendasGeral.valor)} meta={`${num(k.vendasGeral.qtd)} propostas · janela de 92 dias`} />
-          <Kpi cls="bg-front" tom="white" rotulo="Cancelados geral" valor={brl(k.canceladosGeral.valor)} meta={`${num(k.canceladosGeral.qtd)} propostas · janela de 92 dias`} />
+          <Kpi cls="bg-ccnet" tom="blue" rotulo="Vendas geral" valor={brl(k.vendasGeral.valor)} meta={`${num(k.vendasGeral.qtd)} propostas · janela de 32 dias`} />
+          <Kpi cls="bg-front" tom="white" rotulo="Cancelados geral" valor={brl(k.canceladosGeral.valor)} meta={`${num(k.canceladosGeral.qtd)} propostas · janela de 32 dias`} />
         </div>
       </section>
 
@@ -505,7 +505,7 @@ export default async function RelatorioPage({ searchParams }: { searchParams: Pr
         </div>
       </section>
 
-      <p className="footnote">Fonte: Front V2 conciliado com Função · janela móvel de até 92 dias · {metaOficial ? 'Meta oficial' : 'Meta MODELO (não é meta oficial)'} · Gerentes filtrados por texto LUANA/ADRIANO/DANIEL/MARCOS</p>
+      <p className="footnote">Fonte: Front V2 conciliado com Função · janela móvel de até 32 dias · {metaOficial ? 'Meta oficial' : 'Meta MODELO (não é meta oficial)'} · Gerentes filtrados por texto LUANA/ADRIANO/DANIEL/MARCOS</p>
     </div>
   );
 }

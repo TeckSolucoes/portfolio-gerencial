@@ -50,7 +50,7 @@ const numeroPtBr = (valor: string | number | null | undefined) => {
 };
 const inicioDaJanela = (ref: string) => {
   const data = new Date(`${ref}T00:00:00Z`);
-  data.setUTCDate(data.getUTCDate() - 91);
+  data.setUTCDate(data.getUTCDate() - 31);
   return data.toISOString().slice(0, 10);
 };
 

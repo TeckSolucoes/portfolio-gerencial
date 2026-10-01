@@ -116,7 +116,7 @@ export function montarBloco({ relatorio: r, empresa, aba, metaOficial, horaParci
     `• Vendas: ${soma(k.vendasMes)}`,
     `• Cancelados: ${soma(k.canceladosMes)} · ${pct(k.canceladosMesPct)}`,
     `• Novas: ${soma(nrMes?.novas)} · Reinseridas: ${soma(nrMes?.reinseridas)}`,
-    `• Janela de 92 dias: vendas ${soma(k.vendasGeral)} · cancelados ${soma(k.canceladosGeral)}`,
+    `• Janela de 32 dias: vendas ${soma(k.vendasGeral)} · cancelados ${soma(k.canceladosGeral)}`,
     '',
     `🎯 *Meta (${rotuloMeta})*`,
     `• Meta: ${brl(meta?.valor)}`,
