@@ -76,8 +76,10 @@ COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
 COPY --from=builder /app/scripts ./scripts
 
 # Volume persistente do EasyPanel deve apontar pra /app/data — é onde o
-# arquivo SQLite (DATABASE_URL=file:./data/teck-portfolio.db) vive.
-RUN mkdir -p /app/data && chown -R app:app /app
+# arquivo SQLite e os snapshots regeneráveis vivem. Só esse diretório precisa
+# de escrita; percorrer node_modules inteiro com chown torna o deploy caro e
+# pode fazer o builder do EasyPanel encerrar a imagem na última etapa.
+RUN mkdir -p /app/data && chown app:app /app/data
 
 USER app
 EXPOSE 3000
