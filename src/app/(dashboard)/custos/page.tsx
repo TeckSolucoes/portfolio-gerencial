@@ -31,8 +31,6 @@ export default async function CustosPage() {
       <div><span>Já pago</span><strong>{moeda(pago)}</strong></div>
       <div><span>Pendente</span><strong>{moeda(pendente)}</strong></div>
     </section>
-    <p className="nota nota-paga" role="note">Os custos iniciais de Claude, Codex e W-API já foram pagos e estão registrados no histórico de setembro de 2026.</p>
-
     {podeGerenciar && <CadastroCustoModal competencia={competencia} />}
 
     <section className="custos-cadastros" aria-label="Custos cadastrados">

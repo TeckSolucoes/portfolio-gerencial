@@ -41,7 +41,7 @@
 
 .home .topo{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,6fr);gap:12px;margin-bottom:20px;align-items:stretch}
 .home .taxas{display:flex;flex-direction:column}
-.home .taxas .kpis{flex:1}
+.home .taxas .kpis{flex:1;grid-template-columns:repeat(2,minmax(0,1fr))}
 .home .kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
 .home .kpi{position:relative;overflow:hidden;background:linear-gradient(180deg,var(--c-bg) 0%,var(--card) 75%);border:1px solid var(--line);
   border-radius:12px;padding:11px 13px 11px 17px;display:flex;flex-direction:column;gap:5px;min-width:0}
@@ -89,7 +89,7 @@
 }
 @media(max-width:560px){
   .home{border-radius:0;padding:14px}
-  .home .kpis{grid-template-columns:1fr}
+  .home .kpis,.home .taxas .kpis{grid-template-columns:1fr}
 }
 @media(prefers-reduced-motion:reduce){
   .home *{transition:none!important}

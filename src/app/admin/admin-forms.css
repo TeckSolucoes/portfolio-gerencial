@@ -100,10 +100,11 @@
 .adm-inline .adm-money{flex:1;min-width:0;}
 .adm-money{position:relative;display:flex;}
 .adm-money-prefix{
-  position:absolute;left:0;top:0;bottom:0;display:flex;align-items:center;padding:0 12px;
-  font-family:var(--mono);font-size:12px;color:var(--text-dim);border-right:1px solid var(--hair-strong);pointer-events:none;
+  position:absolute;left:13px;top:0;bottom:0;display:flex;align-items:center;
+  font-family:var(--mono);font-size:12px;color:var(--text-dim);pointer-events:none;
 }
-.adm .adm-money input{padding-left:52px;font-variant-numeric:tabular-nums;}
+.adm .adm-money input{padding-left:38px;font-variant-numeric:tabular-nums;}
+.adm-sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
 .adm-section{
   font-family:var(--mono);font-size:11px;letter-spacing:1.4px;text-transform:uppercase;color:var(--text-dim);
   margin:34px 0 14px;font-weight:400;

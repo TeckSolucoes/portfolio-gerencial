@@ -109,21 +109,29 @@ export function WhatsappForm({ inicial }: {
         </div>
 
         <h2 className="adm-section wa-sub">Agenda</h2>
-        <fieldset className="adm-fieldset">
-          <legend className="adm-label">Horários de envio (Brasília)</legend>
-          <div className="wa-atalhos">
-            <button type="button" className="btn btn-ghost" onClick={() => marcar(HORAS.slice(8, 21))}>Comercial 08h–20h</button>
-            <button type="button" className="btn btn-ghost" onClick={() => marcar(HORAS)}>Toda hora</button>
-            <button type="button" className="btn btn-ghost" onClick={() => marcar([])}>Limpar</button>
+        <fieldset className="adm-fieldset wa-agenda">
+          <legend className="adm-sr-only">Agenda de envios</legend>
+          <div className="wa-agenda-head">
+            <div>
+              <span className="adm-label">Horários de envio</span>
+              <p className="adm-hint">Fuso de Brasília</p>
+            </div>
+            <span className="wa-agenda-total">{horarios.size} selecionado{horarios.size === 1 ? '' : 's'}</span>
           </div>
-          <div className="wa-horas">
+          <div className="wa-atalhos" aria-label="Atalhos de agenda">
+            <button type="button" className="wa-preset" onClick={() => marcar(HORAS.slice(8, 21))}>Horário comercial</button>
+            <button type="button" className="wa-preset" onClick={() => marcar(HORAS)}>A cada hora</button>
+            <button type="button" className="wa-preset wa-preset-clear" onClick={() => marcar([])}>Limpar seleção</button>
+          </div>
+          <div className="wa-horas" role="group" aria-label="Selecione os horários">
             {HORAS.map((h) => (
-              <label key={h} className="adm-check-card">
-                <input type="checkbox" name="horarios" value={h} checked={horarios.has(h)} onChange={() => alternar(h)} /> {h.slice(0, 2)}h
+              <label key={h} className="wa-hora">
+                <input type="checkbox" name="horarios" value={h} checked={horarios.has(h)} onChange={() => alternar(h)} />
+                <span>{h}</span>
               </label>
             ))}
           </div>
-          <p className="adm-hint">{horarios.size} envio(s) por dia. A primeira execução consolida 32 dias; as seguintes atualizam somente as propostas do dia.</p>
+          <p className="adm-hint wa-agenda-hint">A primeira execução consolida 32 dias; as seguintes atualizam somente as propostas do dia.</p>
         </fieldset>
 
         <label className="adm-check-card wa-ativo">

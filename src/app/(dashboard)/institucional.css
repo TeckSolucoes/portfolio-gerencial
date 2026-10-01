@@ -26,7 +26,6 @@
 .custos-page .custos-resumo div{padding:11px 13px;border:1px solid var(--line);border-radius:10px;background:var(--card)}
 .custos-page .custos-resumo span{display:block;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.08em}
 .custos-page .custos-resumo strong{display:block;margin-top:7px;font-size:24px}
-.custos-page .nota-paga{border-color:#276749;color:#bbf7d0;background:#10322a}
 .custos-page .custo-cadastro-acao{display:flex;justify-content:flex-end;margin-top:18px}
 .custo-modal{width:min(760px,calc(100vw - 32px));max-height:calc(100vh - 32px);margin:auto;padding:0;border:1px solid #2b476b;border-radius:16px;background:#112036;color:#f0f8ff;box-shadow:0 24px 80px #000b;overflow:auto}.custo-modal::backdrop{background:#020817c7;backdrop-filter:blur(5px)}
 .custo-modal-painel{padding:22px}.custo-modal-painel>header{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;padding-bottom:16px;border-bottom:1px solid #1a2d45}.custo-modal-painel>header span{color:#38bdf8;font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}.custo-modal-painel>header h2{margin-top:4px;font-size:22px}.custo-modal-painel>header p{margin-top:5px;color:#9db0c7;font-size:12px}.custo-modal-fechar{width:36px;height:36px;border:1px solid #2b476b;border-radius:9px;background:#0d1a2c;color:#f0f8ff;font-size:24px;line-height:1;cursor:pointer}

@@ -8,9 +8,6 @@
 .relatorio .cv-mode{display:flex;gap:4px;width:max-content;margin:0 0 12px;padding:4px;border:1px solid #1e3a5f;border-radius:11px;background:#0c192b}
 .relatorio .cv-mode a{padding:7px 12px;border-radius:8px;color:var(--muted);font-size:12px;font-weight:800;text-decoration:none}
 .relatorio .cv-mode a.active{color:#0b1424;background:var(--blue)}
-.relatorio .badge-prova{background:#0B4F78;border:1px solid var(--blue);color:#E0F2FE;text-align:center;padding:8px 14px;border-radius:10px;font-weight:700;font-size:13px;letter-spacing:.03em;margin-bottom:16px}
-.relatorio .badge-prova small{display:block;font-weight:500;opacity:.85;margin-top:3px;letter-spacing:0;font-size:11px;color:var(--muted)}
-.relatorio .badge-prova.live{background:#0b2f2b;border-color:#1f9d78}
 .relatorio .live-dot{display:inline-block;width:8px;height:8px;border-radius:999px;background:#35d39e;box-shadow:0 0 0 4px rgba(53,211,158,.15);margin-right:8px}
 .relatorio .rel-date{display:flex;align-items:end;gap:8px;margin:10px 0 14px}
 .relatorio .rel-date label{display:grid;gap:4px;color:var(--muted);font-size:11px;font-weight:700}
@@ -18,19 +15,21 @@
 .relatorio .rel-date button{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:800;cursor:pointer}
 .relatorio .rel-acoes{display:flex;align-items:end;gap:12px;flex-wrap:wrap;margin:10px 0 14px}
 .relatorio .rel-acoes .rel-date{margin:0}
-.relatorio .rel-whats{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:12px;font-weight:600}
-.relatorio .rel-whats button{min-height:36px;border-radius:8px;border:1px solid var(--green);background:transparent;color:var(--green);padding:7px 12px;font-weight:800;cursor:pointer}
-.relatorio .rel-whats button:hover:not(:disabled){background:var(--green);color:#06140c}
-.relatorio .rel-whats button:disabled{opacity:.6;cursor:wait}
+.relatorio .rel-whats{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-left:auto;font-size:12px;font-weight:600}
+.relatorio .rel-whats>.rel-whats-trigger{display:grid;place-items:center;width:38px;height:38px;min-height:38px;padding:0;border-radius:10px;border:1px solid var(--green);background:#0d2927;color:var(--green);cursor:pointer}
+.relatorio .rel-whats>.rel-whats-trigger:hover{background:var(--green);color:#06140c}
+.relatorio .rel-whats>.rel-whats-trigger:focus-visible{outline:2px solid #fff;outline-offset:2px}
 .relatorio .rel-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:12px;flex-wrap:wrap}
 .relatorio h1{font-size:22px;font-weight:700}
 .relatorio .sub{color:var(--muted);font-size:13px;margin-top:4px}
-.relatorio .ref{background:var(--inner);border:1px solid #1e3a5f;padding:8px 12px;border-radius:8px;font-size:12px;color:var(--blue);white-space:nowrap;font-weight:600}
-.relatorio .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+.relatorio .rel-atualizado{display:flex;align-items:center;color:var(--muted);font-size:12px;white-space:nowrap;padding-top:4px}
+.relatorio .rel-filtros{display:flex;gap:22px;align-items:flex-start;flex-wrap:wrap;margin:14px 0}
+.relatorio .rel-filtro{display:grid;gap:6px}
+.relatorio .rel-filtro-label{font-size:10px;color:var(--muted);font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+.relatorio .tabs{display:flex;gap:7px;flex-wrap:wrap;margin:0;align-items:center}
 .relatorio .tab{background:var(--card);border:1px solid #1e3a5f;color:var(--muted);padding:7px 14px;border-radius:999px;font-size:12px;cursor:pointer;font-weight:600;transition:all .15s}
 .relatorio .tab:hover{border-color:var(--blue);color:var(--text)}
 .relatorio .tab.active{background:var(--blue);color:#0B1424;border-color:var(--blue);font-weight:800}
-.relatorio .tab-note{font-size:11px;color:var(--muted);margin-left:4px}
 .relatorio .sec{margin-top:18px}
 .relatorio .sec-h{font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;letter-spacing:.02em}
 .relatorio .sec-s{font-size:11px;color:var(--muted);margin-bottom:10px}
@@ -186,7 +185,6 @@
 @media print{
 .relatorio{padding:8px;font-size:11px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .relatorio .no-print{display:none!important}
-.relatorio .badge-prova{margin-bottom:8px}
 .relatorio .sec{break-inside:avoid;page-break-inside:avoid;margin-top:12px}
 .relatorio .grid9{grid-template-columns:repeat(3,1fr)!important}
 .relatorio .grid4{grid-template-columns:repeat(4,1fr)!important}

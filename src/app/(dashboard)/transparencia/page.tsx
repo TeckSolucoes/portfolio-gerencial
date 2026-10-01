@@ -43,7 +43,6 @@ export default async function TransparenciaPage({ searchParams }: { searchParams
   const pedido = (await searchParams).mes;
   const mesSel = meses.find((m) => m.mes === (Array.isArray(pedido) ? pedido[0] : pedido)) ?? meses[0] ?? null;
   const detalhe = mesSel ? await detalheDoMes(mesSel.mes) : null;
-  const semBase = bases.length === 0;
 
   return (
     <div className="transp">
@@ -90,12 +89,6 @@ export default async function TransparenciaPage({ searchParams }: { searchParams
               </Link>
             ))}
           </nav>
-
-          {semBase && (
-            <p className="alerta" role="note">
-              Nossa base ainda não foi enviada: todos os novos aparecem como acionáveis, inclusive quem já é cliente.
-            </p>
-          )}
 
           <div className="kpis kpis-4">
             <div className="kpi t-azul">

@@ -57,17 +57,19 @@ function Aviso({ titulo, texto, seletor }: { titulo: string; texto: string; sele
   );
 }
 
-function SeletorEmpresa({ empresas, atual, data }: { empresas: Empresa[]; atual: Empresa; data?: string }) {
+function SeletorEmpresa({ empresas, atual, data, escopo }: { empresas: Empresa[]; atual: Empresa; data?: string; escopo?: string }) {
   if (empresas.length < 2) return null;
   return (
-    <nav className="tabs no-print" aria-label="Empresa do relatório">
-      {empresas.map((e) => (
-        <Link key={e} href={`/relatorio?empresa=${e}${data ? `&data=${data}` : ''}`} className={`tab ${e === atual ? 'active' : ''}`} aria-current={e === atual ? 'page' : undefined}>
-          {ROTULO_EMPRESA[e]}
-        </Link>
-      ))}
-      <span className="tab-note">Empresa</span>
-    </nav>
+    <div className="rel-filtro no-print">
+      <span className="rel-filtro-label">Empresa</span>
+      <nav className="tabs" aria-label="Empresa do relatório">
+        {empresas.map((e) => (
+          <Link key={e} href={`/relatorio?empresa=${e}${escopo ? `&escopo=${encodeURIComponent(escopo)}` : ''}${data ? `&data=${data}` : ''}`} className={`tab ${e === atual ? 'active' : ''}`} aria-current={e === atual ? 'page' : undefined}>
+            {ROTULO_EMPRESA[e]}
+          </Link>
+        ))}
+      </nav>
+    </div>
   );
 }
 
@@ -84,15 +86,15 @@ export default async function RelatorioPage({ searchParams }: { searchParams: Pr
   // O relatório diário abre em D-1: o dia corrente ainda está em formação e
   // costumava aparecer como uma tela inteira de zeros antes do fechamento.
   const ref = data && /^\d{4}-\d{2}-\d{2}$/.test(data) ? data : ultimoDiaFechado();
-  const seletor = <SeletorEmpresa empresas={acesso.empresas} atual={empresa} data={ref} />;
 
   // Só as abas permitidas existem daqui em diante: o gerente nunca recebe Geral nem a turma de outro.
   const abasVisiveis = ABAS.filter((a) => podeVerAba(acesso, a.escopo));
   const aba = abasVisiveis.find((a) => a.escopo === pedido) ?? abasVisiveis[0];
   if (!aba) {
-    return <Aviso titulo="Nenhuma visão do relatório está liberada para você." texto="Peça ao administrador." seletor={seletor} />;
+    return <Aviso titulo="Nenhuma visão do relatório está liberada para você." texto="Peça ao administrador." seletor={<SeletorEmpresa empresas={acesso.empresas} atual={empresa} data={ref} escopo={pedido} />} />;
   }
   const escopo = aba.escopo;
+  const seletor = <SeletorEmpresa empresas={acesso.empresas} atual={empresa} data={ref} escopo={escopo} />;
 
   let r: Partial<Relatorio> & Pick<Relatorio, 'kpis'>;
   try {
@@ -107,6 +109,11 @@ export default async function RelatorioPage({ searchParams }: { searchParams: Pr
   const ontem = new Date(Date.UTC(ano, mesRef - 1, diaRef - 1));
   const dOntem = `${String(ontem.getUTCDate()).padStart(2, '0')}/${String(ontem.getUTCMonth() + 1).padStart(2, '0')}`;
   const mesNome = MESES[mesRef - 1];
+  const atualizadoAs = new Intl.DateTimeFormat('pt-BR', {
+    timeZone: 'America/Sao_Paulo',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(new Date());
 
   const [oficial, whats] = await Promise.all([metaDoMes([empresa], ref.slice(0, 7)), podeAcessar(acesso, 'whatsapp') ? lerConfigWhatsapp() : null]);
   const pagosValor = k.pagosMes.valor;
@@ -149,17 +156,6 @@ export default async function RelatorioPage({ searchParams }: { searchParams: Pr
 
   return (
     <div className="relatorio">
-      <div className="badge-prova live" role="note">
-        <span className="live-dot" /> Dados reais · Front V2 × Função
-        <small>
-          Referência {dRef}/{ano} · ontem {dOntem}
-          {` · mês 01–${dRef}`} · caso = CPF+tipo+produto · Meta = {metaOficial ? 'OFICIAL' : 'MODELO'} · Cliente da casa = grão CPF
-        </small>
-        <small>
-          O Front V2 define o recorte comercial; status e esteira são confirmados na Função pelas propostas encontradas.
-        </small>
-      </div>
-
       <div className="rel-head">
         <div>
           <h1>
@@ -169,19 +165,24 @@ export default async function RelatorioPage({ searchParams }: { searchParams: Pr
             War room · {dRef}/{ano} · {escopo === 'Geral' ? 'Front V2 × Função' : `equipe de ${aba.rotulo}`}
           </div>
         </div>
-        <div className="ref">REF: {dRef}/{ano}</div>
+        <div className="rel-atualizado" role="status"><span className="live-dot" />Atualizado às {atualizadoAs}</div>
       </div>
 
-      {seletor}
-
-      <nav className="tabs no-print" aria-label="Escopo do relatório">
-        {abasVisiveis.map((a) => (
-          <Link key={a.escopo} href={`/relatorio?empresa=${empresa}&escopo=${encodeURIComponent(a.escopo)}&data=${ref}`} className={`tab ${a.escopo === escopo ? 'active' : ''}`} aria-current={a.escopo === escopo ? 'page' : undefined}>
-            {a.rotulo}
-          </Link>
-        ))}
-        {abasVisiveis.length > 1 && <span className="tab-note">Geral = todos · abas = filtro por gerente</span>}
-      </nav>
+      <div className="rel-filtros">
+        {seletor}
+        {abasVisiveis.length > 1 && (
+          <div className="rel-filtro no-print">
+            <span className="rel-filtro-label">Visão</span>
+            <nav className="tabs" aria-label="Escopo do relatório">
+              {abasVisiveis.map((a) => (
+                <Link key={a.escopo} href={`/relatorio?empresa=${empresa}&escopo=${encodeURIComponent(a.escopo)}&data=${ref}`} className={`tab ${a.escopo === escopo ? 'active' : ''}`} aria-current={a.escopo === escopo ? 'page' : undefined}>
+                  {a.rotulo}
+                </Link>
+              ))}
+            </nav>
+          </div>
+        )}
+      </div>
 
       <div className="rel-acoes no-print">
         <form className="rel-date" method="get">
