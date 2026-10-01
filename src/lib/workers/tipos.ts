@@ -1,4 +1,4 @@
-export type GrupoWorker = 'Notícias' | 'Mercado' | 'Diário Oficial' | 'Transparência' | 'Jurídico' | 'Integrações';
+export type GrupoWorker = 'Notícias' | 'Mercado' | 'Diário Oficial' | 'Transparência' | 'Jurídico' | 'Integrações' | 'WhatsApp';
 
 export interface ResultadoWorker {
   itens: number; // quantos registros a coleta trouxe
@@ -14,8 +14,9 @@ export interface Worker {
   descricao: string;
   limiteMs?: number; // teto de duração de uma execução (padrão do motor: 5 min)
   agendamentoMensal?: { dia: number; horario: string }; // fonte publicada uma vez por mês
+  ativoPadrao?: boolean; // sem registro em worker_configs; false = só roda depois de ligado em tela
   // Devolve o motivo de NÃO poder rodar (ex.: falta configuração) ou null se está pronto.
-  pendencia?: () => string | null;
+  pendencia?: () => string | null | Promise<string | null>;
   executar: () => Promise<ResultadoWorker>;
 }
 

@@ -7,6 +7,7 @@ import { coletarCadastros, coletarMencoes, coletarSancoes } from '../juridico';
 import { normalizarChavePortal } from '../portalTransparencia';
 import type { Worker } from './tipos';
 import { validarSaudeBases } from '../bases/saude';
+import { dispararRelatorioAgendado, ID_WORKER_WHATSAPP, lerConfigWhatsapp } from '../whatsapp/envio';
 
 // Fonte que respondeu vazio = coleta ok com 0 itens; fonte que não respondeu (null) = erro.
 const naoNulo = <T,>(v: T | null, fonte: string): T => {
@@ -186,6 +187,19 @@ const juridicoWorkers: Worker[] = [
   },
 ];
 
-export const WORKERS: Worker[] = [...noticiasWorkers, ...mercadoWorkers, ...diarioWorkers, ...transparenciaWorkers, ...juridicoWorkers, ...integracaoWorkers];
+// Manda mensagem para fora (CEO): nasce desligado e só liga pela aba WhatsApp, depois de configurado.
+const whatsappWorkers: Worker[] = [
+  {
+    id: ID_WORKER_WHATSAPP,
+    nome: 'WhatsApp · Relatório diário',
+    grupo: 'WhatsApp',
+    descricao: 'Envia o resumo do relatório do dia (parcial, Geral) pela W-API para os destinatários da aba WhatsApp.',
+    ativoPadrao: false,
+    pendencia: async () => ((await lerConfigWhatsapp()) ? null : 'Configure a W-API e os destinatários na aba WhatsApp.'),
+    executar: dispararRelatorioAgendado,
+  },
+];
+
+export const WORKERS: Worker[] = [...noticiasWorkers, ...mercadoWorkers, ...diarioWorkers, ...transparenciaWorkers, ...juridicoWorkers, ...integracaoWorkers, ...whatsappWorkers];
 
 export const workerPorId = (id: string) => WORKERS.find((w) => w.id === id);

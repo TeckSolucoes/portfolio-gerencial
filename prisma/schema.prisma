@@ -339,6 +339,20 @@ model WorkerExecucao {
   @@map("worker_execucoes")
 }
 
+// Disparo do relatório por WhatsApp (W-API). Linha única (id "padrao"), editada na aba WhatsApp.
+// Agenda e liga/desliga ficam no WorkerConfig do worker "whatsapp-relatorio".
+model WhatsappConfig {
+  id            String   @id
+  instanceId    String   @map("instance_id")
+  token         String
+  destinatarios String // um por linha: número com DDI+DDD, grupo @g.us ou @lid
+  empresas      String // CSV, mesma convenção de users.empresas
+  atualizadoPor String?  @map("atualizado_por")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@map("whatsapp_config")
+}
+
 // Mapeamento mensal de servidores (Portal da Transparência) para achar clientes novos.
 // Resumo de cada mês processado do arquivo oficial.
 model PortalMes {

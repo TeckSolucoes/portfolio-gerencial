@@ -32,6 +32,7 @@ export async function Header({ sidebar = false }: { sidebar?: boolean }) {
     if (user.role === 'superadmin') items.push({ href: '/admin/settings/users', label: 'Usuários', icon: 'users' });
     if (acesso && podeAcessar(acesso, 'metas')) items.push({ href: '/admin/metas', label: 'Metas', icon: 'target' });
     if (acesso && podeAcessar(acesso, 'workers')) items.push({ href: '/admin/workers', label: 'Workers', icon: 'workers' });
+    if (acesso && podeAcessar(acesso, 'whatsapp')) items.push({ href: '/admin/whatsapp', label: 'WhatsApp', icon: 'whatsapp' });
     if (acesso && podeAcessar(acesso, 'noc')) items.push({ href: '/noc', label: 'NOC', icon: 'noc' });
     return <PortalNavigation items={items}
       brand={<Link href="/" className="brand"><BrandMark /><div className="brand-text"><span className="wd">Teck Soluções</span><span className="sub">{NOME_PRODUTO}</span></div></Link>}
@@ -81,7 +82,7 @@ export async function Header({ sidebar = false }: { sidebar?: boolean }) {
             Transparência
           </Link>
         )}
-        {user && (user.role === 'superadmin' || (acesso && (podeAcessar(acesso, 'metas') || podeAcessar(acesso, 'workers')))) && (
+        {user && (user.role === 'superadmin' || (acesso && (podeAcessar(acesso, 'metas') || podeAcessar(acesso, 'workers') || podeAcessar(acesso, 'whatsapp')))) && (
           <Link href="/admin" className="admin-link">
             Administração
           </Link>

@@ -8,6 +8,7 @@ export const FUNCIONALIDADES = [
   { chave: 'juridico', nome: 'Jurídico', rota: '/juridico' },
   { chave: 'metas', nome: 'Metas', rota: '/admin/metas' },
   { chave: 'workers', nome: 'Workers', rota: '/admin/workers' },
+  { chave: 'whatsapp', nome: 'WhatsApp', rota: '/admin/whatsapp' },
   { chave: 'noc', nome: 'NOC', rota: '/noc' },
 ] as const;
 
