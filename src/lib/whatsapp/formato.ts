@@ -60,6 +60,15 @@ export function montarBloco({ relatorio: r, empresa, aba, metaOficial, horaParci
   const rp = r.rankingPagos;
   const ranking = (rotulo: string, item: { nome: string; pct: number } | null) => `• ${rotulo}: ${item ? `${item.nome} (${pct(item.pct)})` : NAO}`;
 
+  const nrMes = r.novaReinserida?.mes;
+  const etapas = (lista: { chave: string; qtd: number; valor: number }[] | undefined) =>
+    (lista ?? []).slice(0, 5).map((e) => `  – ${e.chave}: ${num(e.qtd)} · ${brl(e.valor)}`);
+  const canal = (t: 'Novo' | 'Compra' | 'Adiantamento') => {
+    const c = r.canalMes?.[t];
+    return `• ${t}: ${pct(c?.taxaMorte)} morreu · ${num(c?.casos)} casos (pagou ${num(c?.pagou)}, morreu ${num(c?.morreu)}, jornada ${num(c?.jornada)})`;
+  };
+  const lote = r.resumoMes;
+
   return [
     `*Relatório diário — ${empresa} · ${aba}*`,
     `${dia}/${mes}/${ano} · ${horaParcial ? `parcial, atualizado às ${horaParcial}` : 'dia fechado'}`,
@@ -71,15 +80,21 @@ export function montarBloco({ relatorio: r, empresa, aba, metaOficial, horaParci
     `• Front: ${soma(k.front)} · CCNET: ${soma(k.ccnet)}`,
     `• Cancelados ontem: ${soma(k.canceladosOntem)}`,
     '',
+    '*Clientes*',
+    `• Da casa (dia): ${brl(r.clientes?.casaDia.valor)} · ${num(r.clientes?.casaDia.qtd)} propostas · ${num(r.clientes?.casaDia.cpfs)} CPF`,
+    `• Novo (dia): ${soma(r.clientes?.novoDia)}`,
+    `• Da casa (mês): ${brl(r.clientes?.casaMes.valor)} · ${num(r.clientes?.casaMes.qtd)} propostas · ${num(r.clientes?.casaMes.cpfs)} CPF`,
+    '',
     `*Mês · ${MESES[Number(mes) - 1]}/${ano} até ${dia}/${mes}*`,
     `• Vendas: ${soma(k.vendasMes)}`,
     `• Cancelados: ${soma(k.canceladosMes)} · ${pct(k.canceladosMesPct)}`,
-    `• Pagos: ${soma(k.pagosMes)} · exceção ${soma(k.pagosExcecaoMes)}`,
-    `• Meta (${rotuloMeta}): ${brl(meta?.valor)}`,
-    doGerente ? '• Falta: só no Geral (a meta é da empresa)' : `• Falta: ${brl(meta?.falta)} · ${pct(meta?.faltaPct)} para a meta`,
+    `• Novas: ${soma(nrMes?.novas)} · Reinseridas: ${soma(nrMes?.reinseridas)}`,
+    `• Janela de 92 dias: vendas ${soma(k.vendasGeral)} · cancelados ${soma(k.canceladosGeral)}`,
     '',
-    '*Clientes do dia*',
-    `• Da casa: ${brl(r.clientes?.casaDia.valor)} (${num(r.clientes?.casaDia.cpfs)} CPF) · Novos: ${soma(r.clientes?.novoDia)}`,
+    `*Meta (${rotuloMeta})*`,
+    `• Meta: ${brl(meta?.valor)}`,
+    `• Pagos: ${soma(k.pagosMes)} · exceção ${soma(k.pagosExcecaoMes)}`,
+    doGerente ? '• Falta: só no Geral (a meta é da empresa)' : `• Falta: ${brl(meta?.falta)} · ${pct(meta?.faltaPct)} para a meta`,
     '',
     '*Ranking dos pagos*',
     ranking('Convênio', rp?.convenio ?? null),
@@ -87,9 +102,30 @@ export function montarBloco({ relatorio: r, empresa, aba, metaOficial, horaParci
     ranking('Equipe', rp?.equipe ?? null),
     ranking('Gerente', rp?.gerente ?? null),
     '',
+    '*Exceção vendida*',
+    `• Dia: ${soma(k.excecaoDia)} · Mês: ${soma(k.excecaoMes)} · Pagos: ${soma(k.pagosExcecaoMes)}`,
+    ...(r.excecaoEquipes ?? []).slice(0, 5).map((e) => `  – ${e.equipe}: vendeu ${soma(e.vendeu)} · pagou ${soma(e.pagou)}`),
+    '',
+    '*Por canal (mês)*',
+    canal('Novo'),
+    canal('Compra'),
+    canal('Adiantamento'),
+    '',
     '*Churn*',
     `• Dos que fecharam: ${pct(r.churn?.taxa, 0)} morreu (${num(r.churn?.morreram)} de ${num(r.churn?.fecharam)})`,
-    `• Não voltou: ${num(r.churn?.naoVoltou)} · Voltou e morreu: ${num(r.churn?.voltouMorreu)}`,
+    `• Não voltou: ${num(r.churn?.naoVoltou)} · ${pct(r.churn?.naoVoltouPct, 0)} dos casos · Voltou e morreu: ${num(r.churn?.voltouMorreu)}`,
+    ...(r.churn?.equipes ?? []).slice(0, 5).map((e) => `  – ${e.equipe}: ${pct(e.taxa, 0)}`),
+    '',
+    '*Lote do mês*',
+    lote ? `• Inseriu ${num(lote.inseriu)} · pagou ${num(lote.pagou)} · morreu ${num(lote.morreu)} · jornada ${num(lote.jornada)}` : `• ${NAO}`,
+    // A lista tem nome e CPF de cliente: no WhatsApp vai só a contagem.
+    `• Não reinseridos: ${num(r.lista?.length)} casos (nomes e CPF só no portal)`,
+    '',
+    '*Onde está a venda do dia*',
+    `• Front: ${soma(k.front)}`,
+    ...etapas(r.etapasFront),
+    `• CCNET: ${soma(k.ccnet)}`,
+    ...etapas(r.etapasCcnet),
   ].join('\n');
 }
 

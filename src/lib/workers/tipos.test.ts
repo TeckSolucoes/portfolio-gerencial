@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { estaVencido, estaVencidoMensal, lerHorarios, normalizarHorarios, proximaExecucao, proximaExecucaoMensal, proximoHorario, proximoHorarioMensal, ultimoHorario, ultimoHorarioMensal } from './tipos';
+import { estaVencido, estaVencidoMensal, estaVencidoNaJanela, proximaExecucaoNaJanela, lerHorarios, normalizarHorarios, proximaExecucao, proximaExecucaoMensal, proximoHorario, proximoHorarioMensal, ultimoHorario, ultimoHorarioMensal } from './tipos';
 
 // Horários em Brasília (UTC-3): 08:00 BRT = 11:00Z, 13:00 BRT = 16:00Z, 19:00 BRT = 22:00Z.
 const t = (s: string) => new Date(s);
@@ -76,4 +76,18 @@ test('ler do banco: vazio ou corrompido cai no padrão (null)', () => {
   assert.equal(lerHorarios(null), null);
   assert.equal(lerHorarios(''), null);
   assert.equal(lerHorarios('lixo'), null);
+});
+
+const JANELA = 15 * 60_000;
+
+test('janela: ligar longe do horário não dispara e aponta o próximo', () => {
+  const agora = t('2026-09-27T02:00:00Z'); // 23:00 BRT, último horário 19:00
+  assert.equal(estaVencidoNaJanela(null, PADRAO, JANELA, agora), false);
+  assert.equal(proximaExecucaoNaJanela(null, PADRAO, JANELA, agora).toISOString(), '2026-09-27T11:00:00.000Z');
+});
+
+test('janela: dentro de 15 min do horário roda uma vez; depois disso o atraso é descartado', () => {
+  assert.equal(estaVencidoNaJanela(null, PADRAO, JANELA, t('2026-09-26T16:10:00Z')), true);
+  assert.equal(estaVencidoNaJanela(t('2026-09-26T16:00:30Z'), PADRAO, JANELA, t('2026-09-26T16:10:00Z')), false);
+  assert.equal(estaVencidoNaJanela(t('2026-09-26T11:00:30Z'), PADRAO, JANELA, t('2026-09-26T16:47:00Z')), false);
 });

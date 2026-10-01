@@ -315,3 +315,11 @@
   .app:has(.relatorio) main{padding:0}
   .relatorio .lista-wrap,.relatorio .lote-wrap{max-height:none;overflow:visible}
 }
+.relatorio .rel-whats-dialogo{width:min(560px,calc(100vw - 32px));max-height:calc(100vh - 48px);padding:18px;border-radius:12px;border:1px solid #1e3a5f;background:var(--card);color:var(--text)}
+.relatorio .rel-whats-dialogo::backdrop{background:rgba(3,8,18,.7)}
+.relatorio .rel-whats-dialogo h2{font-size:16px;margin-bottom:4px}
+.relatorio .rel-whats-dialogo>p{font-size:12px;margin-bottom:12px}
+.relatorio .rel-whats-acoes{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
+.relatorio .rel-whats-acoes button{min-height:36px;border-radius:8px;padding:7px 14px;font-weight:800;cursor:pointer;border:1px solid #1e3a5f;background:transparent;color:var(--text)}
+.relatorio .rel-whats-acoes .pri-btn{background:var(--green);border-color:var(--green);color:#06140c}
+.relatorio .rel-whats-acoes button:disabled{opacity:.55;cursor:not-allowed}

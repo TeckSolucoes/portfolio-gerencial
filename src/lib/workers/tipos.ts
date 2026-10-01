@@ -15,6 +15,8 @@ export interface Worker {
   limiteMs?: number; // teto de duração de uma execução (padrão do motor: 5 min)
   agendamentoMensal?: { dia: number; horario: string }; // fonte publicada uma vez por mês
   ativoPadrao?: boolean; // sem registro em worker_configs; false = só roda depois de ligado em tela
+  // Só roda se o horário passou há no máximo isso: não recupera horário perdido nem dispara ao ligar.
+  janelaMs?: number;
   // Devolve o motivo de NÃO poder rodar (ex.: falta configuração) ou null se está pronto.
   pendencia?: () => string | null | Promise<string | null>;
   executar: () => Promise<ResultadoWorker>;
@@ -136,6 +138,16 @@ export const estaVencido = (ultimoInicio: Date | null, horarios: readonly string
 
 export const proximaExecucao = (ultimoInicio: Date | null, horarios: readonly string[], agora = new Date()): Date =>
   estaVencido(ultimoInicio, horarios, agora) ? agora : proximoHorario(horarios, agora);
+
+// Para o que manda mensagem a pessoas: um horário vale só logo depois de passar. Ligar às 23h ou
+// voltar de um deploy às 10h47 não dispara a mensagem "das 10h" atrasada.
+export const estaVencidoNaJanela = (ultimoInicio: Date | null, horarios: readonly string[], janelaMs: number, agora = new Date()) => {
+  const ultimo = ultimoHorario(horarios, agora).getTime();
+  return agora.getTime() - ultimo <= janelaMs && (!ultimoInicio || ultimo > ultimoInicio.getTime());
+};
+
+export const proximaExecucaoNaJanela = (ultimoInicio: Date | null, horarios: readonly string[], janelaMs: number, agora = new Date()): Date =>
+  estaVencidoNaJanela(ultimoInicio, horarios, janelaMs, agora) ? agora : proximoHorario(horarios, agora);
 
 function horarioMensal(dia: number, horario: string, agora: Date, deslocamentoMes: number): Date {
   const p = partes(agora);
