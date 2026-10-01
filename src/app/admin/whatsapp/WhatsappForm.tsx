@@ -1,8 +1,9 @@
 'use client';
 
-import { useActionState, useState, useTransition } from 'react';
+import { useActionState, useRef, useState, useTransition } from 'react';
+import { BolhaWhatsapp } from '@/components/BolhaWhatsapp';
 import { EMPRESAS } from '@/lib/empresas';
-import { enviarAgora, salvarWhatsapp } from './actions';
+import { enviarAgora, enviarTeste, gerarPrevia, salvarWhatsapp } from './actions';
 
 const HORAS = Array.from({ length: 24 }, (_, h) => `${String(h).padStart(2, '0')}:00`);
 
@@ -13,6 +14,31 @@ export function WhatsappForm({ inicial }: {
   const [envio, setEnvio] = useState<{ ok: boolean; mensagem: string } | null>(null);
   const [enviando, startEnvio] = useTransition();
   const [horarios, setHorarios] = useState(() => new Set(inicial.horarios));
+  const formRef = useRef<HTMLFormElement>(null);
+  const [previa, setPrevia] = useState<string | null>(null);
+  const [aviso, setAviso] = useState<{ ok: boolean; mensagem: string } | null>(null);
+  const [numeroTeste, setNumeroTeste] = useState('');
+  const [montando, startPrevia] = useTransition();
+  const [testando, startTeste] = useTransition();
+
+  const doFormulario = () => {
+    const f = new FormData(formRef.current ?? undefined);
+    return { instanceId: String(f.get('instanceId') ?? ''), token: String(f.get('token') ?? ''), empresas: f.getAll('empresas').map(String) };
+  };
+
+  const verPrevia = () => {
+    setAviso(null);
+    startPrevia(async () => {
+      const r = await gerarPrevia(doFormulario().empresas);
+      if (r.ok) setPrevia(r.texto);
+      else setAviso({ ok: false, mensagem: r.mensagem });
+    });
+  };
+
+  const mandarTeste = () => {
+    setAviso(null);
+    startTeste(async () => setAviso(await enviarTeste({ ...doFormulario(), numero: numeroTeste })));
+  };
 
   const marcar = (lista: string[]) => setHorarios(new Set(lista));
   const alternar = (h: string) =>
@@ -31,7 +57,7 @@ export function WhatsappForm({ inicial }: {
 
   return (
     <>
-      <form action={formAction} className="adm-card">
+      <form ref={formRef} action={formAction} className="adm-card">
         <h2 className="adm-section wa-sub">Conexão W-API</h2>
         <div className="adm-grid">
           <div className="adm-field">
@@ -118,13 +144,40 @@ export function WhatsappForm({ inicial }: {
       </form>
 
       <div className="adm-card">
-        <div className="adm-footer wa-teste">
+        <h2 className="adm-section wa-sub">Prévia e teste</h2>
+        <p className="adm-hint">Usa o que está preenchido acima, mesmo sem salvar. A prévia só monta a mensagem; nada é enviado.</p>
+
+        <div className="wa-linha">
+          <button type="button" className="btn btn-ghost" onClick={verPrevia} disabled={montando}>
+            {montando ? 'Montando…' : 'Gerar prévia'}
+          </button>
+          <div className="adm-field wa-numero">
+            <label className="adm-label" htmlFor="wa-teste-num">Número para teste</label>
+            <input id="wa-teste-num" value={numeroTeste} onChange={(e) => setNumeroTeste(e.target.value)} placeholder="21999999999" inputMode="tel" autoComplete="off" />
+          </div>
+          <button type="button" className="btn btn-primary" onClick={mandarTeste} disabled={testando || !numeroTeste.trim()}>
+            {testando ? 'Enviando…' : 'Enviar teste'}
+          </button>
+        </div>
+        {aviso && (
+          <p className={aviso.ok ? 'adm-msg adm-msg-ok' : 'adm-msg adm-msg-error'} role="status">
+            {aviso.mensagem}
+          </p>
+        )}
+        {previa && (
+          <figure className="wa-previa">
+            <figcaption className="adm-label">Prévia · {previa.length.toLocaleString('pt-BR')} caracteres</figcaption>
+            <BolhaWhatsapp texto={previa} />
+          </figure>
+        )}
+
+        <div className="adm-footer">
           <p className={envio?.ok ? 'adm-msg adm-msg-ok' : 'adm-msg adm-msg-error'} role="status">
-            {envio ? envio.mensagem : inicial.pronto ? 'Dispara agora, fora da agenda, com a configuração salva.' : 'Salve a configuração para poder enviar.'}
+            {envio ? envio.mensagem : inicial.pronto ? 'Dispara agora, fora da agenda, para todos os destinatários salvos.' : 'Para enviar a todos, salve a configuração completa.'}
           </p>
           <div className="adm-actions">
             <button type="button" className="btn btn-ghost" onClick={testar} disabled={!inicial.pronto || enviando}>
-              {enviando ? 'Enviando…' : 'Enviar agora'}
+              {enviando ? 'Enviando…' : 'Enviar agora para todos'}
             </button>
           </div>
         </div>

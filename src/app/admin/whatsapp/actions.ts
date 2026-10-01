@@ -4,11 +4,11 @@ import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/prisma';
 import { requireFuncionalidadeForAction, requireSessionForAction } from '@/lib/authz';
 import { registrarAuditoria } from '@/lib/auditoria';
-import { gravarEmpresas } from '@/lib/empresas';
+import { gravarEmpresas, lerEmpresas } from '@/lib/empresas';
 import { definirAtivo, definirHorarios, executarWorker } from '@/lib/workers/motor';
 import { normalizarHorarios } from '@/lib/workers/tipos';
 import { normalizarDestinatarios } from '@/lib/whatsapp/formato';
-import { ID_WORKER_WHATSAPP, lerConfigBruta, salvarConfigWhatsapp } from '@/lib/whatsapp/envio';
+import { enviarTexto, ID_WORKER_WHATSAPP, lerConfigBruta, montarMensagemDeHoje, salvarConfigWhatsapp } from '@/lib/whatsapp/envio';
 
 export type EstadoForm = { error?: string; ok?: string } | undefined;
 
@@ -71,10 +71,45 @@ export async function enviarAgora(): Promise<{ ok: boolean; mensagem: string }> 
     if (r === 'pendente') return { ok: false, mensagem: 'Salve a configuração completa antes de enviar.' };
     if (r === 'inexistente') return { ok: false, mensagem: 'Worker inexistente.' };
     const ultima = await prisma.workerExecucao.findFirst({ where: { workerId: ID_WORKER_WHATSAPP }, orderBy: { iniciadoEm: 'desc' } });
-    await registrarAuditoria(session.user, { acao: 'Relatório enviado por WhatsApp (teste)', rota: ROTA, detalhes: ultima?.mensagem ?? null });
+    await registrarAuditoria(session.user, { acao: 'Relatório enviado por WhatsApp (enviar agora)', rota: ROTA, detalhes: ultima?.mensagem ?? null });
     revalidatePath(ROTA);
     return { ok: ultima?.status === 'ok', mensagem: ultima?.mensagem ?? 'Envio concluído.' };
   } catch (e) {
     return { ok: false, mensagem: e instanceof Error ? e.message : 'Falha no envio.' };
+  }
+}
+
+// Prévia com as empresas marcadas na tela (mesmo antes de salvar): monta, não envia.
+export async function gerarPrevia(empresas: string[]): Promise<{ ok: true; texto: string } | { ok: false; mensagem: string }> {
+  try {
+    await sessaoAutorizada();
+    const lista = lerEmpresas(empresas.join(','));
+    if (lista.length === 0) return { ok: false, mensagem: 'Marque pelo menos uma empresa.' };
+    return { ok: true, texto: await montarMensagemDeHoje(lista) };
+  } catch (e) {
+    return { ok: false, mensagem: e instanceof Error ? e.message : 'Falha ao montar a prévia.' };
+  }
+}
+
+// Teste para um número só, com o que está na tela: não precisa salvar, ligar a agenda nem incomodar
+// os destinatários. Token em branco usa o salvo. A mensagem é montada aqui, nunca vem do navegador.
+export async function enviarTeste(dados: { instanceId: string; token: string; numero: string; empresas: string[] }): Promise<{ ok: boolean; mensagem: string }> {
+  try {
+    const session = await sessaoAutorizada();
+    const atual = await lerConfigBruta();
+    const instanceId = dados.instanceId.trim() || atual?.instanceId || '';
+    const token = dados.token.trim() || atual?.token || '';
+    if (!instanceId || !token) return { ok: false, mensagem: 'Preencha o ID da instância e o token da W-API.' };
+    const numero = normalizarDestinatarios(dados.numero);
+    if (!numero.ok) return { ok: false, mensagem: numero.erro };
+    if (numero.lista.length > 1) return { ok: false, mensagem: 'O teste vai para um número só.' };
+    const empresas = lerEmpresas(dados.empresas.join(','));
+    if (empresas.length === 0) return { ok: false, mensagem: 'Marque pelo menos uma empresa.' };
+
+    await enviarTexto({ instanceId, token }, numero.lista[0], `*[TESTE]*\n${await montarMensagemDeHoje(empresas)}`);
+    await registrarAuditoria(session.user, { acao: 'Teste de WhatsApp enviado', rota: ROTA, detalhes: `${numero.lista[0]} · ${empresas.join(', ')}` });
+    return { ok: true, mensagem: `Teste enviado para ${numero.lista[0]}. Confira no WhatsApp.` };
+  } catch (e) {
+    return { ok: false, mensagem: e instanceof Error ? e.message : 'Falha no envio do teste.' };
   }
 }

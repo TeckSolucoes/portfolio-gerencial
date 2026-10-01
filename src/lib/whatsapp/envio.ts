@@ -57,7 +57,9 @@ export async function montarMensagemRelatorio(empresas: readonly Empresa[], ref:
   return juntarBlocos(blocos, tituloGrupo);
 }
 
-async function enviarTexto(cfg: ConfigWhatsapp, phone: string, message: string) {
+export const montarMensagemDeHoje = (empresas: readonly Empresa[]) => montarMensagemRelatorio(empresas, hojeSp(), { escopo: 'Geral', rotulo: 'Geral' });
+
+export async function enviarTexto(cfg: Pick<ConfigWhatsapp, 'instanceId' | 'token'>, phone: string, message: string) {
   const resposta = await fetch(`${URL_WAPI}?instanceId=${encodeURIComponent(cfg.instanceId)}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${cfg.token}` },
@@ -89,7 +91,7 @@ export async function dispararRelatorioAgendado() {
   const cfg = await lerConfigWhatsapp();
   if (!cfg) throw new Error('Configuração do WhatsApp incompleta.');
   const ref = hojeSp();
-  const mensagem = await montarMensagemRelatorio(cfg.empresas, ref, { escopo: 'Geral', rotulo: 'Geral' });
+  const mensagem = await montarMensagemDeHoje(cfg.empresas);
   const { enviados, falhas } = await dispararParaTodos(cfg, mensagem);
   if (enviados === 0) throw new Error(`Nenhum envio deu certo. ${falhas.join(' · ')}`);
   const resumo = `Enviado para ${enviados} de ${cfg.destinatarios.length} destinatário(s) · ${cfg.empresas.join(', ')} · ${ref}`;

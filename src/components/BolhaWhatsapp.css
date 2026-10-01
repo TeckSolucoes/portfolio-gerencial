@@ -1,0 +1,6 @@
+.wa-bolha{
+  margin:0;max-height:460px;overflow:auto;padding:12px 14px;border-radius:4px 14px 14px 14px;
+  background:#173a2c;color:#e9f5ee;border:1px solid #23533f;
+  font-family:inherit;font-size:13px;line-height:1.5;white-space:pre-wrap;word-break:break-word;
+}
+.wa-bolha b{font-weight:700;color:#fff;}

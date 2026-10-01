@@ -195,6 +195,7 @@ const whatsappWorkers: Worker[] = [
     grupo: 'WhatsApp',
     descricao: 'Envia o resumo do relatório do dia (parcial, Geral) pela W-API para os destinatários da aba WhatsApp.',
     ativoPadrao: false,
+    janelaMs: 15 * 60_000,
     pendencia: async () => ((await lerConfigWhatsapp()) ? null : 'Configure a W-API e os destinatários na aba WhatsApp.'),
     executar: dispararRelatorioAgendado,
   },

@@ -26,13 +26,15 @@ const relatorio = {
   },
   meta: { valor: 2000, modelo: true, pagos: soma(4, 400), pagosExcecao: soma(1, 100), pagosExcecaoPct: 0.25, falta: 1600, faltaPct: 0.8 },
   rankingPagos: { convenio: { nome: 'INSS', valor: 300, pct: 0.75 }, produto: null, equipe: null, gerente: null },
+  lista: [{ nome: 'FULANO DE TAL', cpf: '12345678900' }],
+  etapasFront: [{ chave: 'Digitada', qtd: 3, valor: 300 }],
 } as unknown as Relatorio;
 
 test('bloco: meta oficial substitui a de modelo e recalcula a falta', () => {
   const texto = montarBloco({ relatorio, empresa: 'AKRK', aba: 'Geral', metaOficial: { valor: 1000, faltando: [] }, horaParcial: '14:05' });
   assert.match(texto, /^📊 \*Relatório diário — AKRK · Geral\*/);
   assert.match(texto, /🗓️ 01\/10\/2026 · parcial, atualizado às 14:05/);
-  assert.match(texto, /Meta \(OFICIAL\): R\$\s1\.000,00/);
+  assert.match(texto, /\*Meta \(OFICIAL\)\*\n• Meta: R\$\s1\.000,00/);
   assert.match(texto, /Falta: R\$\s600,00 · 60,0% para a meta/);
   assert.match(texto, /Convênio: INSS \(75,0%\)/);
   assert.match(texto, /Cancelados ontem: —/);
@@ -44,7 +46,7 @@ test('bloco: meta oficial substitui a de modelo e recalcula a falta', () => {
 test('bloco: na aba do gerente não mostra falta da empresa', () => {
   const texto = montarBloco({ relatorio, empresa: 'AKRK', aba: 'Luana', metaOficial: null, horaParcial: null });
   assert.match(texto, /dia fechado/);
-  assert.match(texto, /Meta \(MODELO\)/);
+  assert.match(texto, /\*Meta \(MODELO\)\*/);
   assert.match(texto, /Falta: só no Geral/);
 });
 
@@ -53,4 +55,14 @@ test('juntar: separa empresas, usa título do grupo e não põe link no fim', ()
   assert.equal(juntarBlocos(['A']), 'A');
   assert.equal(juntarBlocos(['*AKRK*', '*DIG*'], 'AKRK e DIG'), '📊 *Relatório diário — AKRK e DIG*\n\n*AKRK*\n\n————————\n\n*DIG*');
   assert.doesNotMatch(juntarBlocos(['A'], 'AKRK e DIG'), /https?:\/\//);
+});
+
+test('bloco: leva todas as seções, mas da lista só a contagem (sem nome nem CPF)', () => {
+  const texto = montarBloco({ relatorio, empresa: 'AKRK', aba: 'Geral', metaOficial: null, horaParcial: null });
+  for (const secao of ['Vendas do dia', 'Clientes', 'Meta', 'Ranking dos pagos', 'Exceção vendida', 'Por canal', 'Churn', 'Lote do mês', 'Onde está a venda do dia']) {
+    assert.ok(texto.includes(`*${secao}`), secao);
+  }
+  assert.match(texto, /Não reinseridos: 1 casos/);
+  assert.match(texto, /– Digitada: 3 · R\$\s300,00/);
+  assert.ok(!texto.includes('FULANO') && !texto.includes('12345678900'));
 });
