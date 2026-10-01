@@ -2,6 +2,7 @@ import { Suspense } from 'react';
 import { auth } from '@/lib/auth';
 import { dataExtenso } from '@/lib/tempo';
 import { BLOCOS, Bolsa, BolsaSkeleton, BlocoNoticias, DiarioHome, DiarioHomeSkeleton, Indicadores, IndicadoresSkeleton, NoticiasSkeleton } from './secoes';
+import { OctaChat } from '@/components/OctaChat';
 import './home.css';
 import { carregarAcesso } from '@/lib/acesso';
 import { podeAcessar } from '@/lib/permissoes';
@@ -32,6 +33,7 @@ async function SecaoDiario() {
 export default function HomePage() {
   return (
     <div className="home">
+      <OctaChat />
       <section className="abertura" aria-label="Boas-vindas">
         <h1>
           <Suspense fallback="Bem-vindo">
