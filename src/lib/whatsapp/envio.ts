@@ -46,15 +46,15 @@ const horaSp = () => new Intl.DateTimeFormat('pt-BR', { timeZone: FUSO, hour: '2
 // Mesmo número da tela: relatório ao vivo + meta oficial do mês (quando cadastrada).
 export async function montarMensagemRelatorio(empresas: readonly Empresa[], ref: string, aba: { escopo: string; rotulo: string }): Promise<string> {
   const parcial = ref === hojeSp() ? horaSp() : null;
+  const variasEmpresas = empresas.length > 1;
   const blocos = await Promise.all(
     empresas.map(async (empresa) => {
       const [relatorio, oficial] = await Promise.all([carregarRelatorioAoVivo(empresa, ref, aba.escopo), metaDoMes([empresa], ref.slice(0, 7))]);
-      return montarBloco({ relatorio, empresa: ROTULO_EMPRESA[empresa], aba: aba.rotulo, metaOficial: oficial, horaParcial: parcial });
+      return montarBloco({ relatorio, empresa: ROTULO_EMPRESA[empresa], aba: aba.rotulo, metaOficial: oficial, horaParcial: parcial, cabecalhoCurto: variasEmpresas });
     }),
   );
-  const base = process.env.NEXTAUTH_URL?.replace(/\/+$/, '');
-  const link = base && empresas.length === 1 ? `${base}/relatorio?empresa=${empresas[0]}&escopo=${encodeURIComponent(aba.escopo)}&data=${ref}` : base ? `${base}/relatorio` : null;
-  return juntarBlocos(blocos, link);
+  const tituloGrupo = variasEmpresas ? empresas.map((empresa) => ROTULO_EMPRESA[empresa]).join(' e ') : null;
+  return juntarBlocos(blocos, tituloGrupo);
 }
 
 export const montarMensagemDeHoje = (empresas: readonly Empresa[]) => montarMensagemRelatorio(empresas, hojeSp(), { escopo: 'Geral', rotulo: 'Geral' });
