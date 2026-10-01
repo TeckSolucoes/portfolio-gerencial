@@ -30,12 +30,15 @@ const relatorio = {
 
 test('bloco: meta oficial substitui a de modelo e recalcula a falta', () => {
   const texto = montarBloco({ relatorio, empresa: 'AKRK', aba: 'Geral', metaOficial: { valor: 1000, faltando: [] }, horaParcial: '14:05' });
-  assert.match(texto, /^\*Relatório diário — AKRK · Geral\*/);
-  assert.match(texto, /01\/10\/2026 · parcial, atualizado às 14:05/);
+  assert.match(texto, /^📊 \*Relatório diário — AKRK · Geral\*/);
+  assert.match(texto, /🗓️ 01\/10\/2026 · parcial, atualizado às 14:05/);
   assert.match(texto, /Meta \(OFICIAL\): R\$\s1\.000,00/);
   assert.match(texto, /Falta: R\$\s600,00 · 60,0% para a meta/);
   assert.match(texto, /Convênio: INSS \(75,0%\)/);
   assert.match(texto, /Cancelados ontem: —/);
+  assert.match(texto, /💡 \*Insights para atuação\*/);
+  assert.match(texto, /Meta: faltam R\$\s600,00/);
+  assert.match(texto, /Concentração: INSS representa 75,0%/);
 });
 
 test('bloco: na aba do gerente não mostra falta da empresa', () => {
@@ -45,7 +48,9 @@ test('bloco: na aba do gerente não mostra falta da empresa', () => {
   assert.match(texto, /Falta: só no Geral/);
 });
 
-test('juntar: separa empresas e põe o link no fim', () => {
-  assert.equal(juntarBlocos(['A', 'B'], 'https://x/relatorio'), 'A\n\n————————\n\nB\n\nRelatório completo: https://x/relatorio');
-  assert.equal(juntarBlocos(['A'], null), 'A');
+test('juntar: separa empresas, usa título do grupo e não põe link no fim', () => {
+  assert.equal(juntarBlocos(['A', 'B']), 'A\n\n————————\n\nB');
+  assert.equal(juntarBlocos(['A']), 'A');
+  assert.equal(juntarBlocos(['*AKRK*', '*DIG*'], 'AKRK e DIG'), '📊 *Relatório diário — AKRK e DIG*\n\n*AKRK*\n\n————————\n\n*DIG*');
+  assert.doesNotMatch(juntarBlocos(['A'], 'AKRK e DIG'), /https?:\/\//);
 });
