@@ -193,7 +193,7 @@ const whatsappWorkers: Worker[] = [
     id: ID_WORKER_WHATSAPP,
     nome: 'WhatsApp · Relatório diário',
     grupo: 'WhatsApp',
-    descricao: 'Envia o resumo do relatório do dia (parcial, Geral) pela W-API para os destinatários da aba WhatsApp.',
+    descricao: 'Envia o resumo do dia pela W-API. Consolida 32 dias na primeira execução diária e, depois, consulta somente as propostas do dia.',
     ativoPadrao: false,
     janelaMs: 15 * 60_000,
     pendencia: async () => ((await lerConfigWhatsapp()) ? null : 'Configure a W-API e os destinatários na aba WhatsApp.'),

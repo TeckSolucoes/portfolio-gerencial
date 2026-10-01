@@ -65,7 +65,7 @@ test('insights: cria uma segunda mensagem identificando as empresas', () => {
 
 test('bloco: leva todas as seções, mas da lista só a contagem (sem nome nem CPF)', () => {
   const texto = montarBloco({ relatorio, empresa: 'AKRK', aba: 'Geral', metaOficial: null, horaParcial: null });
-  for (const secao of ['Vendas do dia', 'Clientes', 'Meta', 'Ranking dos pagos', 'Exceção vendida', 'Por canal', 'Churn', 'Lote do mês', 'Onde está a venda do dia']) {
+  for (const secao of ['Vendas do dia', 'Clientes', 'Meta', 'Ranking dos pagos', 'Exceção vendida', 'Por canal', 'Churn', 'Safra do mês', 'Onde está a venda do dia']) {
     assert.ok(texto.includes(`*${secao}`), secao);
   }
   assert.match(texto, /Não reinseridos: 1 casos/);

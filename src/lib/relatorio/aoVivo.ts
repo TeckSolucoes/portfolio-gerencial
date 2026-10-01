@@ -4,8 +4,10 @@ import type { RowDataPacket } from 'mysql2/promise';
 import { consultarFrontV2, consultarFuncaoEmLotes } from '@/lib/bases/conexoes';
 import { criarCache } from '@/lib/cache/memoria';
 import type { Empresa } from '@/lib/empresas';
+import { gravarCache, lerCache } from '@/lib/workers/cache';
 import { normalizarProduto } from './casos';
 import { escopoGerente, montarRelatorio } from './relatorio';
+import { mesclarPropostas, type SnapshotPropostas } from './snapshot';
 import type { Proposta, Relatorio } from './types';
 
 interface LinhaDiaria extends RowDataPacket {
@@ -93,7 +95,7 @@ async function consultarPropostasDaFuncao(numeros: string[]): Promise<LinhaFunca
   return consultas.length ? consultarFuncaoEmLotes<LinhaFuncao>(consultas) : [];
 }
 
-async function buscarPropostasAoVivo(empresa: Empresa, ref: string): Promise<Proposta[]> {
+async function buscarPropostasAoVivo(empresa: Empresa, ref: string, inicio = inicioDaJanela(ref)): Promise<Proposta[]> {
   const prefixoEquipe = empresa === 'AKRK' ? 'AKRK - %' : empresa === 'DIG' ? 'DIG - %' : '__sem_acesso__';
   const linhas = await consultarFrontV2<LinhaDiaria[]>(
     `SELECT
@@ -126,7 +128,7 @@ async function buscarPropostasAoVivo(empresa: Empresa, ref: string): Promise<Pro
        AND t.Equipe LIKE ? AND ap.deleted_at IS NULL
      GROUP BY ap.id
      LIMIT ${LIMITE + 1}`,
-    [inicioDaJanela(ref), ref, prefixoEquipe],
+    [inicio, ref, prefixoEquipe],
   );
   if (linhas.length > LIMITE) throw new Error('O recorte ultrapassou 50 mil propostas. Reduza a janela do relatório.');
 
@@ -176,9 +178,33 @@ async function buscarPropostasAoVivo(empresa: Empresa, ref: string): Promise<Pro
   return propostas;
 }
 
+const idSnapshot = (empresa: Empresa) => `relatorio-propostas-${empresa.toLowerCase()}`;
+
+async function buscarPropostasIncrementais(empresa: Empresa, ref: string): Promise<Proposta[]> {
+  // Para datas históricas, mantém a leitura fechada da janela solicitada. O snapshot
+  // persistente é exclusivo do dia corrente e sobrevive a deploys no volume do EasyPanel.
+  if (ref !== hojeSp()) return buscarPropostasAoVivo(empresa, ref);
+
+  const id = idSnapshot(empresa);
+  const salvo = await lerCache<SnapshotPropostas>(id);
+  if (!salvo || salvo.dados.ref !== ref) {
+    const propostas = await buscarPropostasAoVivo(empresa, ref);
+    await gravarCache(id, { ref, propostas } satisfies SnapshotPropostas);
+    return propostas;
+  }
+
+  // Durante o dia, o Front e o Função recebem somente as propostas de hoje. Elas são
+  // inseridas ou substituídas no snapshot; a consolidação completa volta a ocorrer no
+  // primeiro acesso do dia seguinte.
+  const recentes = await buscarPropostasAoVivo(empresa, ref, ref);
+  const propostas = mesclarPropostas(salvo.dados.propostas, recentes);
+  await gravarCache(id, { ref, propostas } satisfies SnapshotPropostas);
+  return propostas;
+}
+
 export async function carregarRelatorioAoVivo(empresa: Empresa, ref: string, escopo: string): Promise<Relatorio> {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(ref)) throw new Error('Data inválida.');
   const ttl = ref === hojeSp() ? TTL_HOJE_MS : TTL_DIA_FECHADO_MS;
-  const propostas = await cachePropostas.obter(`${empresa}:${ref}`, ttl, () => buscarPropostasAoVivo(empresa, ref));
+  const propostas = await cachePropostas.obter(`${empresa}:${ref}`, ttl, () => buscarPropostasIncrementais(empresa, ref));
   return montarRelatorio(propostas, ref, escopo === 'Geral' ? null : escopoGerente(escopo));
 }

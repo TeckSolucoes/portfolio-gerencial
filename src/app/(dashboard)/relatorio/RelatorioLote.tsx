@@ -28,9 +28,9 @@ export function RelatorioLote({ dias, resumo }: Props) {
 
   return (
     <section className="sec" id="sec-lote">
-      <div className="sec-h">Lote por dia inserido</div>
-      <div className="sec-s">Cada linha = turma que nasceu naquele dia · lote = data da 1ª proposta do caso · use o filtro de período</div>
-      <div className="lote-filtros" role="group" aria-label="Período do lote">
+      <div className="sec-h">Safra por dia de entrada</div>
+      <div className="sec-s">Cada linha reúne os casos iniciados naquele dia, considerando a data da primeira proposta do cliente para o mesmo tipo e produto.</div>
+      <div className="lote-filtros" role="group" aria-label="Período da safra">
         {OPCOES.map(([v, rot]) => (
           <button key={v} type="button" aria-pressed={periodo === v} className={`pill-f ${periodo === v ? 'active' : ''}`} onClick={() => setPeriodo(v)}>
             {rot}
@@ -54,14 +54,14 @@ export function RelatorioLote({ dias, resumo }: Props) {
           <b>Jornada</b> {n(completo?.jornada)}
         </span>
       </div>
-      <div className="lote-wrap" tabIndex={0} role="region" aria-label="Lotes por dia inserido">
+      <div className="lote-wrap" tabIndex={0} role="region" aria-label="Safras por dia de entrada">
         {linhas.length === 0 ? (
-          <div className="lote-empty">Nenhum lote neste período.</div>
+          <div className="lote-empty">Nenhuma safra neste período.</div>
         ) : (
           <table>
             <thead>
               <tr>
-                <th scope="col">LOTE</th>
+                <th scope="col">SAFRA</th>
                 <th scope="col">CASOS</th>
                 <th scope="col">NA JORNADA</th>
                 <th scope="col">FECHOU</th>

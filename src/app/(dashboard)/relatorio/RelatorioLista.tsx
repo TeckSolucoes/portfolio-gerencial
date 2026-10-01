@@ -8,7 +8,7 @@ type Estado = { fim: 'Todos' | Fim } & Record<Campo, string> & { busca: string }
 
 const FINS: Fim[] = ['Reprovado Front', 'Reprovado CCNET', 'Cancelado'];
 const INICIAL: Estado = { fim: 'Todos', lote: 'Todos', equipe: 'Todos', tipo: 'Todos', produto: 'Todos', motivo: 'Todos', busca: '' };
-const ROTULOS: Record<Campo, string> = { lote: 'Lote', equipe: 'Equipe', tipo: 'Tipo', produto: 'Produto', motivo: 'Motivo' };
+const ROTULOS: Record<Campo, string> = { lote: 'Safra', equipe: 'Equipe', tipo: 'Tipo', produto: 'Produto', motivo: 'Motivo' };
 
 const classeFim = (fim: Fim) => (fim === 'Cancelado' ? 'fim-canc' : fim === 'Reprovado Front' ? 'fim-front' : 'fim-ccnet');
 
@@ -23,7 +23,7 @@ function casa(l: LinhaLista, e: Estado, ignora?: Campo | 'fim') {
 }
 
 function exportar(linhas: LinhaLista[]) {
-  const cab = ['Cliente', 'CPF', 'Proposta', 'Lote', 'Tipo', 'Produto', 'Fim', 'Motivo', 'Equipe', 'Operador'];
+  const cab = ['Cliente', 'CPF', 'Proposta', 'Safra', 'Tipo', 'Produto', 'Fim', 'Motivo', 'Equipe', 'Operador'];
   const cel = (v: string | undefined) => `"${(v ?? '').replaceAll('"', '""')}"`;
   const csv = [cab, ...linhas.map((l) => [l.nome, l.cpf, l.numero, l.lote, l.tipo, l.produto, l.fim, l.motivo, l.equipe, l.operador])]
     .map((linha) => linha.map(cel).join(';'))
@@ -101,7 +101,7 @@ export function RelatorioLista({ linhas }: { linhas: LinhaLista[] }) {
               <thead>
                 <tr>
                   <th scope="col">Cliente</th>
-                  <th scope="col">Lote</th>
+                  <th scope="col">Safra</th>
                   <th scope="col">Caso</th>
                   <th scope="col">Fim</th>
                   <th scope="col">Motivo</th>

@@ -11,7 +11,7 @@ const SECOES = [
   ['exc', 'excecao', 'Exceção'],
   ['canal', 'canal', 'Canal'],
   ['churn', 'churn', 'Churn'],
-  ['lote', 'lote', 'Lote'],
+  ['lote', 'lote', 'Safra'],
   ['lista', 'lista', 'Lista'],
 ] as const;
 

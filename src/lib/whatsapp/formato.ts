@@ -143,7 +143,7 @@ export function montarBloco({ relatorio: r, empresa, aba, metaOficial, horaParci
     `• Não voltou: ${num(r.churn?.naoVoltou)} · ${pct(r.churn?.naoVoltouPct, 0)} dos casos · Voltou e morreu: ${num(r.churn?.voltouMorreu)}`,
     ...(r.churn?.equipes ?? []).slice(0, 5).map((e) => `  – ${e.equipe}: ${pct(e.taxa, 0)}`),
     '',
-    '📦 *Lote do mês*',
+    '📦 *Safra do mês*',
     lote ? `• Inseriu ${num(lote.inseriu)} · pagou ${num(lote.pagou)} · morreu ${num(lote.morreu)} · jornada ${num(lote.jornada)}` : `• ${NAO}`,
     // A lista tem nome e CPF de cliente: no WhatsApp vai só a contagem.
     `• Não reinseridos: ${num(r.lista?.length)} casos (nomes e CPF só no portal)`,

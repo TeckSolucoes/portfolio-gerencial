@@ -123,7 +123,7 @@ export function WhatsappForm({ inicial }: {
               </label>
             ))}
           </div>
-          <p className="adm-hint">{horarios.size} envio(s) por dia. Cada envio leva o relatório de hoje até aquela hora.</p>
+          <p className="adm-hint">{horarios.size} envio(s) por dia. A primeira execução consolida 32 dias; as seguintes atualizam somente as propostas do dia.</p>
         </fieldset>
 
         <label className="adm-check-card wa-ativo">
