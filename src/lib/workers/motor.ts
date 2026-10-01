@@ -2,7 +2,7 @@ import 'server-only';
 import { prisma } from '../prisma';
 import { apagarCache, gravarCache } from './cache';
 import { WORKERS, workerPorId } from './registro';
-import { estaVencido, estaVencidoMensal, HORARIOS_PADRAO, lerHorarios, normalizarHorarios, proximaExecucao, proximaExecucaoMensal } from './tipos';
+import { estaVencido, estaVencidoMensal, estaVencidoNaJanela, HORARIOS_PADRAO, lerHorarios, normalizarHorarios, proximaExecucao, proximaExecucaoMensal, proximaExecucaoNaJanela } from './tipos';
 import type { EstadoWorker, StatusExecucao, Worker } from './tipos';
 
 const TICK_MS = 30_000;
@@ -131,7 +131,9 @@ export async function estadoDosWorkers(): Promise<EstadoWorker[]> {
         ? null
         : (mensal
             ? proximaExecucaoMensal(u?.iniciadoEm ?? null, mensal.dia, mensal.horario, agora)
-            : proximaExecucao(u?.iniciadoEm ?? null, agenda.horarios, agora)).toISOString(),
+            : w.janelaMs
+              ? proximaExecucaoNaJanela(u?.iniciadoEm ?? null, agenda.horarios, w.janelaMs, agora)
+              : proximaExecucao(u?.iniciadoEm ?? null, agenda.horarios, agora)).toISOString(),
     };
   });
 }
@@ -183,7 +185,9 @@ async function rodada() {
     const ultimo = porWorker.get(w.id)?.iniciadoEm ?? null;
     return w.agendamentoMensal
       ? estaVencidoMensal(ultimo, w.agendamentoMensal.dia, w.agendamentoMensal.horario, agora)
-      : estaVencido(ultimo, cfg.agendaDe(w.id).horarios, agora);
+      : w.janelaMs
+        ? estaVencidoNaJanela(ultimo, cfg.agendaDe(w.id).horarios, w.janelaMs, agora)
+        : estaVencido(ultimo, cfg.agendaDe(w.id).horarios, agora);
   });
   const fila = [...vencidos];
   const trabalhar = async () => {

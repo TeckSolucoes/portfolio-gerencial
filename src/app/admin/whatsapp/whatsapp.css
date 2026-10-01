@@ -25,3 +25,7 @@
 .wa-pill.is-warn{color:var(--warn);border-color:var(--warn);}
 .adm .wa-ok{color:var(--good);}
 .adm .wa-erro{color:var(--ember-strong);}
+
+.wa-linha{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;}
+.wa-numero{flex:1 1 200px;max-width:280px;}
+.wa-previa{margin:0;display:flex;flex-direction:column;gap:8px;}
