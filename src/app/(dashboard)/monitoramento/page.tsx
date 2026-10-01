@@ -1,84 +1,52 @@
 import { requireFuncionalidadeForPage } from '@/lib/authz';
 import { redirect } from 'next/navigation';
-import evidencia from '@/lib/monitoramento/evidencia.json';
 import { carregarAcesso } from '@/lib/acesso';
-import { empresaDaEquipe } from '@/lib/empresas';
-import { filtrarPorEmpresa, statusMonitoramento } from '@/lib/permissoes';
-import type { Alerta } from '@/lib/monitoramento/detectar';
-import { nomeEquipe } from '@/lib/relatorio/relatorio';
+import { carregarMonitoramentoAoVivo } from '@/lib/monitoramento/aoVivo';
 import { Painel } from './painel';
-import { ORDEM, TIPOS } from './tipos';
 import './monitoramento.css';
 
 function Aviso({ titulo, texto }: { titulo: string; texto: string }) {
-  return (
-    <div className="monit">
-      <p className="sub">
-        <b>{titulo}</b> {texto}
-      </p>
-    </div>
-  );
+  return <div className="monit"><p className="sub"><b>{titulo}</b> {texto}</p></div>;
 }
 
 export default async function MonitoramentoPage() {
   await requireFuncionalidadeForPage('monitoramento');
   const acesso = await carregarAcesso();
   if (!acesso) redirect('/login');
-  const status = statusMonitoramento(acesso);
-  if (status === 'sem-empresa') return <Aviso titulo="Você ainda não tem empresa liberada." texto="Peça ao administrador." />;
-  if (status === 'so-empresa-inteira') return <Aviso titulo="Monitoramento" texto="Disponível apenas para quem vê a empresa inteira." />;
+  if (acesso.empresas.length === 0) return <Aviso titulo="Você ainda não tem empresa liberada." texto="Peça ao administrador." />;
 
-  // Filtra antes de qualquer agregação ou prop de client component.
-  const alertas = filtrarPorEmpresa(acesso, evidencia.alertas as Alerta[], (a) => empresaDaEquipe(a.unidade));
-  // Os totais de propostas/equipes do JSON são da base inteira (todas as empresas): só o superadmin os vê.
-  const veTudo = acesso.perfil === 'superadmin';
-  const nomes = Object.fromEntries([...new Set(alertas.map((a) => a.unidade))].map((u) => [u, nomeEquipe(u)]));
-  const total = (t: (typeof ORDEM)[number]) => alertas.filter((a) => a.tipos.includes(t)).length;
+  let dados;
+  try {
+    dados = await carregarMonitoramentoAoVivo(acesso.empresas, acesso.perfil === 'superadmin' ? null : acesso.escopoGerente);
+  } catch (erro) {
+    console.error('Falha ao carregar monitoramento ao vivo:', erro);
+    return <Aviso titulo="Monitoramento indisponível." texto="Não foi possível consultar o Front V2 agora. Tente novamente em alguns minutos." />;
+  }
+
+  const atualizado = new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo', dateStyle: 'short', timeStyle: 'short' }).format(new Date(dados.atualizadoEm));
 
   return (
     <div className="monit">
       <header className="cab">
-        <div>
-          <div className="kicker">Monitoramento</div>
-          <h1>Convênio fora do padrão</h1>
-          <p className="sub">Avisa quando uma equipe insere proposta num convênio que ela não costuma vender.</p>
-        </div>
-        <div className="fonte">
-          <b>Dados reais do export do Front</b>
-          <span>
-            {evidencia.fonte.replace(/^Export do Front, /, '')}
-            {veTudo && ` · ${evidencia.propostas.toLocaleString('pt-BR')} propostas · ${evidencia.unidades} equipes`}
-          </span>
-          <small>Unidade = equipe. No Função será a promotora.</small>
-        </div>
+        <div><div className="kicker">Monitoramento operacional</div><h1>Quem precisa de atenção</h1><p className="sub">Responsáveis, objeções e propostas paradas nos últimos 30 dias.</p></div>
+        <div className="atualizado" aria-label={`Dados atualizados em ${atualizado}`}><i aria-hidden /> Atualizado em {atualizado}</div>
       </header>
 
       <div className="kpis">
-        <div className="kpi t-total">
-          <span className="kpi-rot">Total de alertas</span>
-          <span className="kpi-val">{alertas.length.toLocaleString('pt-BR')}</span>
-          <span className="kpi-meta">Um por equipe, convênio e dia.</span>
-        </div>
-        {ORDEM.map((t) => (
-          <div key={t} className={`kpi ${TIPOS[t].classe}`}>
-            <span className="kpi-rot">{TIPOS[t].nome}</span>
-            <span className="kpi-val">{total(t).toLocaleString('pt-BR')}</span>
-            <span className="kpi-meta">{TIPOS[t].explica}</span>
-          </div>
-        ))}
+        <div className="kpi t-critica"><span className="kpi-rot">Casos para acompanhar</span><span className="kpi-val">{dados.casos.toLocaleString('pt-BR')}</span><span className="kpi-meta">Agrupados por responsável.</span></div>
+        <div className="kpi t-objecao"><span className="kpi-rot">Com objeção</span><span className="kpi-val">{dados.objecoes.toLocaleString('pt-BR')}</span><span className="kpi-meta">Motivo identificado na proposta.</span></div>
+        <div className="kpi t-parada"><span className="kpi-rot">Sem atualização</span><span className="kpi-val">{dados.semAtualizacao.toLocaleString('pt-BR')}</span><span className="kpi-meta">Há 2 dias ou mais.</span></div>
+        <div className="kpi t-sem-dono"><span className="kpi-rot">Sem responsável</span><span className="kpi-val">{dados.semResponsavel.toLocaleString('pt-BR')}</span><span className="kpi-meta">Precisam de atribuição.</span></div>
       </div>
 
-      <Painel alertas={alertas} nomes={nomes} />
+      <Painel pessoas={dados.pessoas} />
 
-      <section className="regras" aria-labelledby="h-regras">
-        <h2 id="h-regras">Como ler</h2>
-        <ul>
-          <li>Comparação com os 90 dias anteriores a cada proposta.</li>
-          <li>Equipe com menos de 30 propostas de histórico não gera alerta.</li>
-          <li>Um alerta por equipe, convênio e dia. Sem CPF nem nome de cliente.</li>
-          <li>O caso Quero Mais / Gov. PI não existe nesta base: essa promotora só existe no Função.</li>
-        </ul>
-      </section>
+      <section className="regras" aria-labelledby="h-regras"><h2 id="h-regras">Critérios da fila</h2><ul>
+        <li>Crítica: proposta com objeção, recusa ou reprovação registrada.</li>
+        <li>Alta: proposta sem responsável ou sem atualização há pelo menos 2 dias.</li>
+        <li>Média: proposta enviada e ainda sem retorno da Função.</li>
+        <li>A tela mostra o operador, a equipe e o gerente; dados pessoais do cliente não são exibidos.</li>
+      </ul></section>
     </div>
   );
 }
