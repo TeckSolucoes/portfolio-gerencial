@@ -15,7 +15,7 @@ export function WhatsappForm({ inicial }: {
   const [enviando, startEnvio] = useTransition();
   const [horarios, setHorarios] = useState(() => new Set(inicial.horarios));
   const formRef = useRef<HTMLFormElement>(null);
-  const [previa, setPrevia] = useState<string | null>(null);
+  const [previa, setPrevia] = useState<string[] | null>(null);
   const [aviso, setAviso] = useState<{ ok: boolean; mensagem: string } | null>(null);
   const [numeroTeste, setNumeroTeste] = useState('');
   const [montando, startPrevia] = useTransition();
@@ -30,7 +30,7 @@ export function WhatsappForm({ inicial }: {
     setAviso(null);
     startPrevia(async () => {
       const r = await gerarPrevia(doFormulario().empresas);
-      if (r.ok) setPrevia(r.texto);
+      if (r.ok) setPrevia(r.mensagens);
       else setAviso({ ok: false, mensagem: r.mensagem });
     });
   };
@@ -104,7 +104,7 @@ export function WhatsappForm({ inicial }: {
                 </label>
               ))}
             </div>
-            <p className="adm-hint">Visão Geral do dia, uma seção por empresa na mesma mensagem.</p>
+            <p className="adm-hint">Visão Geral do dia, seguida por uma segunda mensagem com os insights para atuação.</p>
           </fieldset>
         </div>
 
@@ -166,8 +166,13 @@ export function WhatsappForm({ inicial }: {
         )}
         {previa && (
           <figure className="wa-previa">
-            <figcaption className="adm-label">Prévia · {previa.length.toLocaleString('pt-BR')} caracteres</figcaption>
-            <BolhaWhatsapp texto={previa} />
+            <figcaption className="adm-label">Prévia · 2 mensagens · {previa.reduce((total, mensagem) => total + mensagem.length, 0).toLocaleString('pt-BR')} caracteres</figcaption>
+            {previa.map((mensagem, indice) => (
+              <div key={indice}>
+                <p className="adm-hint">Mensagem {indice + 1} · {indice === 0 ? 'Relatório' : 'Insights para atuação'}</p>
+                <BolhaWhatsapp texto={mensagem} />
+              </div>
+            ))}
           </figure>
         )}
 

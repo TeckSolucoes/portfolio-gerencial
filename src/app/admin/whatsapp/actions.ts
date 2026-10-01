@@ -8,7 +8,7 @@ import { gravarEmpresas, lerEmpresas } from '@/lib/empresas';
 import { definirAtivo, definirHorarios, executarWorker } from '@/lib/workers/motor';
 import { normalizarHorarios } from '@/lib/workers/tipos';
 import { normalizarDestinatarios } from '@/lib/whatsapp/formato';
-import { enviarTexto, ID_WORKER_WHATSAPP, lerConfigBruta, montarMensagemDeHoje, salvarConfigWhatsapp } from '@/lib/whatsapp/envio';
+import { enviarTexto, ID_WORKER_WHATSAPP, lerConfigBruta, montarMensagensDeHoje, salvarConfigWhatsapp } from '@/lib/whatsapp/envio';
 
 export type EstadoForm = { error?: string; ok?: string } | undefined;
 
@@ -80,12 +80,13 @@ export async function enviarAgora(): Promise<{ ok: boolean; mensagem: string }> 
 }
 
 // Prévia com as empresas marcadas na tela (mesmo antes de salvar): monta, não envia.
-export async function gerarPrevia(empresas: string[]): Promise<{ ok: true; texto: string } | { ok: false; mensagem: string }> {
+export async function gerarPrevia(empresas: string[]): Promise<{ ok: true; mensagens: string[] } | { ok: false; mensagem: string }> {
   try {
     await sessaoAutorizada();
     const lista = lerEmpresas(empresas.join(','));
     if (lista.length === 0) return { ok: false, mensagem: 'Marque pelo menos uma empresa.' };
-    return { ok: true, texto: await montarMensagemDeHoje(lista) };
+    const mensagens = await montarMensagensDeHoje(lista);
+    return { ok: true, mensagens: [mensagens.relatorio, mensagens.insights] };
   } catch (e) {
     return { ok: false, mensagem: e instanceof Error ? e.message : 'Falha ao montar a prévia.' };
   }
@@ -106,7 +107,9 @@ export async function enviarTeste(dados: { instanceId: string; token: string; nu
     const empresas = lerEmpresas(dados.empresas.join(','));
     if (empresas.length === 0) return { ok: false, mensagem: 'Marque pelo menos uma empresa.' };
 
-    await enviarTexto({ instanceId, token }, numero.lista[0], `*[TESTE]*\n${await montarMensagemDeHoje(empresas)}`);
+    const mensagens = await montarMensagensDeHoje(empresas);
+    await enviarTexto({ instanceId, token }, numero.lista[0], `*[TESTE]*\n${mensagens.relatorio}`);
+    await enviarTexto({ instanceId, token }, numero.lista[0], `*[TESTE]*\n${mensagens.insights}`);
     await registrarAuditoria(session.user, { acao: 'Teste de WhatsApp enviado', rota: ROTA, detalhes: `${numero.lista[0]} · ${empresas.join(', ')}` });
     return { ok: true, mensagem: `Teste enviado para ${numero.lista[0]}. Confira no WhatsApp.` };
   } catch (e) {

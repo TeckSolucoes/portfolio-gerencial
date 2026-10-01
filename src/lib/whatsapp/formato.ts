@@ -43,24 +43,25 @@ export interface EntradaMensagem {
   cabecalhoCurto?: boolean; // quando há mais de uma empresa, o título geral aparece uma vez só
 }
 
-// Um bloco por empresa, em texto com a formatação do WhatsApp (*negrito*, _itálico_).
-export function montarBloco({ relatorio: r, empresa, aba, metaOficial, horaParcial, cabecalhoCurto = false }: EntradaMensagem): string {
-  const k = r.kpis;
-  const [ano, mes, dia] = r.ref.split('-');
-  const doGerente = aba !== 'Geral';
-  const pagos = k.pagosMes.valor;
-  const meta = metaOficial
+function resolverMeta({ relatorio: r, metaOficial }: EntradaMensagem) {
+  const pagos = r.kpis.pagosMes.valor;
+  return metaOficial
     ? {
         valor: metaOficial.valor,
         falta: Math.max(0, Math.round((metaOficial.valor - pagos) * 100) / 100),
         faltaPct: metaOficial.valor > 0 ? Math.max(0, (metaOficial.valor - pagos) / metaOficial.valor) : null,
       }
     : r.meta;
-  const rotuloMeta = metaOficial ? (metaOficial.faltando.length ? 'OFICIAL · PARCIAL' : 'OFICIAL') : 'MODELO';
-  const excDiaPct = k.total.valor ? k.excecaoDia.valor / k.total.valor : null;
+}
+
+function gerarInsights(entrada: EntradaMensagem): string[] {
+  const { relatorio: r, aba } = entrada;
+  const k = r.kpis;
+  const meta = resolverMeta(entrada);
+  const doGerente = aba !== 'Geral';
   const rp = r.rankingPagos;
-  const ranking = (rotulo: string, item: { nome: string; pct: number } | null) => `• ${rotulo}: ${item ? `${item.nome} (${pct(item.pct)})` : NAO}`;
   const insights: string[] = [];
+
   if (!doGerente && meta?.falta != null && meta.falta > 0) {
     insights.push(`Meta: faltam ${brl(meta.falta)} (${pct(meta.faltaPct)}) para o objetivo do mês.`);
   }
@@ -73,8 +74,19 @@ export function montarBloco({ relatorio: r, empresa, aba, metaOficial, horaParci
   if (rp?.convenio && rp.convenio.pct >= 0.5) {
     insights.push(`Concentração: ${rp.convenio.nome} representa ${pct(rp.convenio.pct)} dos pagos; monitore dependência e oportunidade nos demais convênios.`);
   }
-  const insightsAtuacao = (insights.length ? insights : ['Sem alerta relevante nas métricas disponíveis neste período.']).slice(0, 3);
+  return (insights.length ? insights : ['Sem alerta relevante nas métricas disponíveis neste período.']).slice(0, 3);
+}
 
+// Um bloco por empresa, em texto com a formatação do WhatsApp (*negrito*, _itálico_).
+export function montarBloco({ relatorio: r, empresa, aba, metaOficial, horaParcial, cabecalhoCurto = false }: EntradaMensagem): string {
+  const k = r.kpis;
+  const [ano, mes, dia] = r.ref.split('-');
+  const doGerente = aba !== 'Geral';
+  const meta = resolverMeta({ relatorio: r, empresa, aba, metaOficial, horaParcial, cabecalhoCurto });
+  const rotuloMeta = metaOficial ? (metaOficial.faltando.length ? 'OFICIAL · PARCIAL' : 'OFICIAL') : 'MODELO';
+  const excDiaPct = k.total.valor ? k.excecaoDia.valor / k.total.valor : null;
+  const rp = r.rankingPagos;
+  const ranking = (rotulo: string, item: { nome: string; pct: number } | null) => `• ${rotulo}: ${item ? `${item.nome} (${pct(item.pct)})` : NAO}`;
   const nrMes = r.novaReinserida?.mes;
   const etapas = (lista: { chave: string; qtd: number; valor: number }[] | undefined) =>
     (lista ?? []).slice(0, 5).map((e) => `  – ${e.chave}: ${num(e.qtd)} · ${brl(e.valor)}`);
@@ -141,11 +153,15 @@ export function montarBloco({ relatorio: r, empresa, aba, metaOficial, horaParci
     ...etapas(r.etapasFront),
     `• CCNET: ${soma(k.ccnet)}`,
     ...etapas(r.etapasCcnet),
-    '',
-    '💡 *Insights para atuação*',
-    ...insightsAtuacao.map((insight) => `• ${insight}`),
   ].join('\n');
+}
+
+export function montarBlocoInsights(entrada: EntradaMensagem): string {
+  return [`*${entrada.empresa} · ${entrada.aba}*`, ...gerarInsights(entrada).map((insight) => `• ${insight}`)].join('\n');
 }
 
 export const juntarBlocos = (blocos: string[], tituloGrupo: string | null = null) =>
   [tituloGrupo ? `📊 *Relatório diário — ${tituloGrupo}*` : '', blocos.join('\n\n————————\n\n')].filter(Boolean).join('\n\n').trim();
+
+export const juntarInsights = (blocos: string[], titulo: string) =>
+  [`💡 *Insights para atuação — ${titulo}*`, blocos.join('\n\n')].join('\n\n').trim();

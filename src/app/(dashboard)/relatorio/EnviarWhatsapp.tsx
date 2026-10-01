@@ -8,7 +8,7 @@ import { enviarRelatorioWhatsapp, previaWhatsapp } from './actions';
 export function EnviarWhatsapp({ empresa, escopo, rotulo, data, destinatarios }: { empresa: string; escopo: string; rotulo: string; data: string; destinatarios: number }) {
   const dialogo = useRef<HTMLDialogElement>(null);
   const [aberto, setAberto] = useState(false);
-  const [previa, setPrevia] = useState<string | null>(null);
+  const [previa, setPrevia] = useState<string[] | null>(null);
   const [resultado, setResultado] = useState<{ ok: boolean; mensagem: string } | null>(null);
   const [montando, startPrevia] = useTransition();
   const [enviando, startEnvio] = useTransition();
@@ -20,7 +20,7 @@ export function EnviarWhatsapp({ empresa, escopo, rotulo, data, destinatarios }:
     setAberto(true);
     startPrevia(async () => {
       const r = await previaWhatsapp(empresa, escopo, data);
-      if (r.ok) setPrevia(r.texto);
+      if (r.ok) setPrevia(r.mensagens);
       else setResultado({ ok: false, mensagem: r.mensagem });
     });
   };
@@ -47,7 +47,12 @@ export function EnviarWhatsapp({ empresa, escopo, rotulo, data, destinatarios }:
           {empresa} · {rotulo} · {data.split('-').reverse().join('/')} · vai para {destinatarios} destinatário(s)
         </p>
         {montando && <p className="muted">Montando a mensagem com os dados ao vivo…</p>}
-        {previa && <BolhaWhatsapp texto={previa} />}
+        {previa?.map((mensagem, indice) => (
+          <div key={indice}>
+            <p className="muted">Mensagem {indice + 1} · {indice === 0 ? 'Relatório' : 'Insights para atuação'}</p>
+            <BolhaWhatsapp texto={mensagem} />
+          </div>
+        ))}
         {resultado && !resultado.ok && (
           <p className="t-red" role="alert">
             {resultado.mensagem}

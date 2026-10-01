@@ -6,7 +6,7 @@ import { registrarAuditoria } from '@/lib/auditoria';
 import { EMPRESAS, type Empresa } from '@/lib/empresas';
 import { podeAcessar, podeVerAba } from '@/lib/permissoes';
 import { ABAS } from '@/lib/relatorio/abas';
-import { dispararParaTodos, lerConfigWhatsapp, montarMensagemRelatorio } from '@/lib/whatsapp/envio';
+import { dispararParaTodos, lerConfigWhatsapp, montarMensagensRelatorio } from '@/lib/whatsapp/envio';
 
 type Resultado = { ok: boolean; mensagem: string };
 
@@ -23,11 +23,12 @@ async function validar(empresa: string, escopo: string, data: string) {
   return { valido: true, user: session.user, empresa: empresa as Empresa, aba } as const;
 }
 
-export async function previaWhatsapp(empresa: string, escopo: string, data: string): Promise<{ ok: true; texto: string } | { ok: false; mensagem: string }> {
+export async function previaWhatsapp(empresa: string, escopo: string, data: string): Promise<{ ok: true; mensagens: string[] } | { ok: false; mensagem: string }> {
   try {
     const v = await validar(empresa, escopo, data);
     if (!v.valido) return { ok: false, mensagem: v.erro };
-    return { ok: true, texto: await montarMensagemRelatorio([v.empresa], data, v.aba) };
+    const mensagens = await montarMensagensRelatorio([v.empresa], data, v.aba);
+    return { ok: true, mensagens: [mensagens.relatorio, mensagens.insights] };
   } catch (e) {
     return { ok: false, mensagem: e instanceof Error ? e.message : 'Falha ao montar a prévia.' };
   }
@@ -41,8 +42,8 @@ export async function enviarRelatorioWhatsapp(empresa: string, escopo: string, d
     const cfg = await lerConfigWhatsapp();
     if (!cfg) return { ok: false, mensagem: 'Configure a W-API na aba WhatsApp antes de enviar.' };
 
-    const texto = await montarMensagemRelatorio([v.empresa], data, v.aba);
-    const { enviados, falhas } = await dispararParaTodos(cfg, texto);
+    const mensagens = await montarMensagensRelatorio([v.empresa], data, v.aba);
+    const { enviados, falhas } = await dispararParaTodos(cfg, [mensagens.relatorio, mensagens.insights]);
     await registrarAuditoria(v.user, {
       acao: 'Relatório enviado por WhatsApp',
       rota: '/relatorio',

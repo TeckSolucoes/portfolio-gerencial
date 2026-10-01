@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { juntarBlocos, montarBloco, normalizarDestinatarios } from './formato';
+import { juntarBlocos, juntarInsights, montarBloco, montarBlocoInsights, normalizarDestinatarios } from './formato';
 import type { Relatorio } from '../relatorio/types';
 
 test('destinatários: sem DDI vira Brasil, aceita grupo e @lid, tira repetidos', () => {
@@ -38,9 +38,11 @@ test('bloco: meta oficial substitui a de modelo e recalcula a falta', () => {
   assert.match(texto, /Falta: R\$\s600,00 · 60,0% para a meta/);
   assert.match(texto, /Convênio: INSS \(75,0%\)/);
   assert.match(texto, /Cancelados ontem: —/);
-  assert.match(texto, /💡 \*Insights para atuação\*/);
-  assert.match(texto, /Meta: faltam R\$\s600,00/);
-  assert.match(texto, /Concentração: INSS representa 75,0%/);
+  assert.doesNotMatch(texto, /Insights para atuação/);
+  const insights = montarBlocoInsights({ relatorio, empresa: 'AKRK', aba: 'Geral', metaOficial: { valor: 1000, faltando: [] }, horaParcial: '14:05' });
+  assert.match(insights, /^\*AKRK · Geral\*/);
+  assert.match(insights, /Meta: faltam R\$\s600,00/);
+  assert.match(insights, /Concentração: INSS representa 75,0%/);
 });
 
 test('bloco: na aba do gerente não mostra falta da empresa', () => {
@@ -55,6 +57,10 @@ test('juntar: separa empresas, usa título do grupo e não põe link no fim', ()
   assert.equal(juntarBlocos(['A']), 'A');
   assert.equal(juntarBlocos(['*AKRK*', '*DIG*'], 'AKRK e DIG'), '📊 *Relatório diário — AKRK e DIG*\n\n*AKRK*\n\n————————\n\n*DIG*');
   assert.doesNotMatch(juntarBlocos(['A'], 'AKRK e DIG'), /https?:\/\//);
+});
+
+test('insights: cria uma segunda mensagem identificando as empresas', () => {
+  assert.equal(juntarInsights(['*AKRK · Geral*\n• Alerta A', '*DIG · Geral*\n• Alerta B'], 'AKRK e DIG'), '💡 *Insights para atuação — AKRK e DIG*\n\n*AKRK · Geral*\n• Alerta A\n\n*DIG · Geral*\n• Alerta B');
 });
 
 test('bloco: leva todas as seções, mas da lista só a contagem (sem nome nem CPF)', () => {

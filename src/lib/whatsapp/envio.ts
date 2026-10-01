@@ -3,7 +3,7 @@ import { prisma } from '../prisma';
 import { lerEmpresas, ROTULO_EMPRESA, type Empresa } from '../empresas';
 import { metaDoMes } from '../metas';
 import { carregarRelatorioAoVivo } from '../relatorio/aoVivo';
-import { juntarBlocos, montarBloco, normalizarDestinatarios } from './formato';
+import { juntarBlocos, juntarInsights, montarBloco, montarBlocoInsights, normalizarDestinatarios } from './formato';
 
 export const ID_WORKER_WHATSAPP = 'whatsapp-relatorio';
 const ID_CONFIG = 'padrao';
@@ -15,6 +15,11 @@ export interface ConfigWhatsapp {
   token: string;
   destinatarios: string[];
   empresas: Empresa[];
+}
+
+export interface MensagensWhatsapp {
+  relatorio: string;
+  insights: string;
 }
 
 export async function lerConfigBruta() {
@@ -44,20 +49,25 @@ const hojeSp = () => new Intl.DateTimeFormat('en-CA', { timeZone: FUSO }).format
 const horaSp = () => new Intl.DateTimeFormat('pt-BR', { timeZone: FUSO, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date());
 
 // Mesmo número da tela: relatório ao vivo + meta oficial do mês (quando cadastrada).
-export async function montarMensagemRelatorio(empresas: readonly Empresa[], ref: string, aba: { escopo: string; rotulo: string }): Promise<string> {
+export async function montarMensagensRelatorio(empresas: readonly Empresa[], ref: string, aba: { escopo: string; rotulo: string }): Promise<MensagensWhatsapp> {
   const parcial = ref === hojeSp() ? horaSp() : null;
   const variasEmpresas = empresas.length > 1;
-  const blocos = await Promise.all(
+  const conteudos = await Promise.all(
     empresas.map(async (empresa) => {
       const [relatorio, oficial] = await Promise.all([carregarRelatorioAoVivo(empresa, ref, aba.escopo), metaDoMes([empresa], ref.slice(0, 7))]);
-      return montarBloco({ relatorio, empresa: ROTULO_EMPRESA[empresa], aba: aba.rotulo, metaOficial: oficial, horaParcial: parcial, cabecalhoCurto: variasEmpresas });
+      const entrada = { relatorio, empresa: ROTULO_EMPRESA[empresa], aba: aba.rotulo, metaOficial: oficial, horaParcial: parcial, cabecalhoCurto: variasEmpresas };
+      return { relatorio: montarBloco(entrada), insights: montarBlocoInsights(entrada) };
     }),
   );
   const tituloGrupo = variasEmpresas ? empresas.map((empresa) => ROTULO_EMPRESA[empresa]).join(' e ') : null;
-  return juntarBlocos(blocos, tituloGrupo);
+  const tituloInsights = empresas.map((empresa) => ROTULO_EMPRESA[empresa]).join(' e ');
+  return {
+    relatorio: juntarBlocos(conteudos.map((conteudo) => conteudo.relatorio), tituloGrupo),
+    insights: juntarInsights(conteudos.map((conteudo) => conteudo.insights), tituloInsights),
+  };
 }
 
-export const montarMensagemDeHoje = (empresas: readonly Empresa[]) => montarMensagemRelatorio(empresas, hojeSp(), { escopo: 'Geral', rotulo: 'Geral' });
+export const montarMensagensDeHoje = (empresas: readonly Empresa[]) => montarMensagensRelatorio(empresas, hojeSp(), { escopo: 'Geral', rotulo: 'Geral' });
 
 export async function enviarTexto(cfg: Pick<ConfigWhatsapp, 'instanceId' | 'token'>, phone: string, message: string) {
   const resposta = await fetch(`${URL_WAPI}?instanceId=${encodeURIComponent(cfg.instanceId)}`, {
@@ -73,12 +83,12 @@ export async function enviarTexto(cfg: Pick<ConfigWhatsapp, 'instanceId' | 'toke
 }
 
 // Tenta todos os destinatários; um número com problema não impede os outros de receber.
-export async function dispararParaTodos(cfg: ConfigWhatsapp, mensagem: string): Promise<{ enviados: number; falhas: string[] }> {
+export async function dispararParaTodos(cfg: ConfigWhatsapp, mensagens: string | readonly string[]): Promise<{ enviados: number; falhas: string[] }> {
   const falhas: string[] = [];
   let enviados = 0;
   for (const destino of cfg.destinatarios) {
     try {
-      await enviarTexto(cfg, destino, mensagem);
+      for (const mensagem of typeof mensagens === 'string' ? [mensagens] : mensagens) await enviarTexto(cfg, destino, mensagem);
       enviados += 1;
     } catch (e) {
       falhas.push(`${destino}: ${e instanceof Error ? e.message : 'falha no envio'}`);
@@ -91,8 +101,8 @@ export async function dispararRelatorioAgendado() {
   const cfg = await lerConfigWhatsapp();
   if (!cfg) throw new Error('Configuração do WhatsApp incompleta.');
   const ref = hojeSp();
-  const mensagem = await montarMensagemDeHoje(cfg.empresas);
-  const { enviados, falhas } = await dispararParaTodos(cfg, mensagem);
+  const mensagens = await montarMensagensDeHoje(cfg.empresas);
+  const { enviados, falhas } = await dispararParaTodos(cfg, [mensagens.relatorio, mensagens.insights]);
   if (enviados === 0) throw new Error(`Nenhum envio deu certo. ${falhas.join(' · ')}`);
   const resumo = `Enviado para ${enviados} de ${cfg.destinatarios.length} destinatário(s) · ${cfg.empresas.join(', ')} · ${ref}`;
   return { itens: enviados, mensagem: falhas.length ? `${resumo} · falhou: ${falhas.join(' · ')}` : resumo, dados: { ref, enviados, falhas } };
