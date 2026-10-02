@@ -8,7 +8,7 @@ import './PortalNavigation.css';
 export type NavigationItem = {
   href: string;
   label: string;
-  icon: 'home' | 'report' | 'radar' | 'guide' | 'news' | 'people' | 'info' | 'costs' | 'settings' | 'users' | 'target' | 'workers' | 'whatsapp' | 'noc' | 'legal';
+  icon: 'home' | 'report' | 'radar' | 'guide' | 'news' | 'people' | 'info' | 'costs' | 'settings' | 'users' | 'target' | 'workers' | 'whatsapp' | 'noc' | 'legal' | 'apps';
   exact?: boolean;
   secondary?: boolean;
 };
@@ -30,6 +30,7 @@ function Icon({ name }: { name: NavigationItem['icon'] | 'menu' | 'close' | 'log
     whatsapp: <><path d="M4 20l1.3-3.9A8 8 0 1 1 8 19l-4 1Z" /><path d="M9 10c.5 2 2 3.5 4 4l1.2-1.2 2 .9-.4 1.6c-3.6.3-7.2-3.3-6.9-6.9l1.6-.4.9 2L9 10Z" /></>,
     noc: <><path d="M3 12h4l2-6 4 12 2-6h6" /><path d="M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z" /></>,
     legal: <><path d="M12 3v18M6 6h12M5 6l-3 7h6L5 6Zm14 0-3 7h6l-3-7ZM8 21h8" /><path d="M2 13a3 3 0 0 0 6 0m8 0a3 3 0 0 0 6 0" /></>,
+    apps: <><rect x="3" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="3" width="7" height="7" rx="1.5" /><rect x="3" y="14" width="7" height="7" rx="1.5" /><rect x="14" y="14" width="7" height="7" rx="1.5" /></>,
     menu: <path d="M4 6h16M4 12h16M4 18h16" />,
     close: <path d="m6 6 12 12M6 18 18 6" />,
     logout: <><path d="M9 4H4v16h5m5-12 4 4-4 4m-6-4h13" /></>,

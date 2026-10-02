@@ -1,0 +1,63 @@
+.sistemas{--verde:#4ade80;--ok-soft:#4ade801f;--vermelho:#fb7185}
+.sistemas .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.sistemas .sis-totais{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:12px;color:var(--muted);font-size:12px}
+.sistemas .sis-totais b{color:var(--text);font-size:18px;margin-right:4px}
+
+.sistemas .sis-barra{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:18px 0 8px}
+.sistemas .sis-filtros{display:flex;gap:6px;flex-wrap:wrap}
+.sistemas .sis-pill{display:inline-flex;align-items:center;gap:6px;min-height:34px;padding:0 12px;border:1px solid #29415e;border-radius:999px;background:var(--inner);color:var(--muted);font:inherit;font-size:12px;font-weight:700;cursor:pointer}
+.sistemas .sis-pill b{color:var(--text)}
+.sistemas .sis-pill:hover{border-color:var(--blue);color:var(--text)}
+.sistemas .sis-pill[aria-pressed="true"]{background:var(--blue);border-color:var(--blue);color:#0b1424}
+.sistemas .sis-pill[aria-pressed="true"] b{color:#0b1424}
+.sistemas .sis-select select,.sistemas .sis-busca input{height:36px;border:1px solid #29415e;border-radius:8px;background:var(--inner);color:var(--text);padding:0 11px;font:inherit;font-size:12px}
+.sistemas .sis-busca{flex:1 1 260px}
+.sistemas .sis-busca input{width:100%}
+.sistemas :is(.sis-select select,.sis-busca input,.sis-pill,.sis-link,.sis-editar):focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.sistemas .sis-resultado{margin-bottom:12px;color:var(--muted);font-size:11px}
+.sistemas .sis-vazio{padding:24px;border:1px dashed var(--line);border-radius:10px;color:var(--muted);text-align:center}
+
+.sistemas .sis-grupo{margin-top:16px}
+.sistemas .sis-grupo h2{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:13px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:#c7d6e5}
+.sistemas .sis-grupo h2 span{padding:1px 8px;border-radius:999px;background:var(--inner);border:1px solid var(--line);color:var(--muted);font-size:11px}
+.sistemas .sis-lista{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:10px;overflow:hidden;list-style:none}
+.sistemas .sis-item{--c:var(--blue);position:relative;display:grid;grid-template-columns:minmax(0,1fr) 130px minmax(250px,340px);align-items:center;gap:8px 16px;padding:11px 14px 11px 17px;background:var(--inner)}
+.sistemas .sis-item+.sis-item{border-top:1px solid var(--line)}
+.sistemas .sis-item::before{content:"";position:absolute;inset:0 auto 0 0;width:3px;background:var(--c)}
+.sistemas .sis-item.c-externo{--c:var(--purple)}
+.sistemas .sis-item.s-descontinuado{opacity:.6}
+.sistemas .sis-id{min-width:0}
+.sistemas .sis-id h3{font-size:14px;font-weight:700}
+.sistemas .sis-id p{margin-top:2px;color:var(--muted);font-size:11.5px}
+.sistemas .sis-id .sis-desc{color:#c7d6e5}
+.sistemas .sis-tags{display:flex;gap:5px;flex-wrap:wrap}
+.sistemas .sis-tag{padding:2px 8px;border-radius:999px;border:1px solid var(--c);color:var(--c);font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap}
+.sistemas .sis-tag.t-sit{--c:var(--orange)}
+.sistemas .sis-acoes{display:flex;align-items:center;justify-content:flex-end;gap:8px}
+.sistemas .sis-link{display:inline-flex;align-items:baseline;gap:6px;max-width:100%;padding:6px 11px;border-radius:8px;background:#38bdf81a;border:1px solid #38bdf866;color:var(--blue);font-size:12px;font-weight:700;text-decoration:none;white-space:nowrap}
+.sistemas .sis-link small{max-width:180px;overflow:hidden;text-overflow:ellipsis;color:var(--muted);font-weight:500}
+.sistemas .sis-link:hover{background:#38bdf833}
+.sistemas .sis-semlink{color:var(--muted);font-size:11px}
+.sistemas .sis-editar{padding:6px 10px;border:1px solid #29415e;border-radius:8px;background:none;color:var(--muted);font:inherit;font-size:12px;cursor:pointer}
+.sistemas .sis-editar:hover{color:var(--text);border-color:var(--blue)}
+
+.sistemas .sis-modal{width:min(560px,calc(100vw - 32px));padding:0;border:1px solid var(--line);border-radius:14px;background:var(--card);color:var(--text)}
+.sistemas .sis-modal::backdrop{background:rgba(3,8,18,.72)}
+.sistemas .sis-form{display:grid;grid-template-columns:1fr 1fr;gap:12px 14px;padding:18px}
+.sistemas .sis-form .span-2{grid-column:1 / -1}
+.sistemas .sis-form header{display:flex;justify-content:space-between;align-items:center}
+.sistemas .sis-form h2{font-size:17px}
+.sistemas .sis-fechar{width:32px;height:32px;border:0;border-radius:8px;background:none;color:var(--muted);font-size:22px;cursor:pointer}
+.sistemas .sis-form label{display:flex;flex-direction:column;gap:5px;color:var(--muted);font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+.sistemas .sis-form :is(input,select,textarea){width:100%;min-height:38px;padding:8px 11px;border:1px solid #29415e;border-radius:8px;background:var(--inner);color:var(--text);font:inherit;font-size:13px;letter-spacing:0;text-transform:none}
+.sistemas .sis-form :is(input,select,textarea):focus-visible{outline:2px solid var(--blue);outline-offset:1px}
+.sistemas .sis-meta{color:var(--muted);font-size:11px}
+.sistemas .sis-erro{color:var(--vermelho);font-size:12px}
+.sistemas .sis-form footer{display:flex;justify-content:flex-end;gap:8px;padding-top:6px}
+.sistemas .sis-remover{margin-right:auto;color:var(--vermelho)}
+
+@media (max-width:760px){
+  .sistemas .sis-item{grid-template-columns:1fr auto}
+  .sistemas .sis-acoes{grid-column:1 / -1;justify-content:flex-start}
+  .sistemas .sis-form{grid-template-columns:1fr}
+}

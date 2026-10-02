@@ -6,6 +6,7 @@ export const FUNCIONALIDADES = [
   { chave: 'transparencia', nome: 'Portal Transparência', rota: '/transparencia' },
   { chave: 'custos', nome: 'Custos', rota: '/custos' },
   { chave: 'juridico', nome: 'Jurídico', rota: '/juridico' },
+  { chave: 'sistemas', nome: 'Sistemas', rota: '/sistemas' },
   { chave: 'metas', nome: 'Metas', rota: '/admin/metas' },
   { chave: 'workers', nome: 'Workers', rota: '/admin/workers' },
   { chave: 'whatsapp', nome: 'WhatsApp', rota: '/admin/whatsapp' },
