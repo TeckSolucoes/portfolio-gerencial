@@ -368,6 +368,26 @@ model WhatsappConfig {
   @@map("whatsapp_config")
 }
 
+// Inventário de sistemas e aplicações da empresa (aba Sistemas). Carga inicial veio do
+// "Catálogo de sistemas" da Intranet (Confluence); a partir daí é mantido em tela.
+model Sistema {
+  id            String   @id @default(uuid())
+  nome          String
+  url           String?
+  classificacao String // interno | externo
+  categoria     String
+  empresa       String?
+  responsavel   String?
+  situacao      String   @default("ativo") // ativo | implantacao | descontinuado
+  descricao     String?
+  atualizadoPor String?  @map("atualizado_por")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@index([classificacao, categoria])
+  @@map("sistemas")
+}
+
 // Mapeamento mensal de servidores (Portal da Transparência) para achar clientes novos.
 // Resumo de cada mês processado do arquivo oficial.
 model PortalMes {
