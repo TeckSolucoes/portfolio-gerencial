@@ -1,0 +1,13 @@
+.carregando{max-width:1600px;margin:0 auto;padding:clamp(16px,2.5vw,26px);display:flex;flex-direction:column;gap:12px}
+.carregando .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.carregando .ck{background:#112036;border-radius:8px;position:relative;overflow:hidden}
+.carregando .ck::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(240,248,255,.06),transparent);transform:translateX(-100%);animation:ck-brilho 1.4s ease-in-out infinite}
+.carregando .ck-kicker{width:140px;height:11px}
+.carregando .ck-titulo{width:min(380px,70%);height:28px}
+.carregando .ck-linha{width:min(560px,90%);height:13px;margin-bottom:8px}
+.carregando .ck-grade{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.carregando .ck-bloco{height:84px;border-radius:10px}
+.carregando .ck-painel{height:320px;border-radius:12px}
+@keyframes ck-brilho{to{transform:translateX(100%)}}
+@media (max-width:640px){.carregando .ck-grade{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){.carregando .ck::after{animation:none}}
