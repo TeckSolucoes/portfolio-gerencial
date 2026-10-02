@@ -23,10 +23,10 @@ export async function Header({ sidebar = false }: { sidebar?: boolean }) {
   if (sidebar && user) {
     const items: NavigationItem[] = [{ href: '/', label: 'Início', icon: 'home', exact: true }];
     if (acesso && temEmpresa && podeAcessar(acesso, 'relatorio')) items.push({ href: '/relatorio', label: 'Relatório Gerencial', icon: 'report' });
-    if (acesso && temEmpresa && podeAcessar(acesso, 'relatorio_supervisao')) items.push({ href: '/relatorio-supervisao', label: 'Relatório Supervisão', icon: 'supervision' });
-    if (acesso && temEmpresa && podeAcessar(acesso, 'monitoramento')) items.push({ href: '/monitoramento', label: 'Monitoramento', icon: 'radar' });
+    if (acesso && temEmpresa && podeAcessar(acesso, 'monitoramento')) items.push({ href: '/monitoramento', label: 'Em Atenção', icon: 'radar' });
+    if (acesso && podeAcessar(acesso, 'roteiros')) items.push({ href: '/roteiros', label: 'Roteiros', icon: 'guide' });
     if (acesso && podeAcessar(acesso, 'diario_oficial')) items.push({ href: '/diario-oficial', label: 'Diário Oficial', icon: 'news' });
-    if (acesso && podeAcessar(acesso, 'transparencia')) items.push({ href: '/transparencia', label: 'Transparência', icon: 'people' });
+    if (acesso && podeAcessar(acesso, 'transparencia')) items.push({ href: '/transparencia', label: 'Portal Transparência', icon: 'people' });
     if (acesso && podeAcessar(acesso, 'custos')) items.push({ href: '/custos', label: 'Custos', icon: 'costs' });
     if (acesso && podeAcessar(acesso, 'juridico')) items.push({ href: '/juridico', label: 'Jurídico', icon: 'legal' });
     if (user.role === 'superadmin') items.push({ href: '/admin/settings/users', label: 'Usuários', icon: 'users' });
@@ -62,14 +62,9 @@ export async function Header({ sidebar = false }: { sidebar?: boolean }) {
             Relatório Gerencial
           </Link>
         )}
-        {acesso && temEmpresa && podeAcessar(acesso, 'relatorio_supervisao') && (
-          <Link href="/relatorio-supervisao" className="admin-link">
-            Relatório Supervisão
-          </Link>
-        )}
         {acesso && temEmpresa && podeAcessar(acesso, 'monitoramento') && (
           <Link href="/monitoramento" className="admin-link">
-            Monitoramento
+            Em Atenção
           </Link>
         )}
         {acesso && podeAcessar(acesso, 'diario_oficial') && (
@@ -79,7 +74,7 @@ export async function Header({ sidebar = false }: { sidebar?: boolean }) {
         )}
         {acesso && podeAcessar(acesso, 'transparencia') && (
           <Link href="/transparencia" className="admin-link">
-            Transparência
+            Portal Transparência
           </Link>
         )}
         {user && (user.role === 'superadmin' || (acesso && (podeAcessar(acesso, 'metas') || podeAcessar(acesso, 'workers') || podeAcessar(acesso, 'whatsapp')))) && (

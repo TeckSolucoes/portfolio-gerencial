@@ -320,7 +320,7 @@ export function UserFormDrawer({
               hint={
                 ehSuper
                   ? 'Não se aplica a superadmin.'
-                  : 'Em branco, vê a empresa inteira; preenchido, só a turma desse gerente (sem a visão Geral e sem Monitoramento).'
+                  : 'Em branco, vê a empresa inteira; preenchido, só a turma desse gerente (sem a visão Geral e sem Em Atenção).'
               }
             />
           </div>

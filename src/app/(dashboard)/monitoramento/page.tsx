@@ -20,7 +20,7 @@ export default async function MonitoramentoPage() {
     dados = await carregarMonitoramentoAoVivo(acesso.empresas, acesso.perfil === 'superadmin' ? null : acesso.escopoGerente);
   } catch (erro) {
     console.error('Falha ao carregar monitoramento ao vivo:', erro);
-    return <Aviso titulo="Monitoramento indisponível." texto="Não foi possível consultar o Front V2 agora. Tente novamente em alguns minutos." />;
+    return <Aviso titulo="Em Atenção indisponível." texto="Não foi possível consultar o Front V2 agora. Tente novamente em alguns minutos." />;
   }
 
   const atualizado = new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo', dateStyle: 'short', timeStyle: 'short' }).format(new Date(dados.atualizadoEm));
@@ -28,7 +28,7 @@ export default async function MonitoramentoPage() {
   return (
     <div className="monit">
       <header className="cab">
-        <div><div className="kicker">Monitoramento operacional</div><h1>Quem precisa de atenção</h1><p className="sub">Responsáveis, objeções e propostas paradas nos últimos 30 dias.</p></div>
+        <div><div className="kicker">Em Atenção</div><h1>Quem precisa de atenção</h1><p className="sub">Responsáveis, objeções e propostas paradas nos últimos 30 dias.</p></div>
         <div className="atualizado" aria-label={`Dados atualizados em ${atualizado}`}><i aria-hidden /> Atualizado em {atualizado}</div>
       </header>
 

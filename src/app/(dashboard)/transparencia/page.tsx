@@ -48,7 +48,7 @@ export default async function TransparenciaPage({ searchParams }: { searchParams
     <div className="transp">
       <header className="cab">
         <div>
-          <div className="kicker">Transparência · Clientes novos</div>
+          <div className="kicker">Portal Transparência</div>
           <h1>Servidores federais que ainda não são clientes</h1>
           <p className="sub">
             Todo mês o painel compara o cadastro oficial de servidores do Portal da Transparência com o mês anterior, tira quem já é cliente e gera a
