@@ -117,7 +117,9 @@ export function montarRelatorio(propostas: Proposta[], ref: string, escopo: Esco
   const escopoTodas = todas.filter((p) => doEscopo(p.gerente));
   const canceladas = escopoTodas.filter((p) => p.cancelada);
   const vendasMes = escopoTodas.filter(doMes);
-  const pagosMes = vendasMes.filter((p) => p.integrada);
+  // Pago = Integrado. O mês do ranking segue o evento de integração, não a criação da proposta.
+  // O fallback mantém compatibilidade com fontes antigas e dados sintéticos sem a nova data.
+  const pagosMes = escopoTodas.filter((p) => p.integrada && (p.dataIntegracao || p.data).startsWith(mes) && (p.dataIntegracao || p.data) <= ref);
   const ontem = diaAnterior(ref);
   const trazDataCancelamento = todas.some((p) => p.cancelada && p.dataCancelamento);
   const canceladasOntemProps = trazDataCancelamento
