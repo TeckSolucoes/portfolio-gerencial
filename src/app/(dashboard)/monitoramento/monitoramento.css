@@ -22,3 +22,5 @@
 .monit .ger-sinais{display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end}
 .monit .ger-ativo{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:12px;margin-bottom:8px}.monit .ger-ativo button{background:none;border:0;padding:0;color:var(--blue);font:inherit;font-weight:700;cursor:pointer;text-decoration:underline}
 @media (max-width:760px){.monit .ger-linha{grid-template-columns:1fr auto;grid-template-areas:"nome pct" "barra barra" "sinais sinais"}.monit .ger-nome{grid-area:nome}.monit .ger-pct{grid-area:pct;align-items:flex-end}.monit .ger-barra{grid-area:barra}.monit .ger-sinais{grid-area:sinais;justify-content:flex-start}}
+.monit .sk{display:block;background:var(--inner);border-radius:7px;position:relative;overflow:hidden}.monit .sk::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(240,248,255,.06),transparent);transform:translateX(-100%);animation:monit-brilho 1.4s ease-in-out infinite}@keyframes monit-brilho{to{transform:translateX(100%)}}
+@media (prefers-reduced-motion:reduce){.monit .sk::after{animation:none}}

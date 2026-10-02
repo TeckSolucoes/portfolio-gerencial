@@ -1,18 +1,20 @@
-import { BLOCOS, BolsaSkeleton, IndicadoresSkeleton, NoticiasSkeleton } from './secoes';
-import './home.css';
+import './carregando.css';
 
-export default function HomeLoading() {
+// Vale para as rotas do painel que não têm um carregamento próprio. Fica neutro de propósito:
+// um esqueleto com a cara de uma tela específica (antes era o da home) engana sobre o que vem.
+export default function Carregando() {
   return (
-    <div className="home" aria-busy="true">
-      <section className="abertura">
-        <div className="sk" style={{ width: '35%', height: 30 }} />
-        <div className="sk" style={{ width: '65%', height: 13, marginTop: 12 }} />
-      </section>
-      <div className="topo"><BolsaSkeleton /><IndicadoresSkeleton /></div>
-      <h2 className="sec-titulo sec-noticias">Notícias</h2>
-      <div className="blocos">
-        {BLOCOS.map((bloco) => <NoticiasSkeleton key={bloco.id} id={bloco.id} titulo={bloco.titulo} tom={bloco.tom} />)}
+    <div className="carregando" aria-busy="true" role="status">
+      <span className="sr-only">Carregando…</span>
+      <div className="ck ck-kicker" />
+      <div className="ck ck-titulo" />
+      <div className="ck ck-linha" />
+      <div className="ck-grade">
+        <div className="ck ck-bloco" />
+        <div className="ck ck-bloco" />
+        <div className="ck ck-bloco" />
       </div>
+      <div className="ck ck-painel" />
     </div>
   );
 }
