@@ -38,6 +38,14 @@ interface LinhaFuncao extends RowDataPacket {
   status_funcao: string | null;
   esteira_funcao: string | null;
   valor_liberado: string | number | null;
+  data_integracao: string | null;
+}
+
+interface LinhaTotaisGerais extends RowDataPacket {
+  qtd: string | number;
+  valor: string | number | null;
+  cancelados_qtd: string | number;
+  cancelados_valor: string | number | null;
 }
 
 const LIMITE = 50_000;
@@ -63,6 +71,7 @@ const inicioDaJanela = (ref: string) => {
 const TTL_DIA_FECHADO_MS = 60 * 60 * 1000; // dia encerrado não deveria mudar; ainda assim atualiza de hora em hora
 const TTL_HOJE_MS = 3 * 60 * 1000; // dia corrente ainda em formação: reconsulta com mais frequência
 const cachePropostas = criarCache<Proposta[]>();
+const cacheTotaisGerais = criarCache<{ vendas: { qtd: number; valor: number }; cancelados: { qtd: number; valor: number } }>();
 
 const hojeSp = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(new Date());
 
@@ -74,7 +83,7 @@ async function consultarPropostasDaFuncao(numeros: string[]): Promise<LinhaFunca
     const marcadores = lote.map(() => '?').join(', ');
     consultas.push({
       sql: `WITH liberacoes AS (
-              SELECT NumeroProposta, SUM(Valor) AS valor_liberado
+              SELECT NumeroProposta, SUM(Valor) AS valor_liberado, DATE(MIN(created_at)) AS data_integracao
               FROM releases
               WHERE deleted_at IS NULL AND NumeroProposta IN (${marcadores})
               GROUP BY NumeroProposta
@@ -83,7 +92,8 @@ async function consultarPropostasDaFuncao(numeros: string[]): Promise<LinhaFunca
               p.SituacaoPropostaEsteira AS status_funcao_raw,
               f.SituacaoEsteira AS status_funcao,
               COALESCE(NULLIF(f.last_activity_description, ''), NULLIF(f.Descricao, ''), f.SituacaoEsteira) AS esteira_funcao,
-              COALESCE(l.valor_liberado, 0) AS valor_liberado
+              COALESCE(l.valor_liberado, 0) AS valor_liberado,
+              COALESCE(l.data_integracao, CASE WHEN p.SituacaoPropostaEsteira = 'INT' THEN DATE(p.updated_at) END) AS data_integracao
             FROM proposals p
             LEFT JOIN function_mat_information f
               ON f.NumeroProposta = p.NumeroProposta AND f.deleted_at IS NULL
@@ -155,6 +165,7 @@ async function buscarPropostasAoVivo(empresa: Empresa, ref: string, inicio = ini
       produto,
       modalidade: String(linha.modalidade ?? ''),
       data: linha.data,
+      dataIntegracao: atual?.data_integracao ? String(atual.data_integracao).slice(0, 10) : undefined,
       hora: linha.hora,
       valor: numeroPtBr(linha.valor),
       gerente: String(linha.gerente ?? '(não informado)'),
@@ -178,7 +189,36 @@ async function buscarPropostasAoVivo(empresa: Empresa, ref: string, inicio = ini
   return propostas;
 }
 
-const idSnapshot = (empresa: Empresa) => `relatorio-propostas-${empresa.toLowerCase()}`;
+const idSnapshot = (empresa: Empresa) => `relatorio-propostas-v2-${empresa.toLowerCase()}`;
+
+async function consultarTotaisGerais(empresa: Empresa, escopo: string) {
+  const prefixoEquipe = empresa === 'AKRK' ? 'AKRK - %' : empresa === 'DIG' ? 'DIG - %' : '__sem_acesso__';
+  const gerente = escopo === 'Geral' ? null : `${escopo.trim().split(/\s+/)[0]}%`;
+  const linhas = await consultarFrontV2<LinhaTotaisGerais[]>(
+    `SELECT COUNT(*) AS qtd,
+       COALESCE(SUM(base.valor), 0) AS valor,
+       COALESCE(SUM(base.cancelada), 0) AS cancelados_qtd,
+       COALESCE(SUM(CASE WHEN base.cancelada = 1 THEN base.valor ELSE 0 END), 0) AS cancelados_valor
+     FROM (
+       SELECT ap.id,
+         MAX(COALESCE(ap.valorTotalContratado, 0) / 100) AS valor,
+         MAX(CASE WHEN UPPER(COALESCE(ap.status, '')) LIKE '%CANCEL%'
+                    OR UPPER(COALESCE(ap.fStatus, '')) LIKE '%CANCEL%'
+                  THEN 1 ELSE 0 END) AS cancelada
+       FROM \`db-atendimento\`.v_tab_atendimento t
+       JOIN \`db-atendimento\`.atendimento_propostas ap ON ap.id = t.id_front
+       WHERE t.Equipe LIKE ? AND ap.deleted_at IS NULL
+         AND (? IS NULL OR t.Gerente LIKE ?)
+       GROUP BY ap.id
+     ) base`,
+    [prefixoEquipe, gerente, gerente],
+  );
+  const linha = linhas[0];
+  return {
+    vendas: { qtd: Number(linha?.qtd ?? 0), valor: numeroPtBr(linha?.valor) },
+    cancelados: { qtd: Number(linha?.cancelados_qtd ?? 0), valor: numeroPtBr(linha?.cancelados_valor) },
+  };
+}
 
 async function buscarPropostasIncrementais(empresa: Empresa, ref: string): Promise<Proposta[]> {
   // Para datas históricas, mantém a leitura fechada da janela solicitada. O snapshot
@@ -205,6 +245,12 @@ async function buscarPropostasIncrementais(empresa: Empresa, ref: string): Promi
 export async function carregarRelatorioAoVivo(empresa: Empresa, ref: string, escopo: string): Promise<Relatorio> {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(ref)) throw new Error('Data inválida.');
   const ttl = ref === hojeSp() ? TTL_HOJE_MS : TTL_DIA_FECHADO_MS;
-  const propostas = await cachePropostas.obter(`${empresa}:${ref}`, ttl, () => buscarPropostasIncrementais(empresa, ref));
-  return montarRelatorio(propostas, ref, escopo === 'Geral' ? null : escopoGerente(escopo));
+  const [propostas, totaisGerais] = await Promise.all([
+    cachePropostas.obter(`${empresa}:${ref}`, ttl, () => buscarPropostasIncrementais(empresa, ref)),
+    cacheTotaisGerais.obter(`${empresa}:${escopo}`, TTL_DIA_FECHADO_MS, () => consultarTotaisGerais(empresa, escopo)),
+  ]);
+  const relatorio = montarRelatorio(propostas, ref, escopo === 'Geral' ? null : escopoGerente(escopo));
+  relatorio.kpis.vendasGeral = totaisGerais.vendas;
+  relatorio.kpis.canceladosGeral = totaisGerais.cancelados;
+  return relatorio;
 }

@@ -14,6 +14,7 @@ export interface Proposta {
   produto: Produto;
   modalidade: string;
   data: string; // YYYY-MM-DD, data de referência da inserção
+  dataIntegracao?: string; // YYYY-MM-DD, quando a proposta passou a Integrada/Paga
   hora?: string; // HH:MM:SS quando a fonte traz; desempata propostas do mesmo dia
   valor: number;
   gerente: string;

@@ -147,6 +147,19 @@ test('taxa de morte: em branco quando ninguém fechou, senão morreu/(pagou+morr
   assert.equal(r.canalMes.Novo.mortesFront, 2);
 });
 
+test('pagos e ranking seguem a data de integração, não a criação da proposta', () => {
+  const r = montarRelatorio(
+    [
+      p({ cpf: '1', data: '2026-09-12', dataIntegracao: '2026-10-01', integrada: true, valor: 300, convenio: 'Convênio Outubro' }),
+      p({ cpf: '2', data: '2026-10-01', dataIntegracao: '2026-09-30', integrada: true, valor: 900, convenio: 'Convênio Setembro' }),
+    ],
+    '2026-10-02',
+  );
+  assert.deepEqual(r.kpis.pagosMes, { qtd: 1, valor: 300 });
+  assert.equal(r.rankingPagos.convenio?.nome, 'Convênio Outubro');
+  assert.equal(r.rankingPagos.convenio?.pct, 1);
+});
+
 test('venda do dia: nova x reinserida, e Front x CCNET com etapas', () => {
   const r = montarRelatorio(
     [
