@@ -8,7 +8,7 @@ import './PortalNavigation.css';
 export type NavigationItem = {
   href: string;
   label: string;
-  icon: 'home' | 'report' | 'supervision' | 'radar' | 'news' | 'people' | 'info' | 'costs' | 'settings' | 'users' | 'target' | 'workers' | 'whatsapp' | 'noc' | 'legal';
+  icon: 'home' | 'report' | 'radar' | 'guide' | 'news' | 'people' | 'info' | 'costs' | 'settings' | 'users' | 'target' | 'workers' | 'whatsapp' | 'noc' | 'legal';
   exact?: boolean;
   secondary?: boolean;
 };
@@ -17,8 +17,8 @@ function Icon({ name }: { name: NavigationItem['icon'] | 'menu' | 'close' | 'log
   const paths = {
     home: <><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z" /></>,
     report: <><path d="M4 3v17h17M8 16v-4m5 4V8m5 8V5" /></>,
-    supervision: <><path d="M3 20V10m6 10V4m6 16v-7m6 7V7" /><path d="M2 20h20" /></>,
     radar: <><circle cx="12" cy="12" r="9" /><path d="M16 8a6 6 0 1 0 2 5M12 12l7-7" /><circle cx="12" cy="12" r="1" /></>,
+    guide: <><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H11a3 3 0 0 1 3 3v15a3 3 0 0 0-3-3H6.5A2.5 2.5 0 0 0 4 20.5Z" /><path d="M20 5.5A2.5 2.5 0 0 0 17.5 3H14v18a3 3 0 0 1 3-3h.5a2.5 2.5 0 0 1 2.5 2.5Z" /></>,
     news: <><rect x="4" y="3" width="16" height="18" rx="2" /><path d="M8 7h8M8 11h8M8 15h3m3 0h2M8 18h3m3 0h2" /></>,
     people: <><circle cx="9" cy="8" r="3" /><path d="M3 21v-3a6 6 0 0 1 12 0v3m2-16a3 3 0 0 1 0 6m2 10v-3a6 6 0 0 0-2-4" /></>,
     info: <><path d="M12 7v14" /><path d="M3 18a1 1 0 0 1-1-1V5a2 2 0 0 1 2-2h5a3 3 0 0 1 3 3v15a3 3 0 0 0-3-3Z" /><path d="M21 18a1 1 0 0 0 1-1V5a2 2 0 0 0-2-2h-5a3 3 0 0 0-3 3v15a3 3 0 0 1 3-3Z" /></>,

@@ -240,6 +240,21 @@ model PermissaoUsuario {
   @@map("permissoes_usuario")
 }
 
+model RoteiroConvenio {
+  id            String   @id @default(uuid())
+  nome          String   @unique
+  descricao     String?
+  regrasJson    String   @default("[]") @map("regras_json")
+  observacoes   String?
+  ativo         Boolean  @default(true)
+  criadoPor     String?  @map("criado_por")
+  atualizadoPor String?  @map("atualizado_por")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@map("roteiros_convenios")
+}
+
 model Custo {
   id                  String              @id @default(uuid())
   nome                String

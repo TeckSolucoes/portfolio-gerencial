@@ -23,7 +23,7 @@ test('permissão do usuário prevalece sobre perfil e ausência nega', () => {
   assert.equal(regras.custos, false);
   assert.equal(regras.noc, false);
   assert.equal(regras.juridico, false);
-  assert.equal(regras.relatorio_supervisao, false);
+  assert.equal(regras.roteiros, false);
 });
 
 const usuario = (over: Partial<Parameters<typeof montarAcesso>[0]> = {}) =>
