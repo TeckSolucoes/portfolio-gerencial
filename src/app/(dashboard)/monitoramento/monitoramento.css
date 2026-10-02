@@ -11,3 +11,14 @@
 @media(max-width:560px){.monit{border-radius:0;padding:12px}.monit .fila{padding:11px}.monit .kpis{grid-template-columns:1fr 1fr}.monit .kpi{padding:8px 9px 8px 13px}.monit .kpi-val{font-size:21px}.monit .kpi-meta{display:none}.monit .responsavel{grid-template-columns:1fr;grid-template-areas:"identidade" "numeros" "motivos" "acao" "datas";gap:7px;padding:10px 10px 10px 14px}.monit .resp-motivos,.monit .resp-acao{padding-top:6px;border-top:1px solid var(--line)}.monit .resp-datas{justify-content:space-between}.monit .busca{flex-basis:100%}}
 @media(max-width:390px){.monit .kpis{grid-template-columns:1fr}}
 @media(prefers-reduced-motion:reduce){.monit *{transition:none!important}}
+.monit .gerentes{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:16px}
+.monit .ger-legenda{display:flex;gap:12px;font-size:11px;color:var(--muted)}.monit .ger-legenda li{display:flex;align-items:center;gap:5px}.monit .ger-legenda li::before{content:"";width:10px;height:10px;border-radius:3px;background:var(--c)}.monit .lg-critica{--c:var(--red)}.monit .lg-alta{--c:var(--orange)}.monit .lg-media{--c:var(--blue)}
+.monit .ger-lista{display:flex;flex-direction:column;gap:6px;margin-top:12px}
+.monit .ger-linha{width:100%;display:grid;grid-template-columns:minmax(130px,.7fr) minmax(160px,2fr) 92px minmax(230px,auto);align-items:center;gap:12px;background:var(--inner);border:1px solid var(--line);border-radius:9px;padding:9px 12px;color:var(--text);font:inherit;text-align:left;cursor:pointer}
+.monit .ger-linha:hover{border-color:#29415e}.monit .ger-linha:focus-visible{outline:2px solid var(--blue);outline-offset:1px}.monit .ger-linha[aria-pressed="true"]{border-color:var(--blue);box-shadow:inset 3px 0 0 var(--blue)}
+.monit .ger-nome{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.monit .ger-barra{display:flex;height:12px;border-radius:999px;background:#1a2d45;overflow:hidden}.monit .ger-barra i{display:block;height:100%}.monit .seg-critica{background:var(--red)}.monit .seg-alta{background:var(--orange)}.monit .seg-media{background:var(--blue)}
+.monit .ger-pct{display:flex;flex-direction:column;line-height:1.15}.monit .ger-pct b{font-size:16px}.monit .ger-pct small{font-size:10px;color:var(--muted)}
+.monit .ger-sinais{display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end}
+.monit .ger-ativo{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:12px;margin-bottom:8px}.monit .ger-ativo button{background:none;border:0;padding:0;color:var(--blue);font:inherit;font-weight:700;cursor:pointer;text-decoration:underline}
+@media (max-width:760px){.monit .ger-linha{grid-template-columns:1fr auto;grid-template-areas:"nome pct" "barra barra" "sinais sinais"}.monit .ger-nome{grid-area:nome}.monit .ger-pct{grid-area:pct;align-items:flex-end}.monit .ger-barra{grid-area:barra}.monit .ger-sinais{grid-area:sinais;justify-content:flex-start}}
