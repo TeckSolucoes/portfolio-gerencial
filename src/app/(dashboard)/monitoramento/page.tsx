@@ -39,7 +39,7 @@ export default async function MonitoramentoPage() {
         <div className="kpi t-sem-dono"><span className="kpi-rot">Sem responsável</span><span className="kpi-val">{dados.semResponsavel.toLocaleString('pt-BR')}</span><span className="kpi-meta">Precisam de atribuição.</span></div>
       </div>
 
-      <Painel pessoas={dados.pessoas} />
+      <Painel pessoas={dados.pessoas} gerentes={dados.gerentes} />
 
       <section className="regras" aria-labelledby="h-regras"><h2 id="h-regras">Critérios da fila</h2><ul>
         <li>Crítica: proposta com objeção, recusa ou reprovação registrada.</li>

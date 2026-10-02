@@ -34,6 +34,22 @@ export interface PessoaMonitorada {
   proximaAcao: string;
 }
 
+export interface GerenteMonitorado {
+  chave: string;
+  gerente: string;
+  total: number; // propostas do gerente no período, com ou sem alerta
+  emAlerta: number;
+  pct: number; // emAlerta / total
+  critica: number;
+  alta: number;
+  media: number;
+  objecoes: number;
+  paradas: number;
+  semResponsavel: number;
+}
+
+const SEM_GERENTE = 'Gerente não informado';
+
 const normalizar = (valor: unknown) =>
   String(valor ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toUpperCase();
 
@@ -82,7 +98,7 @@ export function agruparPorResponsavel(propostas: PropostaMonitorada[], hoje: str
     if (!sinais.length) continue;
     const operador = proposta.operador.trim() || 'Sem responsável';
     const equipe = proposta.equipe.trim() || 'Equipe não informada';
-    const gerente = proposta.gerente.trim() || 'Gerente não informado';
+    const gerente = proposta.gerente.trim() || SEM_GERENTE;
     const chave = `${gerente}|${equipe}|${operador}`;
     const atual = grupos.get(chave) ?? {
       pessoa: {
@@ -134,3 +150,38 @@ export function agruparPorResponsavel(propostas: PropostaMonitorada[], hoje: str
 }
 
 const pesoPessoa = (p: PessoaMonitorada) => (p.prioridade === 'CRITICA' ? 3 : p.prioridade === 'ALTA' ? 2 : 1);
+
+// Mesma chave para juntar a fila, os totais da consulta e o filtro da tela.
+export const chaveGerente = (gerente: string) => normalizar(gerente.trim() || SEM_GERENTE);
+
+// Uma linha por gerente com casos por gravidade. Ordena pela proporção da carteira em alerta: em
+// número absoluto, quem tem a equipe maior sempre pareceria pior.
+export function agruparPorGerente(propostas: PropostaMonitorada[], totais: ReadonlyMap<string, number>, hoje: string): GerenteMonitorado[] {
+  const grupos = new Map<string, GerenteMonitorado>();
+  const vistos = new Set<string>();
+  for (const proposta of propostas) {
+    const sinais = sinaisDaProposta(proposta, hoje);
+    if (!sinais.length || vistos.has(proposta.id)) continue;
+    vistos.add(proposta.id);
+    const chave = chaveGerente(proposta.gerente);
+    const g = grupos.get(chave) ?? {
+      chave, gerente: proposta.gerente.trim() || SEM_GERENTE, total: 0, emAlerta: 0, pct: 0,
+      critica: 0, alta: 0, media: 0, objecoes: 0, paradas: 0, semResponsavel: 0,
+    };
+    g.emAlerta += 1;
+    const nivel = prioridade(peso(sinais));
+    if (nivel === 'CRITICA') g.critica += 1;
+    else if (nivel === 'ALTA') g.alta += 1;
+    else g.media += 1;
+    g.objecoes += Number(sinais.includes('OBJECAO'));
+    g.paradas += Number(sinais.includes('SEM_ATUALIZACAO'));
+    g.semResponsavel += Number(sinais.includes('SEM_RESPONSAVEL'));
+    grupos.set(chave, g);
+  }
+  return [...grupos.values()]
+    .map((g) => {
+      const total = Math.max(totais.get(g.chave) ?? 0, g.emAlerta);
+      return { ...g, total, pct: g.emAlerta / total };
+    })
+    .sort((a, b) => b.pct - a.pct || b.critica - a.critica || a.gerente.localeCompare(b.gerente));
+}

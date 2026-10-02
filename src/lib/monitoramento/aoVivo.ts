@@ -4,7 +4,7 @@ import type { RowDataPacket } from 'mysql2/promise';
 import { criarCache } from '@/lib/cache/memoria';
 import { consultarFrontV2 } from '@/lib/bases/conexoes';
 import type { Empresa } from '@/lib/empresas';
-import { agruparPorResponsavel, type PessoaMonitorada, type PropostaMonitorada } from './operacional';
+import { agruparPorGerente, agruparPorResponsavel, chaveGerente, type GerenteMonitorado, type PessoaMonitorada, type PropostaMonitorada } from './operacional';
 
 interface LinhaMonitoramento extends RowDataPacket {
   id: string | number;
@@ -19,11 +19,13 @@ interface LinhaMonitoramento extends RowDataPacket {
   esteira: string | null;
   motivo: string | null;
   codigo_funcao: string | null;
+  total_gerente: string | number | null;
 }
 
 export interface MonitoramentoAoVivo {
   atualizadoEm: string;
   pessoas: PessoaMonitorada[];
+  gerentes: GerenteMonitorado[];
   casos: number;
   objecoes: number;
   semAtualizacao: number;
@@ -38,9 +40,12 @@ async function buscar(empresas: Empresa[], escopoGerente: string | null): Promis
   const prefixos = empresas.map((empresa) => (empresa === 'AKRK' ? 'AKRK - %' : 'DIG - %'));
   const filtrosEmpresa = prefixos.map(() => 't.Equipe LIKE ?').join(' OR ');
   const filtroGerente = escopoGerente ? ' AND UPPER(t.Gerente) LIKE UPPER(?)' : '';
-  const parametros: unknown[] = [...prefixos];
-  if (escopoGerente) parametros.push(`${escopoGerente.trim().split(/\s+/)[0]}%`);
+  const recorte: unknown[] = [...prefixos];
+  if (escopoGerente) recorte.push(`${escopoGerente.trim().split(/\s+/)[0]}%`);
+  const parametros = [...recorte, ...recorte];
 
+  // tot = denominador do bloco de gerentes: todas as propostas do gerente no mesmo recorte, com ou sem
+  // alerta. Vai na mesma consulta porque cada consulta ao Front V2 abre um túnel SSH novo.
   const linhas = await consultarFrontV2<LinhaMonitoramento[]>(
     `SELECT
        ap.id,
@@ -54,10 +59,20 @@ async function buscar(empresas: Empresa[], escopoGerente: string | null): Promis
        ap.fStatus AS status_funcao,
        ap.fEsteira AS esteira,
        ap.motivoCancelamentoFuncao AS motivo,
-       NULLIF(TRIM(ap.codigoPropostaExterna), '') AS codigo_funcao
+       NULLIF(TRIM(ap.codigoPropostaExterna), '') AS codigo_funcao,
+       MAX(tot.total) AS total_gerente
      FROM \`db-atendimento\`.v_tab_atendimento t
      JOIN \`db-atendimento\`.atendimento_propostas ap ON ap.id = t.id_front
      LEFT JOIN \`db-empresa\`.v_convenio_formatado cf ON cf.id_convenio = ap.convenio
+     LEFT JOIN (
+       SELECT t.Gerente AS gerente, COUNT(DISTINCT ap.id) AS total
+       FROM \`db-atendimento\`.v_tab_atendimento t
+       JOIN \`db-atendimento\`.atendimento_propostas ap ON ap.id = t.id_front
+       WHERE ap.created_at >= DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)
+         AND ap.deleted_at IS NULL
+         AND (${filtrosEmpresa})${filtroGerente}
+       GROUP BY t.Gerente
+     ) tot ON tot.gerente <=> t.Gerente
      WHERE ap.created_at >= DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)
        AND ap.deleted_at IS NULL
        AND (${filtrosEmpresa})${filtroGerente}
@@ -89,10 +104,14 @@ async function buscar(empresas: Empresa[], escopoGerente: string | null): Promis
     motivo: String(linha.motivo ?? ''),
     temCodigoFuncao: Boolean(linha.codigo_funcao),
   }));
+  const totais = new Map<string, number>();
+  for (const linha of linhas) totais.set(chaveGerente(String(linha.gerente ?? '')), Number(linha.total_gerente ?? 0));
   const pessoas = agruparPorResponsavel(propostas, hojeSp());
+  const gerentes = agruparPorGerente(propostas, totais, hojeSp());
   return {
     atualizadoEm: new Date().toISOString(),
     pessoas,
+    gerentes,
     casos: pessoas.reduce((total, pessoa) => total + pessoa.casos, 0),
     objecoes: pessoas.reduce((total, pessoa) => total + pessoa.objecoes, 0),
     semAtualizacao: pessoas.reduce((total, pessoa) => total + pessoa.semAtualizacao, 0),
