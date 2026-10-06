@@ -49,12 +49,12 @@ const hojeSp = () => new Intl.DateTimeFormat('en-CA', { timeZone: FUSO }).format
 const horaSp = () => new Intl.DateTimeFormat('pt-BR', { timeZone: FUSO, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date());
 
 // Mesmo número da tela: relatório ao vivo + meta oficial do mês (quando cadastrada).
-export async function montarMensagensRelatorio(empresas: readonly Empresa[], ref: string, aba: { escopo: string; rotulo: string }): Promise<MensagensWhatsapp> {
+export async function montarMensagensRelatorio(empresas: readonly Empresa[], ref: string, aba: { escopo: string; rotulo: string; gerenteComercialId?: string | null }): Promise<MensagensWhatsapp> {
   const parcial = ref === hojeSp() ? horaSp() : null;
   const variasEmpresas = empresas.length > 1;
   const conteudos = await Promise.all(
     empresas.map(async (empresa) => {
-      const [relatorio, oficial] = await Promise.all([carregarRelatorioAoVivo(empresa, ref, aba.escopo), metaDoMes([empresa], ref.slice(0, 7))]);
+      const [relatorio, oficial] = await Promise.all([carregarRelatorioAoVivo(empresa, ref, aba.escopo, aba.gerenteComercialId), metaDoMes([empresa], ref.slice(0, 7))]);
       const entrada = { relatorio, empresa: ROTULO_EMPRESA[empresa], aba: aba.rotulo, metaOficial: oficial, horaParcial: parcial, cabecalhoCurto: variasEmpresas };
       return { relatorio: montarBloco(entrada), insights: montarBlocoInsights(entrada) };
     }),

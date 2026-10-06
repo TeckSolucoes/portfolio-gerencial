@@ -1,6 +1,6 @@
 {
   "projeto": "Portal Teck (Painel Executivo)",
-  "atualizadoEm": "2026-09-29",
+  "atualizadoEm": "2026-10-05",
   "legendaStatus": [
     "pendente",
     "em-andamento",
@@ -1141,6 +1141,30 @@
         }
       ],
       "concluidoEm": "2026-09-28"
+    },
+    {
+      "id": "PRD-17",
+      "titulo": "Confiabilidade dos números e Estrutura Comercial versionada",
+      "ordem": 52,
+      "impacto": "alto",
+      "esforco": "alto",
+      "donoSugerido": "produto + dados + fullstack + QA + segurança",
+      "dependeDe": [],
+      "riscos": [
+        "RSK-1",
+        "RSK-2",
+        "RSK-7"
+      ],
+      "criterioPronto": "O portal possui cadastro versionado empresa-gerente-equipe-vendedor por IDs e vigência, fila de vínculos pendentes, composição auditável dos KPIs, valores contratado/integrado/liberado separados, conciliação Front V2 x Função e os mesmos totais na tela, exportação e WhatsApp.",
+      "notas": "Aprovado pelo usuário em 05/10/2026. Implantação deve ocorrer em modo paralelo antes do corte; nenhuma associação silenciosa pelo primeiro nome.",
+      "status": "em-andamento",
+      "historico": [
+        {
+          "data": "2026-10-05",
+          "acao": "em-andamento",
+          "nota": ""
+        }
+      ]
     }
   ],
   "riscos": [

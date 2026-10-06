@@ -68,6 +68,12 @@
 .relatorio .kpi .lab{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:6px}
 .relatorio .kpi .val{font-size:clamp(15px,1.55vw,22px);font-weight:800;margin-top:10px;letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1.15;color:var(--text)}
 .relatorio .kpi .meta{font-size:12px;color:var(--muted);margin-top:6px;line-height:1.35}
+.relatorio .kpi .kpi-confianca{font-size:10px;color:#6f8aa5;margin-top:6px;padding-top:5px;border-top:1px solid rgba(140,162,186,.14);line-height:1.3}
+.relatorio .rel-qualidade{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:10px 0 4px;padding:10px;border:1px solid #1a2d45;border-radius:11px;background:var(--inner)}
+.relatorio .rel-qualidade>div{display:flex;align-items:baseline;gap:7px;min-width:0}
+.relatorio .rel-qualidade b{font-size:15px;color:var(--text);font-variant-numeric:tabular-nums}
+.relatorio .rel-qualidade span,.relatorio .rel-qualidade p{font-size:10px;color:var(--muted)}
+.relatorio .rel-qualidade p{grid-column:1/-1;padding-top:6px;border-top:1px solid #1a2d45}
 .relatorio .kpi .tag{display:inline-block;font-size:9px;font-weight:800;letter-spacing:.06em;padding:2px 7px;border-radius:999px;background:rgba(56,189,248,.18);color:var(--blue);margin-left:6px;vertical-align:middle}
 .relatorio .bg-total{--accent:var(--blue);background:linear-gradient(180deg,#123048 0%,var(--card) 70%)}
 .relatorio .bg-novas,
@@ -307,6 +313,10 @@
   .relatorio .churn-kpis{grid-template-columns:1fr}
   .relatorio .exc-sum{grid-template-columns:1fr}
   .relatorio .churn-bar .nm{width:84px}
+  .relatorio .rel-qualidade{grid-template-columns:1fr}
+  .relatorio .rel-qualidade p{grid-column:auto}
+  .relatorio .kpi .kpi-confianca{font-size:11.5px;line-height:1.45}
+  .relatorio .rel-qualidade span,.relatorio .rel-qualidade p{font-size:11.5px;line-height:1.45}
 }
 @media print{
   .app:has(.relatorio)>header{display:none}

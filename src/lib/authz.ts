@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 import { carregarAcesso } from './acesso';
 import { podeAcessar } from './permissoes';
 import type { Funcionalidade } from './funcionalidades';
+import { prisma } from './prisma';
 
 // Checagem de autorização pra Server Actions (plan §4 + guia de auth do
 // Next: "treat every action as an untrusted entry point" — o proxy.ts cobre
@@ -24,7 +25,11 @@ export async function requireGerenteForAction(): Promise<Session> {
 
 export async function requireSuperadminForAction(): Promise<Session> {
   const session = await requireSessionForAction();
-  if (session.user.role !== 'superadmin') throw new Error('Ação restrita a superadmin.');
+  const usuario = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { role: true },
+  });
+  if (usuario?.role !== 'superadmin') throw new Error('Ação restrita a superadmin.');
   return session;
 }
 

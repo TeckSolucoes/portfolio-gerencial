@@ -12,17 +12,20 @@ export default async function UsersPage() {
   const session = await auth();
   if (session?.user.role !== 'superadmin') redirect('/admin');
 
-  const [rows, regrasPerfil] = await Promise.all([prisma.user.findMany({
+  const [rows, regrasPerfil, gerentesComerciais] = await Promise.all([prisma.user.findMany({
     orderBy: { email: 'asc' },
     include: {
       permissoes: true,
+      gerenteComercial: { select: { id: true, nome: true, empresa: true } },
       auditorias: {
         where: { latitude: { not: null }, longitude: { not: null } },
         orderBy: { criadoEm: 'desc' },
         take: 1,
       },
     },
-  }), prisma.permissaoPerfil.findMany()]);
+  }), prisma.permissaoPerfil.findMany(), prisma.gerenteComercial.findMany({
+    orderBy: [{ ativo: 'desc' }, { empresa: 'asc' }, { nome: 'asc' }], select: { id: true, nome: true, empresa: true, codigoExterno: true, ativo: true },
+  })]);
   const perfis = Object.fromEntries((['superadmin', 'gerente', 'visualizador'] as const).map((role) => [role,
     Object.fromEntries(FUNCIONALIDADES.map((f) => [f.chave, regrasPerfil.find((r) => r.role === role && r.funcionalidade === f.chave)?.permitido ?? false]))
   ])) as Record<'superadmin' | 'gerente' | 'visualizador', Record<Funcionalidade, boolean>>;
@@ -34,6 +37,9 @@ export default async function UsersPage() {
     role: u.role,
     empresas: lerEmpresas(u.empresas),
     escopoGerente: u.escopoGerente,
+    gerenteComercialId: u.gerenteComercialId,
+    gerenteComercialNome: u.gerenteComercial?.nome ?? null,
+    gerenteComercialEmpresa: u.gerenteComercial?.empresa ?? null,
     ultimaLatitude: u.auditorias[0]?.latitude ?? null,
     ultimaLongitude: u.auditorias[0]?.longitude ?? null,
     ultimoAcessoEm: u.auditorias[0]?.criadoEm.toISOString() ?? null,
@@ -45,11 +51,11 @@ export default async function UsersPage() {
       <div className="kicker">Configurações · Superadmin</div>
       <h1>Usuários e acesso</h1>
       <p className="lede">
-        Quem entra no portal e o que cada pessoa enxerga. O usuário só vê dados das empresas marcadas; a turma do gerente
-        limita ainda mais.
+        Quem entra no portal e o que cada pessoa enxerga. O vínculo com a Estrutura Comercial delimita a responsabilidade
+        sem depender de nomes digitados manualmente.
       </p>
 
-      <UsersManager users={users} currentUserId={session.user.id} permissoesPerfil={perfis} />
+      <UsersManager users={users} currentUserId={session.user.id} permissoesPerfil={perfis} gerentesComerciais={gerentesComerciais} />
 
       <details className="adm-matrix">
         <summary>Matriz de acesso por perfil</summary>

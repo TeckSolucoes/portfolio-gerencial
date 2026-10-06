@@ -202,7 +202,8 @@ model User {
   // Vazio = nenhuma; superadmin ignora e vê todas. Lido do banco a cada request, não do token.
   empresas       String  @default("")
   // Gerente que só pode ver a própria turma no relatório (primeiro nome, ex.: "Luana").
-  escopoGerente  String? @map("escopo_gerente")
+  escopoGerente      String? @map("escopo_gerente")
+  gerenteComercialId String? @map("gerente_comercial_id")
 
   // Rate limit de login (força bruta) — contador zera no sucesso, bloqueia
   // por LOCK_DURATION_MINUTES (src/lib/auth.ts) ao chegar em MAX_ATTEMPTS.
@@ -214,8 +215,152 @@ model User {
 
   auditorias AuditoriaUsuario[]
   permissoes PermissaoUsuario[]
+  gerenteComercial GerenteComercial? @relation(fields: [gerenteComercialId], references: [id], onDelete: SetNull)
 
+  @@index([gerenteComercialId])
   @@map("users")
+}
+
+model GerenteComercial {
+  id              String   @id @default(uuid())
+  empresa         String
+  nome            String
+  nomeNormalizado String   @map("nome_normalizado")
+  codigoExterno   String?  @map("codigo_externo")
+  ativo           Boolean  @default(true)
+  criadoPor       String?  @map("criado_por")
+  atualizadoPor   String?  @map("atualizado_por")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  vinculosEquipe VinculoEquipeGerente[]
+  aliases        AliasHierarquia[]
+  usuarios       User[]
+
+  @@index([empresa, nomeNormalizado])
+  @@unique([empresa, codigoExterno])
+  @@index([empresa, ativo])
+  @@map("gerentes_comerciais")
+}
+
+model EquipeComercial {
+  id              String   @id @default(uuid())
+  empresa         String
+  nome            String
+  nomeNormalizado String   @map("nome_normalizado")
+  codigoExterno   String?  @map("codigo_externo")
+  ativo           Boolean  @default(true)
+  criadoPor       String?  @map("criado_por")
+  atualizadoPor   String?  @map("atualizado_por")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  vinculosGerente  VinculoEquipeGerente[]
+  vinculosVendedor VinculoVendedorEquipe[]
+  aliases          AliasHierarquia[]
+
+  @@index([empresa, nomeNormalizado])
+  @@unique([empresa, codigoExterno])
+  @@index([empresa, ativo])
+  @@map("equipes_comerciais")
+}
+
+model VendedorComercial {
+  id              String   @id @default(uuid())
+  empresa         String
+  nome            String
+  nomeNormalizado String   @map("nome_normalizado")
+  codigoExterno   String?  @map("codigo_externo")
+  ativo           Boolean  @default(true)
+  criadoPor       String?  @map("criado_por")
+  atualizadoPor   String?  @map("atualizado_por")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  vinculosEquipe VinculoVendedorEquipe[]
+  aliases        AliasHierarquia[]
+
+  @@index([empresa, nomeNormalizado])
+  @@unique([empresa, codigoExterno])
+  @@index([empresa, ativo])
+  @@map("vendedores_comerciais")
+}
+
+model VinculoEquipeGerente {
+  id        String    @id @default(uuid())
+  equipeId  String    @map("equipe_id")
+  gerenteId String    @map("gerente_id")
+  inicio    DateTime
+  fim       DateTime?
+  criadoPor String?   @map("criado_por")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  equipe  EquipeComercial  @relation(fields: [equipeId], references: [id], onDelete: Restrict)
+  gerente GerenteComercial @relation(fields: [gerenteId], references: [id], onDelete: Restrict)
+
+  @@index([equipeId, inicio, fim])
+  @@index([gerenteId, inicio, fim])
+  @@map("vinculos_equipe_gerente")
+}
+
+model VinculoVendedorEquipe {
+  id         String    @id @default(uuid())
+  vendedorId String    @map("vendedor_id")
+  equipeId   String    @map("equipe_id")
+  inicio     DateTime
+  fim        DateTime?
+  criadoPor  String?   @map("criado_por")
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  vendedor VendedorComercial @relation(fields: [vendedorId], references: [id], onDelete: Restrict)
+  equipe   EquipeComercial   @relation(fields: [equipeId], references: [id], onDelete: Restrict)
+
+  @@index([vendedorId, inicio, fim])
+  @@index([equipeId, inicio, fim])
+  @@map("vinculos_vendedor_equipe")
+}
+
+model AliasHierarquia {
+  id               String   @id @default(uuid())
+  empresa          String
+  tipo             String
+  origem           String
+  valor            String
+  valorNormalizado String   @map("valor_normalizado")
+  gerenteId        String?  @map("gerente_id")
+  equipeId         String?  @map("equipe_id")
+  vendedorId       String?  @map("vendedor_id")
+  criadoPor        String?  @map("criado_por")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  gerente  GerenteComercial?  @relation(fields: [gerenteId], references: [id], onDelete: Cascade)
+  equipe   EquipeComercial?   @relation(fields: [equipeId], references: [id], onDelete: Cascade)
+  vendedor VendedorComercial? @relation(fields: [vendedorId], references: [id], onDelete: Cascade)
+
+  @@unique([empresa, tipo, origem, valorNormalizado])
+  @@index([gerenteId])
+  @@index([equipeId])
+  @@index([vendedorId])
+  @@map("aliases_hierarquia")
+}
+
+model ItemSemVinculo {
+  id               String    @id @default(uuid())
+  empresa          String
+  tipo             String
+  origem           String
+  valorOriginal    String    @map("valor_original")
+  valorNormalizado String    @map("valor_normalizado")
+  ocorrencias      Int       @default(1)
+  status           String    @default("pendente")
+  primeiroEm       DateTime  @default(now()) @map("primeiro_em")
+  ultimoEm         DateTime  @default(now()) @map("ultimo_em")
+  resolvidoEm      DateTime? @map("resolvido_em")
+  resolvidoPor     String?   @map("resolvido_por")
+
+  @@unique([empresa, tipo, origem, valorNormalizado])
+  @@index([status, ultimoEm])
+  @@map("itens_sem_vinculo")
 }
 
 model PermissaoPerfil {

@@ -44,7 +44,7 @@ export interface EntradaMensagem {
 }
 
 function resolverMeta({ relatorio: r, metaOficial }: EntradaMensagem) {
-  const pagos = r.kpis.pagosMes.valor;
+  const pagos = (r.kpis.integradoContratadoMes ?? r.kpis.pagosMes).valor;
   return metaOficial
     ? {
         valor: metaOficial.valor,
@@ -80,6 +80,8 @@ function gerarInsights(entrada: EntradaMensagem): string[] {
 // Um bloco por empresa, em texto com a formatação do WhatsApp (*negrito*, _itálico_).
 export function montarBloco({ relatorio: r, empresa, aba, metaOficial, horaParcial, cabecalhoCurto = false }: EntradaMensagem): string {
   const k = r.kpis;
+  const integrado = k.integradoContratadoMes ?? k.pagosMes;
+  const liberado = k.valorLiberadoMes;
   const [ano, mes, dia] = r.ref.split('-');
   const doGerente = aba !== 'Geral';
   const meta = resolverMeta({ relatorio: r, empresa, aba, metaOficial, horaParcial, cabecalhoCurto });
@@ -116,11 +118,14 @@ export function montarBloco({ relatorio: r, empresa, aba, metaOficial, horaParci
     `• Vendas: ${soma(k.vendasMes)}`,
     `• Cancelados: ${soma(k.canceladosMes)} · ${pct(k.canceladosMesPct)}`,
     `• Novas: ${soma(nrMes?.novas)} · Reinseridas: ${soma(nrMes?.reinseridas)}`,
-    `• Histórico da hierarquia: vendas ${soma(k.vendasGeral)} · cancelados ${soma(k.canceladosGeral)}`,
+    `• Histórico contratado: ${soma(k.vendasGeral)} · Front V2 · sem corte de data`,
+    `• Histórico cancelado: ${soma(k.canceladosGeral)} · Front V2 · sem corte de data`,
     '',
     `🎯 *Meta (${rotuloMeta})*`,
     `• Meta: ${brl(meta?.valor)}`,
-    `• Pagos: ${soma(k.pagosMes)} · exceção ${soma(k.pagosExcecaoMes)}`,
+    `• Integrado contratado: ${soma(integrado)} · Front V2 × Função`,
+    `• Valor liberado: ${liberado ? `${brl(liberado.valor)} (${num(liberado.qtd)} de ${num(liberado.totalIntegradas)} integradas${liberado.completo ? '' : ' · parcial'})` : 'indisponível'} · Função/releases`,
+    `• Integrado exceção: ${soma(k.pagosExcecaoMes)}`,
     doGerente ? '• Falta: só no Geral (a meta é da empresa)' : `• Falta: ${brl(meta?.falta)} · ${pct(meta?.faltaPct)} para a meta`,
     '',
     '🏆 *Ranking dos pagos*',
@@ -153,6 +158,13 @@ export function montarBloco({ relatorio: r, empresa, aba, metaOficial, horaParci
     ...etapas(r.etapasFront),
     `• CCNET: ${soma(k.ccnet)}`,
     ...etapas(r.etapasCcnet),
+    ...(r.qualidade ? [
+      '',
+      '🔎 *Cobertura dos dados*',
+      `• Função: ${num(r.qualidade.conciliadasFuncao)} conciliadas · ${num(r.qualidade.semCodigoFuncao)} sem código · ${num(r.qualidade.codigosNaoEncontrados)} códigos não encontrados`,
+      `• Hierarquia: ${num(r.qualidade.hierarquiaNaoInformada)} sem informação · ${r.qualidade.fonte}`,
+      `• Integração: ${num(r.qualidade.integradasSemData)} sem data comprovada, fora do ranking mensal`,
+    ] : []),
   ].join('\n');
 }
 

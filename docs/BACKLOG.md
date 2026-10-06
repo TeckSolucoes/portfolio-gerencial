@@ -1,6 +1,6 @@
 # Backlog — Portal Teck (Painel Executivo)
 
-Atualizado em 2026-09-29. **Gerado por `node scripts/backlog.mjs render` a partir de `docs/backlog/backlog.json`: não edite este arquivo à mão.**
+Atualizado em 2026-10-05. **Gerado por `node scripts/backlog.mjs render` a partir de `docs/backlog/backlog.json`: não edite este arquivo à mão.**
 
 **Ao terminar um item, marque como concluído** (obrigatório, no mesmo PR do trabalho):
 
@@ -12,7 +12,7 @@ Orientações completas: `docs/backlog/COMO-USAR.md`. Contexto do projeto: `docs
 
 ## Resumo
 
-- Pendentes: 28 · Em andamento: 1 · Bloqueados: 8 · Concluídos: 14
+- Pendentes: 28 · Em andamento: 2 · Bloqueados: 8 · Concluídos: 14
 - Próximo item liberado: **INF-2** Snapshot manual do VPS/volume antes de qualquer limpeza
 
 ## Itens em aberto (do mais importante para o menos importante)
@@ -235,6 +235,12 @@ Orientações completas: `docs/backlog/COMO-USAR.md`. Contexto do projeto: `docs
   - impacto médio · esforço P · dono: IA
   - Pronto quando: Três especialistas reavaliam prioridade, riscos e esforço; backlog.json atualizado e revisado com o usuário.
   - Notas: O texto-base está em docs/backlog/insumos.md. Padrão do usuário: sempre agentes especialistas em paralelo.
+
+- [~] **PRD-17** Confiabilidade dos números e Estrutura Comercial versionada
+  - impacto alto · esforço alto · dono: produto + dados + fullstack + QA + segurança
+  - Pronto quando: O portal possui cadastro versionado empresa-gerente-equipe-vendedor por IDs e vigência, fila de vínculos pendentes, composição auditável dos KPIs, valores contratado/integrado/liberado separados, conciliação Front V2 x Função e os mesmos totais na tela, exportação e WhatsApp.
+  - Riscos: RSK-1, RSK-2, RSK-7
+  - Notas: Aprovado pelo usuário em 05/10/2026. Implantação deve ocorrer em modo paralelo antes do corte; nenhuma associação silenciosa pelo primeiro nome.
 
 ## Concluídos
 

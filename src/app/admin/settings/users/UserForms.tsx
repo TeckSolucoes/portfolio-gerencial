@@ -1,7 +1,7 @@
 'use client';
 
 import { useId, useState, useTransition } from 'react';
-import { createUser, updateUser } from './actions';
+import { createUser, resetUserPassword, updateUser } from './actions';
 import { PasswordField } from '@/components/PasswordField';
 import { EMPRESAS } from '@/lib/empresas';
 import type { Empresa } from '@/lib/empresas';
@@ -17,11 +17,16 @@ export type UserDTO = {
   role: Perfil;
   empresas: Empresa[];
   escopoGerente: string | null;
+  gerenteComercialId: string | null;
+  gerenteComercialNome: string | null;
+  gerenteComercialEmpresa: string | null;
   ultimaLatitude: number | null;
   ultimaLongitude: number | null;
   ultimoAcessoEm: string | null;
   permissoes: Partial<Record<Funcionalidade, boolean>>;
 };
+
+export type GerenteComercialOption = { id: string; nome: string; empresa: string; codigoExterno: string | null; ativo: boolean };
 
 export const PERFIS: { value: Perfil; label: string; descricao: string }[] = [
   {
@@ -53,7 +58,7 @@ function erroDoServidor(msg: string): Erros {
   if (/^Preencha e-mail/i.test(msg)) return { form: msg };
   if (/e-mail/i.test(msg)) return { email: msg };
   if (/senha/i.test(msg)) return { password: msg };
-  if (/nome do gerente/i.test(msg)) return { escopo: msg };
+  if (/gerente comercial|empresa do gerente/i.test(msg)) return { escopo: msg };
   if (/superadmin/i.test(msg)) return { role: msg };
   if (/empresa/i.test(msg)) return { empresas: msg };
   if (/nome de exibi/i.test(msg)) return { name: msg };
@@ -83,6 +88,7 @@ export function UserFormDrawer({
   onDone,
   pedirConfirmacao,
   permissoesPerfil,
+  gerentesComerciais,
 }: {
   user: UserDTO | null;
   ultimoSuperadmin: boolean;
@@ -90,6 +96,7 @@ export function UserFormDrawer({
   onDone: (mensagem: string) => void;
   pedirConfirmacao: (c: { titulo: string; texto: string; confirmar: string; executar: () => Promise<void> }) => void;
   permissoesPerfil: Record<Perfil, Record<Funcionalidade, boolean>>;
+  gerentesComerciais: GerenteComercialOption[];
 }) {
   const base = useId();
   const criando = user === null;
@@ -112,7 +119,11 @@ export function UserFormDrawer({
       if (!senha) e.password = 'Defina a senha inicial.';
       else if (senha.length < 8) e.password = 'A senha precisa ter pelo menos 8 caracteres.';
     }
-    if (String(fd.get('escopoGerente') ?? '').trim().length > 60) e.escopo = 'Nome do gerente muito longo (máx. 60).';
+    const gerenteComercialId = String(fd.get('gerenteComercialId') ?? '').trim();
+    const gerenteSelecionado = gerentesComerciais.find((gerente) => gerente.id === gerenteComercialId);
+    if (role === 'gerente' && !gerenteComercialId) e.escopo = 'Selecione o gerente comercial deste usuário.';
+    else if (gerenteSelecionado && !gerenteSelecionado.ativo) e.escopo = 'O gerente vinculado está inativo. Selecione um gerente ativo.';
+    else if (gerenteSelecionado && !empresas.includes(gerenteSelecionado.empresa as Empresa)) e.escopo = 'Marque a empresa do gerente selecionado.';
     return e;
   }
 
@@ -304,25 +315,31 @@ export function UserFormDrawer({
           </fieldset>
 
           <div className="adm-field">
-            <label className="adm-label" htmlFor={idDe('escopo')}>Restringir à turma do gerente (opcional)</label>
-            <input
+            <label className="adm-label" htmlFor={idDe('escopo')}>Gerente na Estrutura Comercial {role === 'gerente' ? '(obrigatório)' : '(opcional)'}</label>
+            <select
               {...ctl(idDe('escopo'), erros.escopo)}
-              name="escopoGerente"
-              type="text"
-              defaultValue={user?.escopoGerente ?? ''}
-              placeholder="Primeiro nome, ex.: Luana"
+              name="gerenteComercialId"
+              defaultValue={user?.gerenteComercialId ?? ''}
               disabled={ehSuper}
-              autoComplete="off"
-            />
+            >
+              <option value="">{role === 'gerente' ? 'Selecione o gerente' : 'Sem restrição por gerente'}</option>
+              {gerentesComerciais
+                .filter((gerente) => (gerente.ativo && empresas.includes(gerente.empresa as Empresa)) || gerente.id === user?.gerenteComercialId)
+                .map((gerente) => <option key={gerente.id} value={gerente.id}>{gerente.empresa} · {gerente.nome}{gerente.codigoExterno ? ` · ${gerente.codigoExterno}` : ''}{gerente.ativo ? '' : ' · INATIVO — substitua'}</option>)}
+            </select>
             <Help
               id={idDe('escopo')}
               error={erros.escopo}
               hint={
                 ehSuper
                   ? 'Não se aplica a superadmin.'
-                  : 'Em branco, vê a empresa inteira; preenchido, só a turma desse gerente (sem a visão Geral e sem Em Atenção).'
+                  : role === 'gerente'
+                    ? 'Define por ID qual estrutura este usuário gerencia.'
+                    : 'Quando selecionado, restringe o usuário à estrutura oficial desse gerente.'
               }
             />
+            {user?.gerenteComercialId && gerentesComerciais.find((gerente) => gerente.id === user.gerenteComercialId)?.ativo === false && !ehSuper && <p className="adm-warn" role="alert">O gerente vinculado está inativo. Selecione um gerente ativo antes de salvar.</p>}
+            {!user?.gerenteComercialId && user?.escopoGerente && !ehSuper && <p className="adm-warn" role="note">Vínculo antigo: “{user.escopoGerente}”. Selecione o gerente oficial para concluir a migração.</p>}
           </div>
         </div>
 
@@ -366,17 +383,10 @@ export function ResetPasswordDialog({
       return;
     }
     setErro(undefined);
-    // Reaproveita updateUser (mesma validação e checagem de superadmin) reenviando os dados atuais.
     const fd = new FormData();
-    fd.set('displayName', user.displayName);
-    fd.set('displayTitle', user.displayTitle ?? '');
-    fd.set('role', user.role);
-    user.empresas.forEach((e) => fd.append('empresas', e));
-    fd.set('escopoGerente', user.escopoGerente ?? '');
-    for (const [chave, permitido] of Object.entries(user.permissoes)) fd.set(`permissao_${chave}`, permitido ? 'liberar' : 'bloquear');
     fd.set('newPassword', senha);
     startTransition(async () => {
-      const r = await updateUser(user.id, undefined, fd);
+      const r = await resetUserPassword(user.id, undefined, fd);
       if (r?.error) setErro(r.error);
       else onDone(`Senha de ${user.displayName} redefinida.`);
     });

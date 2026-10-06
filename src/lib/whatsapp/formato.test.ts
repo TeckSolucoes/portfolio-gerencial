@@ -22,6 +22,7 @@ const relatorio = {
     total: soma(10, 1000), novas: soma(6, 600), reinseridas: soma(4, 400), front: soma(3, 300), ccnet: soma(7, 700),
     canceladosOntem: null, taxaMes: null, excecaoDia: soma(1, 100), vendasMes: soma(10, 1000), vendasGeral: soma(50, 5000),
     canceladosMes: soma(1, 50), canceladosMesPct: 0.1, canceladosGeral: soma(5, 500), pagosMes: soma(4, 400),
+    integradoContratadoMes: soma(4, 400), valorLiberadoMes: { qtd: 3, valor: 350, totalIntegradas: 4, completo: false },
     pagosExcecaoMes: soma(1, 100), excecaoMes: soma(2, 200),
   },
   meta: { valor: 2000, modelo: true, pagos: soma(4, 400), pagosExcecao: soma(1, 100), pagosExcecaoPct: 0.25, falta: 1600, faltaPct: 0.8 },
@@ -38,6 +39,9 @@ test('bloco: meta oficial substitui a de modelo e recalcula a falta', () => {
   assert.match(texto, /Falta: R\$\s600,00 · 60,0% para a meta/);
   assert.match(texto, /Convênio: INSS \(75,0%\)/);
   assert.match(texto, /Cancelados ontem: —/);
+  assert.match(texto, /Integrado contratado: R\$\s400,00 \(4\)/);
+  assert.match(texto, /Valor liberado: R\$\s350,00 \(3 de 4 integradas · parcial\)/);
+  assert.match(texto, /Histórico contratado: R\$\s5\.000,00 \(50\) · Front V2 · sem corte de data/);
   assert.doesNotMatch(texto, /Insights para atuação/);
   const insights = montarBlocoInsights({ relatorio, empresa: 'AKRK', aba: 'Geral', metaOficial: { valor: 1000, faltando: [] }, horaParcial: '14:05' });
   assert.match(insights, /^\*AKRK · Geral\*/);
@@ -50,6 +54,13 @@ test('bloco: na aba do gerente não mostra falta da empresa', () => {
   assert.match(texto, /dia fechado/);
   assert.match(texto, /\*Meta \(MODELO\)\*/);
   assert.match(texto, /Falta: só no Geral/);
+});
+
+test('bloco: não converte valor liberado indisponível em zero', () => {
+  const semLiberacao = { ...relatorio, kpis: { ...relatorio.kpis, valorLiberadoMes: null } };
+  const texto = montarBloco({ relatorio: semLiberacao, empresa: 'AKRK', aba: 'Geral', metaOficial: null, horaParcial: null });
+  assert.match(texto, /Valor liberado: indisponível/);
+  assert.doesNotMatch(texto, /Valor liberado: R\$\s0,00/);
 });
 
 test('juntar: separa empresas, usa título do grupo e não põe link no fim', () => {

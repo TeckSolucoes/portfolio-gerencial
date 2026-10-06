@@ -16,14 +16,20 @@ import type {
 
 const TIPOS: Tipo[] = ['Novo', 'Compra', 'Adiantamento'];
 
-export const GERENTES = ['Luana Cosme', 'Adriano Monteiro', 'Daniel Mansur', 'Marcos Mota'];
-
 const semAcento = (s: string) => s.normalize('NFD').replace(/\p{Diacritic}/gu, '').toUpperCase().trim();
 
-// O Front grava o nome completo (e às vezes com sobrenomes a mais); o gerente é casado pelo primeiro nome.
 export function escopoGerente(nome: string): Escopo {
-  const primeiro = semAcento(nome).split(/\s+/)[0];
-  return { nome, corresponde: (gerente) => semAcento(gerente).startsWith(primeiro) };
+  const esperado = semAcento(nome);
+  return { nome, corresponde: (gerente) => semAcento(gerente) === esperado };
+}
+
+export function escopoGerentePorValores(nome: string, valores: readonly string[]): Escopo {
+  const reconhecidos = new Set(valores.map(semAcento));
+  return { nome, corresponde: (gerente) => reconhecidos.has(semAcento(gerente)) };
+}
+
+export function escopoGerentePorId(nome: string, gerenteComercialId: string): Escopo {
+  return { nome, corresponde: (_gerente, id) => id === gerenteComercialId };
 }
 
 const titulo = (s: string) =>
@@ -99,7 +105,7 @@ function diaAnterior(ymd: string): string {
 
 export function montarRelatorio(propostas: Proposta[], ref: string, escopo: Escopo | null = null): Relatorio {
   const { casos, descartadas } = construirCasos(propostas);
-  const doEscopo = (gerente: string) => (escopo ? escopo.corresponde(gerente) : true);
+  const doEscopo = (proposta: Proposta) => (escopo ? escopo.corresponde(proposta.gerente, proposta.gerenteComercialId) : true);
   const mes = ref.slice(0, 7);
   const alertas: string[] = [];
 
@@ -107,23 +113,32 @@ export function montarRelatorio(propostas: Proposta[], ref: string, escopo: Esco
   // os números de caso abaixo seguem o gerente do lote.
   const vendas = casos
     .flatMap((c) => c.propostas.map((p, i) => ({ p, nova: i === 0, tipo: c.tipo })))
-    .filter((v) => v.p.data === ref && doEscopo(v.p.gerente));
+    .filter((v) => v.p.data === ref && doEscopo(v.p));
 
-  const casosMes = casos.filter((c) => c.lote.startsWith(mes) && doEscopo(c.gerente));
+  const casosMes = casos.filter((c) => c.lote.startsWith(mes) && doEscopo(c.propostas[0]));
   const contagemMes = contar(casosMes);
 
   const todas = casos.flatMap((c) => c.propostas);
   const doMes = (p: Proposta) => p.data.startsWith(mes);
-  const escopoTodas = todas.filter((p) => doEscopo(p.gerente));
+  const escopoTodas = todas.filter(doEscopo);
   const canceladas = escopoTodas.filter((p) => p.cancelada);
   const vendasMes = escopoTodas.filter(doMes);
-  // Pago = Integrado. O mês do ranking segue o evento de integração, não a criação da proposta.
-  // O fallback mantém compatibilidade com fontes antigas e dados sintéticos sem a nova data.
-  const pagosMes = escopoTodas.filter((p) => p.integrada && (p.dataIntegracao || p.data).startsWith(mes) && (p.dataIntegracao || p.data) <= ref);
+  // Pago = Integrado. Sem evidência temporal da integração, a proposta não é atribuída
+  // silenciosamente ao mês de criação.
+  const pagosMes = escopoTodas.filter((p) => p.integrada && p.dataIntegracao?.startsWith(mes) && p.dataIntegracao <= ref);
+  const pagosComLiberacao = pagosMes.filter((p) => p.valorLiberado !== undefined);
+  const valorLiberadoMes = pagosComLiberacao.length === 0
+    ? null
+    : {
+        qtd: pagosComLiberacao.length,
+        valor: centavos(pagosComLiberacao.reduce((total, proposta) => total + proposta.valorLiberado!, 0)),
+        totalIntegradas: pagosMes.length,
+        completo: pagosComLiberacao.length === pagosMes.length,
+      };
   const ontem = diaAnterior(ref);
   const trazDataCancelamento = todas.some((p) => p.cancelada && p.dataCancelamento);
   const canceladasOntemProps = trazDataCancelamento
-    ? todas.filter((p) => p.cancelada && p.dataCancelamento === ontem && doEscopo(p.gerente))
+    ? todas.filter((p) => p.cancelada && p.dataCancelamento === ontem && doEscopo(p))
     : null;
 
   const trocasEquipe: TrocaEquipe[] = [];
@@ -131,7 +146,7 @@ export function montarRelatorio(propostas: Proposta[], ref: string, escopo: Esco
     for (let i = 1; i < c.propostas.length; i++) {
       const p = c.propostas[i];
       const anterior = c.propostas[i - 1];
-      if (p.data === ref && doEscopo(p.gerente) && p.equipe !== anterior.equipe) {
+      if (p.data === ref && doEscopo(p) && p.equipe !== anterior.equipe) {
         trocasEquipe.push({
           nome: c.nome,
           cpf: c.cpf,
@@ -195,9 +210,9 @@ export function montarRelatorio(propostas: Proposta[], ref: string, escopo: Esco
   const casaMesPs = vendasMes.filter(casa);
 
   const mesNovaReins = casos
-    .filter((c) => doEscopo(c.gerente) || c.propostas.some((p) => doEscopo(p.gerente)))
+    .filter((c) => doEscopo(c.propostas[0]) || c.propostas.some(doEscopo))
     .flatMap((c) => c.propostas.map((p, i) => ({ p, nova: i === 0 })))
-    .filter((x) => doMes(x.p) && doEscopo(x.p.gerente));
+    .filter((x) => doMes(x.p) && doEscopo(x.p));
 
   const fechados = contagemMes.pagou + contagemMes.morreu;
   const equipesFechadas = desfechoPor(casosMes, (c) => nomeEquipe(c.equipe))
@@ -225,6 +240,27 @@ export function montarRelatorio(propostas: Proposta[], ref: string, escopo: Esco
     alertas.push('A fonte não traz data de cancelamento: "cancelados de ontem" indisponível.');
   }
 
+  const hierarquiaInformada = (proposta: Proposta) => proposta.hierarquiaInformada ?? [proposta.gerente, proposta.equipe, proposta.operador]
+    .every((valor) => valor.trim() !== '' && valor !== '(não informado)');
+  const propostasQualidade = propostas.filter(doEscopo);
+  const comCodigoFuncao = propostasQualidade.filter((proposta) => proposta.temCodigoFuncao);
+  const codigosNaoEncontrados = comCodigoFuncao.filter((proposta) => proposta.conciliadaFuncao !== true).length;
+  const periodoInicio = propostasQualidade.reduce((inicio, proposta) => (!inicio || proposta.data < inicio ? proposta.data : inicio), '');
+  const qualidade = {
+    totalPropostas: propostasQualidade.length,
+    integradasSemData: propostasQualidade.filter((proposta) => proposta.integrada && !proposta.dataIntegracao).length,
+    comCodigoFuncao: comCodigoFuncao.length,
+    semCodigoFuncao: propostasQualidade.length - comCodigoFuncao.length,
+    conciliadasFuncao: comCodigoFuncao.filter((proposta) => proposta.conciliadaFuncao === true).length,
+    codigosNaoEncontrados,
+    semCorrespondenciaFuncao: codigosNaoEncontrados,
+    hierarquiaInformada: propostasQualidade.filter(hierarquiaInformada).length,
+    hierarquiaNaoInformada: propostasQualidade.filter((proposta) => !hierarquiaInformada(proposta)).length,
+    periodoInicio: periodoInicio || ref,
+    periodoFim: ref,
+    fonte: 'Front V2 × Função',
+  };
+
   return {
     ref,
     escopo: escopo ? escopo.nome : 'Geral',
@@ -243,9 +279,12 @@ export function montarRelatorio(propostas: Proposta[], ref: string, escopo: Esco
       canceladosMesPct: vendasMes.length === 0 ? null : canceladas.filter(doMes).length / vendasMes.length,
       canceladosGeral: somar(canceladas),
       pagosMes: somar(pagosMes),
+      integradoContratadoMes: somar(pagosMes),
+      valorLiberadoMes,
       pagosExcecaoMes: somar(pagosMes.filter((p) => p.excecao)),
       excecaoMes: somar(vendasMes.filter((p) => p.excecao)),
     },
+    qualidade,
     etapasFront: agrupar(
       vendas.filter((v) => !v.p.temCodigoFuncao),
       (v) => v.p.status,

@@ -8,7 +8,7 @@ import { metaDoMes } from '@/lib/metas';
 import { escolherEmpresa, podeAcessar, podeVerAba } from '@/lib/permissoes';
 import type { Relatorio, Tipo } from '@/lib/relatorio/types';
 import { carregarRelatorioAoVivo } from '@/lib/relatorio/aoVivo';
-import { ABAS } from '@/lib/relatorio/abas';
+import { listarAbasRelatorio } from '@/lib/relatorio/abas';
 import { RelatorioLista } from './RelatorioLista';
 import { RelatorioLote } from './RelatorioLote';
 import { RelatorioNav } from './RelatorioNav';
@@ -32,7 +32,7 @@ const dm = (ymd: string) => ymd.split('-').reverse().slice(0, 2).join('/');
 const razao = (parte: number | undefined, todo: number | undefined) => (parte == null || !todo ? null : parte / todo);
 const larg = (parte: number, todo: number) => (todo > 0 ? Math.max(0, Math.min(100, (100 * parte) / todo)) : 0);
 
-function Kpi({ cls, tom, rotulo, valor, meta, tag, children }: { cls: string; tom: string; rotulo: string; valor: string; meta?: string; tag?: string; children?: React.ReactNode }) {
+function Kpi({ cls, tom, rotulo, valor, meta, tag, detalhe, children }: { cls: string; tom: string; rotulo: string; valor: string; meta?: string; tag?: string; detalhe?: string; children?: React.ReactNode }) {
   return (
     <div className={`kpi ${cls}`}>
       <div className={`lab t-${tom}`}>
@@ -41,6 +41,7 @@ function Kpi({ cls, tom, rotulo, valor, meta, tag, children }: { cls: string; to
       </div>
       <div className={`val t-${tom}`}>{valor}</div>
       {meta !== undefined && <div className="meta">{meta}</div>}
+      {detalhe && <div className="kpi-confianca">{detalhe}</div>}
       {children}
     </div>
   );
@@ -57,14 +58,14 @@ function Aviso({ titulo, texto, seletor }: { titulo: string; texto: string; sele
   );
 }
 
-function SeletorEmpresa({ empresas, atual, data, escopo }: { empresas: Empresa[]; atual: Empresa; data?: string; escopo?: string }) {
+function SeletorEmpresa({ empresas, atual, data, escopo, gerenteComercialId }: { empresas: Empresa[]; atual: Empresa; data?: string; escopo?: string; gerenteComercialId?: string | null }) {
   if (empresas.length < 2) return null;
   return (
     <div className="rel-filtro no-print">
       <span className="rel-filtro-label">Empresa</span>
       <nav className="tabs" aria-label="Empresa do relatório">
         {empresas.map((e) => (
-          <Link key={e} href={`/relatorio?empresa=${e}${escopo ? `&escopo=${encodeURIComponent(escopo)}` : ''}${data ? `&data=${data}` : ''}`} className={`tab ${e === atual ? 'active' : ''}`} aria-current={e === atual ? 'page' : undefined}>
+          <Link key={e} href={`/relatorio?empresa=${e}${escopo ? `&escopo=${encodeURIComponent(escopo)}` : ''}${gerenteComercialId ? `&gerente=${encodeURIComponent(gerenteComercialId)}` : ''}${data ? `&data=${data}` : ''}`} className={`tab ${e === atual ? 'active' : ''}`} aria-current={e === atual ? 'page' : undefined}>
             {ROTULO_EMPRESA[e]}
           </Link>
         ))}
@@ -73,7 +74,7 @@ function SeletorEmpresa({ empresas, atual, data, escopo }: { empresas: Empresa[]
   );
 }
 
-export default async function RelatorioPage({ searchParams }: { searchParams: Promise<{ escopo?: string; empresa?: string; data?: string }> }) {
+export default async function RelatorioPage({ searchParams }: { searchParams: Promise<{ escopo?: string; gerente?: string; empresa?: string; data?: string }> }) {
   await requireFuncionalidadeForPage('relatorio');
   const acesso = await carregarAcesso();
   if (!acesso) redirect('/login');
@@ -81,24 +82,25 @@ export default async function RelatorioPage({ searchParams }: { searchParams: Pr
     return <Aviso titulo="Você ainda não tem empresa liberada." texto="Peça ao administrador." />;
   }
 
-  const { escopo: pedido, empresa: empresaPedida, data } = await searchParams;
+  const { escopo: pedido, gerente: gerentePedido, empresa: empresaPedida, data } = await searchParams;
   const empresa = escolherEmpresa(acesso, empresaPedida)!;
   // O relatório diário abre em D-1: o dia corrente ainda está em formação e
   // costumava aparecer como uma tela inteira de zeros antes do fechamento.
   const ref = data && /^\d{4}-\d{2}-\d{2}$/.test(data) ? data : ultimoDiaFechado();
 
   // Só as abas permitidas existem daqui em diante: o gerente nunca recebe Geral nem a turma de outro.
-  const abasVisiveis = ABAS.filter((a) => podeVerAba(acesso, a.escopo));
-  const aba = abasVisiveis.find((a) => a.escopo === pedido) ?? abasVisiveis[0];
+  const abasRelatorio = await listarAbasRelatorio(empresa);
+  const abasVisiveis = abasRelatorio.filter((a) => podeVerAba(acesso, a.escopo, a.gerenteComercialId ?? undefined));
+  const aba = abasVisiveis.find((a) => gerentePedido ? a.gerenteComercialId === gerentePedido : a.escopo === pedido) ?? abasVisiveis[0];
   if (!aba) {
-    return <Aviso titulo="Nenhuma visão do relatório está liberada para você." texto="Peça ao administrador." seletor={<SeletorEmpresa empresas={acesso.empresas} atual={empresa} data={ref} escopo={pedido} />} />;
+    return <Aviso titulo="Nenhuma visão do relatório está liberada para você." texto="Peça ao administrador." seletor={<SeletorEmpresa empresas={acesso.empresas} atual={empresa} data={ref} escopo={pedido} gerenteComercialId={gerentePedido} />} />;
   }
   const escopo = aba.escopo;
-  const seletor = <SeletorEmpresa empresas={acesso.empresas} atual={empresa} data={ref} escopo={escopo} />;
+  const seletor = <SeletorEmpresa empresas={acesso.empresas} atual={empresa} data={ref} escopo={escopo} gerenteComercialId={aba.gerenteComercialId} />;
 
   let r: Partial<Relatorio> & Pick<Relatorio, 'kpis'>;
   try {
-    r = await carregarRelatorioAoVivo(empresa, ref, escopo);
+    r = await carregarRelatorioAoVivo(empresa, ref, escopo, aba.gerenteComercialId);
   } catch {
     return <Aviso titulo="As bases ao vivo não responderam." texto="Tente novamente em instantes; nenhum dado antigo foi exibido." seletor={seletor} />;
   }
@@ -116,7 +118,7 @@ export default async function RelatorioPage({ searchParams }: { searchParams: Pr
   }).format(new Date());
 
   const [oficial, whats] = await Promise.all([metaDoMes([empresa], ref.slice(0, 7)), podeAcessar(acesso, 'whatsapp') ? lerConfigWhatsapp() : null]);
-  const pagosValor = k.pagosMes.valor;
+  const pagosValor = k.integradoContratadoMes.valor;
   const metaOficial = oficial && {
     valor: oficial.valor,
     falta: Math.max(0, Math.round((oficial.valor - pagosValor) * 100) / 100),
@@ -135,6 +137,10 @@ export default async function RelatorioPage({ searchParams }: { searchParams: Pr
   const lista = r.lista ?? [];
   const loteDia = r.loteDia ?? [];
   const canal = r.canalMes;
+  const qualidade = r.qualidade;
+  const dataCompleta = (ymd: string) => ymd.split('-').reverse().join('/');
+  const detalheDia = `Contratado · Front V2 · ${dRef}/${ano}`;
+  const detalheMes = `Contratado · Front V2 · 01/${String(mesRef).padStart(2, '0')} a ${dRef}/${ano}`;
 
   const faltando = [
     !clientes && 'Clientes',
@@ -145,6 +151,7 @@ export default async function RelatorioPage({ searchParams }: { searchParams: Pr
     !churn && 'Churn',
     !r.lista && 'Lista de não reinseridos',
     k.canceladosOntem == null && 'Cancelados ontem (depende do CCNET ao vivo)',
+    k.valorLiberadoMes == null && 'Valor liberado (nenhuma release localizada na Função)',
   ].filter(Boolean) as string[];
 
   const excDiaPct = razao(k.excecaoDia.valor, k.total.valor);
@@ -175,7 +182,7 @@ export default async function RelatorioPage({ searchParams }: { searchParams: Pr
             <span className="rel-filtro-label">Visão</span>
             <nav className="tabs" aria-label="Escopo do relatório">
               {abasVisiveis.map((a) => (
-                <Link key={a.escopo} href={`/relatorio?empresa=${empresa}&escopo=${encodeURIComponent(a.escopo)}&data=${ref}`} className={`tab ${a.escopo === escopo ? 'active' : ''}`} aria-current={a.escopo === escopo ? 'page' : undefined}>
+                <Link key={a.gerenteComercialId ?? a.escopo} href={`/relatorio?empresa=${empresa}&escopo=${encodeURIComponent(a.escopo)}${a.gerenteComercialId ? `&gerente=${encodeURIComponent(a.gerenteComercialId)}` : ''}&data=${ref}`} className={`tab ${(a.gerenteComercialId ? a.gerenteComercialId === aba.gerenteComercialId : a.escopo === escopo) ? 'active' : ''}`} aria-current={(a.gerenteComercialId ? a.gerenteComercialId === aba.gerenteComercialId : a.escopo === escopo) ? 'page' : undefined}>
                   {a.rotulo}
                 </Link>
               ))}
@@ -191,7 +198,7 @@ export default async function RelatorioPage({ searchParams }: { searchParams: Pr
           <label>Data do relatório <input type="date" name="data" defaultValue={ref} /></label>
           <button type="submit">Atualizar</button>
         </form>
-        {whats && <EnviarWhatsapp empresa={empresa} escopo={escopo} rotulo={aba.rotulo} data={ref} destinatarios={whats.destinatarios.length} />}
+        {whats && <EnviarWhatsapp empresa={empresa} escopo={escopo} gerenteComercialId={aba.gerenteComercialId} rotulo={aba.rotulo} data={ref} destinatarios={whats.destinatarios.length} />}
       </div>
 
       <RelatorioNav />
@@ -202,13 +209,24 @@ export default async function RelatorioPage({ searchParams }: { searchParams: Pr
         </p>
       )}
 
+      {qualidade && (
+        <section className="rel-qualidade no-print" aria-label="Cobertura dos dados">
+          <div><b>{num(qualidade.conciliadasFuncao)}</b><span>conciliadas na Função</span></div>
+          <div><b>{num(qualidade.semCodigoFuncao)}</b><span>ainda sem código da Função</span></div>
+          <div><b>{num(qualidade.codigosNaoEncontrados)}</b><span>códigos não encontrados na Função</span></div>
+          <div><b>{num(qualidade.hierarquiaNaoInformada)}</b><span>sem hierarquia informada</span></div>
+          <div><b>{num(qualidade.integradasSemData)}</b><span>integradas sem data comprovada; fora do ranking mensal</span></div>
+          <p>{qualidade.fonte} · {dataCompleta(qualidade.periodoInicio)} a {dataCompleta(qualidade.periodoFim)} · {num(qualidade.totalPropostas)} propostas analisadas</p>
+        </section>
+      )}
+
       <section className="sec" id="sec-clientes">
         <div className="sec-h">Clientes</div>
         <div className="sec-s">Grão CPF · da casa = já teve qualquer contrato no grupo · novo = 1ª proposta do CPF · independente de nova/reinserida</div>
         <div className="grid-cli">
-          <Kpi cls="bg-casa" tom="green" rotulo="Cliente da casa · dia" valor={brl(clientes?.casaDia.valor)} meta={clientes ? `${num(clientes.casaDia.qtd)} propostas · ${num(clientes.casaDia.cpfs)} CPF` : NAO} />
-          <Kpi cls="bg-novo" tom="blue" rotulo="Cliente novo · dia" valor={brl(clientes?.novoDia.valor)} meta={clientes ? `${num(clientes.novoDia.qtd)} propostas` : NAO} />
-          <Kpi cls="bg-casames" tom="purple" rotulo="Cliente da casa · mês" valor={brl(clientes?.casaMes.valor)} meta={clientes ? `${num(clientes.casaMes.qtd)} propostas · ${num(clientes.casaMes.cpfs)} CPF` : NAO} />
+          <Kpi cls="bg-casa" tom="green" rotulo="Cliente da casa · dia" valor={brl(clientes?.casaDia.valor)} meta={clientes ? `${num(clientes.casaDia.qtd)} propostas · ${num(clientes.casaDia.cpfs)} CPF` : NAO} detalhe={`Histórico no recorte do Front V2 · ${dRef}/${ano}`} />
+          <Kpi cls="bg-novo" tom="blue" rotulo="Cliente novo · dia" valor={brl(clientes?.novoDia.valor)} meta={clientes ? `${num(clientes.novoDia.qtd)} propostas` : NAO} detalhe={`Sem proposta anterior no recorte · Front V2 · ${dRef}/${ano}`} />
+          <Kpi cls="bg-casames" tom="purple" rotulo="Cliente da casa · mês" valor={brl(clientes?.casaMes.valor)} meta={clientes ? `${num(clientes.casaMes.qtd)} propostas · ${num(clientes.casaMes.cpfs)} CPF` : NAO} detalhe={detalheMes} />
         </div>
       </section>
 
@@ -216,15 +234,15 @@ export default async function RelatorioPage({ searchParams }: { searchParams: Pr
         <div className="sec-h">Vendas</div>
         <div className="sec-s">Nove cartões · propostas do dia {dRef} (exceto cancelados ontem/mês)</div>
         <div className="grid9">
-          <Kpi cls="bg-total" tom="blue" rotulo="Total do dia" valor={brl(k.total.valor)} meta={`${num(k.total.qtd)} operações`} />
-          <Kpi cls="bg-novas" tom="green" rotulo="Vendas novas" valor={brl(k.novas.valor)} meta={`${num(k.novas.qtd)} · 1ª proposta do caso`} />
-          <Kpi cls="bg-reins" tom="purple" rotulo="Reinseridas" valor={brl(k.reinseridas.valor)} meta={`${num(k.reinseridas.qtd)} · mesmo caso, proposta nova`} />
-          <Kpi cls="bg-exc" tom="orange" rotulo="Exceção do dia" valor={brl(k.excecaoDia.valor)} meta={`${num(k.excecaoDia.qtd)} propostas · ${pct(excDiaPct)} do dia`} />
-          <Kpi cls="bg-front" tom="red" rotulo="Front" valor={brl(k.front.valor)} meta={`${num(k.front.qtd)} propostas`} />
-          <Kpi cls="bg-ccnet" tom="blue" rotulo="CCNET" valor={brl(k.ccnet.valor)} meta={`${num(k.ccnet.qtd)} propostas`} />
-          <Kpi cls="bg-canc" tom="red" rotulo="Cancelados ontem" valor={brl(k.canceladosOntem?.valor)} meta={k.canceladosOntem ? `${num(k.canceladosOntem.qtd)} · ${dOntem}` : 'indisponível · depende do CCNET ao vivo'} />
-          <Kpi cls="bg-cancm" tom="white" rotulo="Cancelados do mês" valor={brl(k.canceladosMes.valor)} meta={`${num(k.canceladosMes.qtd)} propostas`} />
-          <Kpi cls="bg-front" tom="white" rotulo="Cancelados %" valor={pct(k.canceladosMesPct)} meta={`${num(k.canceladosMes.qtd)} de ${num(k.vendasMes.qtd)} no mês`} />
+          <Kpi cls="bg-total" tom="blue" rotulo="Total do dia" valor={brl(k.total.valor)} meta={`${num(k.total.qtd)} operações`} detalhe={detalheDia} />
+          <Kpi cls="bg-novas" tom="green" rotulo="Vendas novas" valor={brl(k.novas.valor)} meta={`${num(k.novas.qtd)} · 1ª proposta do caso`} detalhe={detalheDia} />
+          <Kpi cls="bg-reins" tom="purple" rotulo="Reinseridas" valor={brl(k.reinseridas.valor)} meta={`${num(k.reinseridas.qtd)} · mesmo caso, proposta nova`} detalhe={detalheDia} />
+          <Kpi cls="bg-exc" tom="orange" rotulo="Exceção do dia" valor={brl(k.excecaoDia.valor)} meta={`${num(k.excecaoDia.qtd)} propostas · ${pct(excDiaPct)} do dia`} detalhe={detalheDia} />
+          <Kpi cls="bg-front" tom="red" rotulo="Front" valor={brl(k.front.valor)} meta={`${num(k.front.qtd)} propostas`} detalhe={`Sem código Função · ${dRef}/${ano}`} />
+          <Kpi cls="bg-ccnet" tom="blue" rotulo="CCNET" valor={brl(k.ccnet.valor)} meta={`${num(k.ccnet.qtd)} propostas`} detalhe={`Com código Função · ${dRef}/${ano}`} />
+          <Kpi cls="bg-canc" tom="red" rotulo="Cancelados ontem" valor={brl(k.canceladosOntem?.valor)} meta={k.canceladosOntem ? `${num(k.canceladosOntem.qtd)} · ${dOntem}` : 'indisponível · depende do CCNET ao vivo'} detalhe="Status Front/Função · data do cancelamento" />
+          <Kpi cls="bg-cancm" tom="white" rotulo="Cancelados do mês" valor={brl(k.canceladosMes.valor)} meta={`${num(k.canceladosMes.qtd)} propostas`} detalhe={detalheMes} />
+          <Kpi cls="bg-front" tom="white" rotulo="Cancelados %" valor={pct(k.canceladosMesPct)} meta={`${num(k.canceladosMes.qtd)} de ${num(k.vendasMes.qtd)} no mês`} detalhe="Quantidade cancelada ÷ propostas do mês" />
         </div>
       </section>
 
@@ -234,10 +252,10 @@ export default async function RelatorioPage({ searchParams }: { searchParams: Pr
           Propostas cadastradas em {mesNome}/{ano} até {dRef} · cancelamento = Status Front “Cancelada”
         </div>
         <div className="grid4">
-          <Kpi cls="bg-total" tom="blue" rotulo="Vendas do mês" valor={brl(k.vendasMes.valor)} meta={`${num(k.vendasMes.qtd)} propostas · ${mesNome}`} />
-          <Kpi cls="bg-cancm" tom="white" rotulo="Cancelados do mês" valor={brl(k.canceladosMes.valor)} meta={`${num(k.canceladosMes.qtd)} propostas canceladas`} />
-          <Kpi cls="bg-ccnet" tom="blue" rotulo="Vendas geral" valor={brl(k.vendasGeral.valor)} meta={`${num(k.vendasGeral.qtd)} propostas · histórico da hierarquia`} />
-          <Kpi cls="bg-front" tom="white" rotulo="Cancelados geral" valor={brl(k.canceladosGeral.valor)} meta={`${num(k.canceladosGeral.qtd)} propostas · histórico da hierarquia`} />
+          <Kpi cls="bg-total" tom="blue" rotulo="Vendas do mês" valor={brl(k.vendasMes.valor)} meta={`${num(k.vendasMes.qtd)} propostas · ${mesNome}`} detalhe={detalheMes} />
+          <Kpi cls="bg-cancm" tom="white" rotulo="Cancelados do mês" valor={brl(k.canceladosMes.valor)} meta={`${num(k.canceladosMes.qtd)} propostas canceladas`} detalhe={detalheMes} />
+          <Kpi cls="bg-ccnet" tom="blue" rotulo="Histórico contratado" valor={brl(k.vendasGeral.valor)} meta={`${num(k.vendasGeral.qtd)} propostas · sem corte de data`} detalhe="Valor contratado · Front V2 · histórico disponível" />
+          <Kpi cls="bg-front" tom="white" rotulo="Histórico cancelado" valor={brl(k.canceladosGeral.valor)} meta={`${num(k.canceladosGeral.qtd)} propostas · sem corte de data`} detalhe="Status Front · Front V2 · histórico disponível" />
         </div>
       </section>
 
@@ -258,13 +276,15 @@ export default async function RelatorioPage({ searchParams }: { searchParams: Pr
             tag={metaOficial ? (metaOficial.parcial ? 'OFICIAL · PARCIAL' : 'OFICIAL') : 'MODELO'}
             valor={brl(meta?.valor)}
             meta={metaOficial ? (metaOficial.parcial ? `sem meta cadastrada para: ${oficial!.faltando.join(', ')}` : `meta de ${ROTULO_EMPRESA[empresa]}`) : meta ? 'trocar quando a meta oficial chegar' : 'meta ainda não informada'}
+            detalhe={`${metaOficial ? 'Cadastro oficial' : 'Modelo'} · ${mesNome}/${ano}`}
           />
-          <Kpi cls="bg-novas" tom="green" rotulo="Pagos" valor={brl(k.pagosMes.valor)} meta={`${num(k.pagosMes.qtd)} propostas · ${mesNome}`} />
-          <Kpi cls="bg-exc" tom="orange" rotulo="Pagos exceção" valor={brl(k.pagosExcecaoMes.valor)} meta={`${num(k.pagosExcecaoMes.qtd)} propostas · ${pct(pagosExcPct)} dos pagos`} />
+          <Kpi cls="bg-novas" tom="green" rotulo="Integrado contratado" valor={brl(k.integradoContratadoMes.valor)} meta={`${num(k.integradoContratadoMes.qtd)} propostas · ${mesNome}`} detalhe="Valor contratado · data de integração · Front V2 × Função" />
+          <Kpi cls="bg-ccnet" tom="blue" rotulo="Valor liberado" valor={brl(k.valorLiberadoMes?.valor)} meta={k.valorLiberadoMes ? `${num(k.valorLiberadoMes.qtd)} de ${num(k.valorLiberadoMes.totalIntegradas)} integradas${k.valorLiberadoMes.completo ? '' : ' · parcial'}` : 'indisponível · nenhuma release localizada'} detalhe="Soma das releases · Função · mês da integração" />
+          <Kpi cls="bg-exc" tom="orange" rotulo="Integrado exceção" valor={brl(k.pagosExcecaoMes.valor)} meta={`${num(k.pagosExcecaoMes.qtd)} propostas · ${pct(pagosExcPct)} dos integrados`} detalhe="Contratado · exceção · mês da integração" />
           {doGerente ? (
-            <Kpi cls="bg-canc" tom="red" rotulo="Falta" valor="—" meta="a meta é da empresa; o que falta só faz sentido no Geral" />
+            <Kpi cls="bg-canc" tom="red" rotulo="Falta" valor="—" meta="a meta é da empresa; o que falta só faz sentido no Geral" detalhe="Meta da empresa − integrado contratado" />
           ) : (
-            <Kpi cls="bg-canc" tom="red" rotulo="Falta" valor={brl(meta?.falta)} meta={meta ? `${pct(meta.faltaPct)} para a meta` : NAO} />
+            <Kpi cls="bg-canc" tom="red" rotulo="Falta" valor={brl(meta?.falta)} meta={meta ? `${pct(meta.faltaPct)} para a meta` : NAO} detalhe="Meta da empresa − integrado contratado" />
           )}
         </div>
       </section>
@@ -506,7 +526,7 @@ export default async function RelatorioPage({ searchParams }: { searchParams: Pr
         </div>
       </section>
 
-      <p className="footnote">Fonte: Front V2 conciliado com Função · totais gerais sem corte de data; demais análises usam o recorte operacional · {metaOficial ? 'Meta oficial' : 'Meta MODELO (não é meta oficial)'} · hierarquia preservada por empresa e gerente</p>
+      <p className="footnote">Fonte: Front V2 × Função · histórico contratado sem corte de data; demais análises exibem o período em cada KPI · integrado usa valor contratado e data de integração · liberado soma releases disponíveis · {metaOficial ? 'Meta oficial' : 'Meta MODELO (não é meta oficial)'} · hierarquia preservada por empresa e gerente</p>
     </div>
   );
 }

@@ -61,11 +61,35 @@ test('superadmin vê todas as empresas mesmo sem cadastro', () => {
 });
 
 test('escopo de gerente limita à própria aba e esconde o Geral', () => {
-  const luana = usuario({ role: 'gerente', empresas: 'AKRK', escopoGerente: 'Luana' });
+  const luana = usuario({ role: 'gerente', empresas: 'AKRK', escopoGerente: 'Luana Cosme' });
   assert.equal(podeVerAba(luana, 'Luana Cosme'), true);
   assert.equal(podeVerAba(luana, 'Daniel Mansur'), false);
   assert.equal(podeVerAba(luana, 'Geral'), false);
   assert.equal(podeVerAba(usuario({ empresas: 'AKRK' }), 'Geral'), true);
+});
+
+test('vínculo oficial exige ID e restringe à empresa do gerente', () => {
+  const acesso = usuario({
+    role: 'gerente', empresas: 'AKRK,DIG', escopoGerente: 'legado', gerenteComercialId: 'gerente-luana',
+    gerenteComercial: { nome: 'Luana Cosme', empresa: 'AKRK', ativo: true },
+  });
+  assert.equal(acesso.escopoGerente, 'Luana Cosme');
+  assert.equal(acesso.gerenteComercialId, 'gerente-luana');
+  assert.deepEqual(acesso.empresas, ['AKRK']);
+  assert.equal(podeVerAba(acesso, 'Luana Cosme'), false);
+  assert.equal(podeVerAba(acesso, 'Luana Silva'), false);
+  assert.equal(podeVerAba(acesso, 'Nome divergente', 'gerente-luana'), true);
+  assert.equal(podeVerAba(acesso, 'Luana Cosme', 'outro-id'), false);
+});
+
+test('vínculo oficial inválido falha fechado', () => {
+  const acesso = usuario({
+    role: 'gerente', empresas: 'AKRK', escopoGerente: 'Luana', gerenteComercialId: 'inativo',
+    gerenteComercial: { nome: 'Luana Cosme', empresa: 'AKRK', ativo: false },
+  });
+  assert.equal(acesso.gerenteComercialId, null);
+  assert.equal(acesso.escopoGerente, null);
+  assert.deepEqual(acesso.empresas, []);
 });
 
 const ABAS = ['Geral', 'Luana Cosme', 'Adriano Monteiro'];
@@ -91,7 +115,7 @@ test('duas empresas: escolhe a pedida, senão a primeira', () => {
 });
 
 test('gerente com escopo: só a própria aba, nunca Geral nem outro gerente', () => {
-  const u = usuario({ empresas: 'AKRK', escopoGerente: 'Luana' });
+  const u = usuario({ empresas: 'AKRK', escopoGerente: 'Luana Cosme' });
   assert.deepEqual(abasPermitidas(u, ABAS), ['Luana Cosme']);
   assert.equal(escolherAba(u, 'Geral', ABAS), 'Luana Cosme');
   assert.equal(escolherAba(u, 'Adriano Monteiro', ABAS), 'Luana Cosme');
@@ -105,7 +129,7 @@ test('gerente com escopo que não existe nas abas não recebe nada', () => {
 });
 
 test('superadmin: todas as abas, todas as empresas, monitoramento liberado', () => {
-  const u = usuario({ role: 'superadmin', escopoGerente: 'Luana' });
+  const u = usuario({ role: 'superadmin', escopoGerente: 'Luana Cosme' });
   assert.deepEqual(abasPermitidas(u, ABAS), ABAS);
   assert.equal(escolherEmpresa(u, 'DIG'), 'DIG');
   assert.equal(statusMonitoramento(u), 'ok');
@@ -118,4 +142,26 @@ test('filtrarPorEmpresa: empresa null só o superadmin; outra empresa nunca vaza
   assert.deepEqual(filtrar(usuario({ empresas: 'AKRK' })), ['AKRK - A']);
   assert.deepEqual(filtrar(usuario({ empresas: 'AKRK,DIG' })), ['AKRK - A', 'DIG - B']);
   assert.deepEqual(filtrar(usuario({ role: 'superadmin' })), itens);
+});
+
+
+test('nome legado exige igualdade completa normalizada e não autoriza cadastro oficial', () => {
+  const acesso = usuario({ role: 'gerente', empresas: 'AKRK', escopoGerente: '  Luána   Cosme ' });
+  assert.equal(podeVerAba(acesso, 'LUANA COSME'), true);
+  assert.equal(podeVerAba(acesso, 'Luana Silva'), false);
+  assert.equal(podeVerAba(acesso, 'Luana'), false);
+  assert.equal(podeVerAba(acesso, 'Luana Cosme', 'homonimo-1'), false);
+  assert.equal(podeVerAba(acesso, 'Luana Cosme', 'homonimo-2'), false);
+  assert.equal(podeVerAba(usuario({ role: 'gerente', empresas: 'AKRK', escopoGerente: 'Luana' }), 'Luana Cosme'), false);
+});
+
+test('vínculo ausente, inativo ou fora da empresa não libera nenhuma aba', () => {
+  for (const gerenteComercial of [null, { nome: 'Luana Cosme', empresa: 'AKRK', ativo: false }, { nome: 'Luana Cosme', empresa: 'DIG', ativo: true }]) {
+    const acesso = usuario({ role: 'gerente', empresas: 'AKRK', escopoGerente: 'Luana Cosme', gerenteComercialId: 'gerente-1', gerenteComercial });
+    assert.equal(podeVerAba(acesso, 'Geral'), false);
+    assert.equal(podeVerAba(acesso, 'Luana Cosme'), false);
+    assert.equal(podeVerAba(acesso, 'Luana Cosme', 'gerente-1'), false);
+    assert.deepEqual(abasPermitidas(acesso, ABAS), []);
+  }
+  assert.equal(podeVerAba(usuario({ role: 'gerente', empresas: 'AKRK' }), 'Geral'), false);
 });

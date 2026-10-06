@@ -9,6 +9,7 @@ const recursos = [
   { titulo: 'Portal Transparência', texto: 'Apoia a identificação de novos servidores federais com acesso restrito.', itens: ['Comparação mensal do arquivo SIAPE', 'Exclusão de pessoas já presentes na base de clientes', 'Geração de planilha para uso autorizado'], tom: 'roxo' },
   { titulo: 'NOC', texto: 'Mostra a saúde operacional do portal e das fontes de dados.', itens: ['Estado do banco e do volume', 'Último backup detectado', 'Workers, falhas e próximas execuções'], tom: '' },
   { titulo: 'Jurídico', texto: 'Monitora os CNPJs do grupo por rotinas independentes.', itens: ['Consulta cadastral por CNPJ', 'Menções públicas, processos, licitações e contratos', 'Sanções CEIS/CNEP e alertas ainda não vistos'], tom: 'roxo' },
+  { titulo: 'Estrutura Comercial', texto: 'Organiza a hierarquia responsável pelos resultados da operação.', itens: ['Empresa, gerente, equipe e vendedor com vigência', 'Tratamento de nomes ainda sem vínculo', 'Qualidade dos vínculos e histórico de transferências'], tom: 'roxo' },
   { titulo: 'Administração', texto: 'Reúne os controles de operação e acesso do portal.', itens: ['Usuários, perfis, empresas e turmas', 'Metas mensais por empresa', 'Agenda, execução e histórico dos workers'], tom: 'laranja' },
 ];
 
