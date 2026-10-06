@@ -3,7 +3,8 @@ import 'server-only';
 import type { RowDataPacket } from 'mysql2/promise';
 import { criarCache } from '@/lib/cache/memoria';
 import { consultarFrontV2 } from '@/lib/bases/conexoes';
-import type { Empresa } from '@/lib/empresas';
+import { empresaDaEquipe, type Empresa } from '@/lib/empresas';
+import { listarRecortesGerenteNaFonte, obterVersaoHierarquia, resolverHierarquiaNaData } from '@/lib/hierarquia/servico';
 import { agruparPorGerente, agruparPorResponsavel, chaveGerente, type GerenteMonitorado, type PessoaMonitorada, type PropostaMonitorada } from './operacional';
 
 interface LinhaMonitoramento extends RowDataPacket {
@@ -36,12 +37,24 @@ const cache = criarCache<MonitoramentoAoVivo>();
 const TTL_MS = 3 * 60 * 1000;
 const hojeSp = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(new Date());
 
-async function buscar(empresas: Empresa[], escopoGerente: string | null): Promise<MonitoramentoAoVivo> {
+type RecorteGerente = { inicio: Date; fim: Date | null; equipes: string[] };
+
+async function buscar(empresas: Empresa[], escopoGerente: string | null, gerenteComercialId?: string | null, recortesGerente?: readonly RecorteGerente[] | null): Promise<MonitoramentoAoVivo> {
   const prefixos = empresas.map((empresa) => (empresa === 'AKRK' ? 'AKRK - %' : 'DIG - %'));
   const filtrosEmpresa = prefixos.map(() => 't.Equipe LIKE ?').join(' OR ');
-  const filtroGerente = escopoGerente ? ' AND UPPER(t.Gerente) LIKE UPPER(?)' : '';
+  const parametrosGerente: unknown[] = [];
+  const recortesValidos = recortesGerente?.filter((recorte) => recorte.equipes.length > 0) ?? [];
+  const filtroGerente = gerenteComercialId
+    ? recortesValidos.length === 0
+      ? ' AND 1 = 0'
+      : ` AND (${recortesValidos.map((recorte) => {
+          parametrosGerente.push(recorte.inicio, recorte.fim, recorte.fim, ...recorte.equipes);
+          return `(ap.created_at >= ? AND (? IS NULL OR ap.created_at <= ?) AND UPPER(TRIM(t.Equipe)) IN (${recorte.equipes.map(() => 'UPPER(?)').join(', ')}))`;
+        }).join(' OR ')})`
+    : escopoGerente ? ' AND UPPER(TRIM(t.Gerente)) = UPPER(?)' : '';
   const recorte: unknown[] = [...prefixos];
-  if (escopoGerente) recorte.push(`${escopoGerente.trim().split(/\s+/)[0]}%`);
+  if (gerenteComercialId) recorte.push(...parametrosGerente);
+  else if (escopoGerente) recorte.push(escopoGerente);
   const parametros = [...recorte, ...recorte];
 
   // tot = denominador do bloco de gerentes: todas as propostas do gerente no mesmo recorte, com ou sem
@@ -90,11 +103,36 @@ async function buscar(empresas: Empresa[], escopoGerente: string | null): Promis
   );
   if (linhas.length > 12000) throw new Error('O monitoramento ultrapassou 12 mil propostas no período.');
 
-  const propostas: PropostaMonitorada[] = linhas.map((linha) => ({
+  const resolucoes = new Map<string, Awaited<ReturnType<typeof resolverHierarquiaNaData>> extends Map<string, infer R> ? R : never>();
+  for (const empresa of empresas) {
+    const daEmpresa = linhas.filter((linha) => empresaDaEquipe(String(linha.equipe ?? '')) === empresa);
+    const resolvidas = await resolverHierarquiaNaData(empresa, daEmpresa.map((linha) => ({
+      chave: `${empresa}:${linha.id}`,
+      data: linha.criada_em,
+      origem: 'front_v2' as const,
+      gerente: String(linha.gerente ?? ''),
+      equipe: String(linha.equipe ?? ''),
+      vendedor: String(linha.operador ?? ''),
+    })));
+    for (const [chave, resolvida] of resolvidas) resolucoes.set(chave, resolvida);
+  }
+  const linhasResolvidas = linhas.map((linha) => {
+    const empresa = empresaDaEquipe(String(linha.equipe ?? ''));
+    const resolvida = empresa ? resolucoes.get(`${empresa}:${linha.id}`) : undefined;
+    return {
+      linha,
+      gerenteComercialId: resolvida?.gerenteId ?? null,
+      gerente: resolvida?.gerenteNome ?? String(linha.gerente ?? ''),
+      equipe: resolvida?.equipeNome ?? String(linha.equipe ?? ''),
+      operador: resolvida?.vendedorNome ?? String(linha.operador ?? ''),
+    };
+  }).filter((item) => !gerenteComercialId || item.gerenteComercialId === gerenteComercialId);
+
+  const propostas: PropostaMonitorada[] = linhasResolvidas.map(({ linha, gerente, equipe, operador }) => ({
     id: String(linha.id),
-    gerente: String(linha.gerente ?? ''),
-    equipe: String(linha.equipe ?? ''),
-    operador: String(linha.operador ?? ''),
+    gerente,
+    equipe,
+    operador,
     convenio: String(linha.convenio ?? ''),
     criadaEm: linha.criada_em,
     atualizadaEm: linha.atualizada_em,
@@ -105,7 +143,7 @@ async function buscar(empresas: Empresa[], escopoGerente: string | null): Promis
     temCodigoFuncao: Boolean(linha.codigo_funcao),
   }));
   const totais = new Map<string, number>();
-  for (const linha of linhas) totais.set(chaveGerente(String(linha.gerente ?? '')), Number(linha.total_gerente ?? 0));
+  for (const item of linhasResolvidas) totais.set(chaveGerente(item.gerente), Number(item.linha.total_gerente ?? 0));
   const pessoas = agruparPorResponsavel(propostas, hojeSp());
   const gerentes = agruparPorGerente(propostas, totais, hojeSp());
   return {
@@ -119,7 +157,15 @@ async function buscar(empresas: Empresa[], escopoGerente: string | null): Promis
   };
 }
 
-export async function carregarMonitoramentoAoVivo(empresas: Empresa[], escopoGerente: string | null) {
-  const chave = `${[...empresas].sort().join(',')}:${escopoGerente ?? 'geral'}`;
-  return cache.obter(chave, TTL_MS, () => buscar(empresas, escopoGerente));
+export async function carregarMonitoramentoAoVivo(empresas: Empresa[], escopoGerente: string | null, gerenteComercialId?: string | null) {
+  const [recortes, versaoHierarquia] = await Promise.all([
+    gerenteComercialId && empresas.length === 1
+      ? listarRecortesGerenteNaFonte(gerenteComercialId, empresas[0], 'front_v2')
+      : Promise.resolve(null),
+    obterVersaoHierarquia(empresas),
+  ]);
+  if (gerenteComercialId && !recortes) throw new Error('Gerente comercial inválido para o monitoramento.');
+  const versao = recortes?.map((recorte) => `${recorte.inicio.toISOString()}:${recorte.fim?.toISOString() ?? ''}:${[...recorte.equipes].sort().join('|')}`).join(';') ?? '';
+  const chave = `${[...empresas].sort().join(',')}:${gerenteComercialId ?? escopoGerente ?? 'geral'}:${versao}:${versaoHierarquia}`;
+  return cache.obter(chave, TTL_MS, () => buscar(empresas, escopoGerente, gerenteComercialId, recortes));
 }

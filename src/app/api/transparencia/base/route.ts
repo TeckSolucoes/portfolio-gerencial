@@ -5,6 +5,7 @@ import { gravarBase, origemValida } from '@/lib/transparencia/painel';
 import { registrarAuditoria } from '@/lib/auditoria';
 import { carregarAcesso } from '@/lib/acesso';
 import { podeAcessar } from '@/lib/permissoes';
+import { restricaoOperacaoNominal } from '../autorizacao';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,7 +22,11 @@ export async function POST(req: Request) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ erro: 'Não autenticado.' }, { status: 401 });
   const acesso = await carregarAcesso();
-  if (!acesso || !podeAcessar(acesso, 'transparencia')) return NextResponse.json({ erro: 'Sem permissão.' }, { status: 403 });
+  if (!acesso) return NextResponse.json({ erro: 'Não autenticado.' }, { status: 401 });
+  const restricao = restricaoOperacaoNominal(acesso.perfil);
+  if (restricao) return NextResponse.json({ erro: restricao.erro }, { status: restricao.status });
+  const usuario = session.user;
+  if (!podeAcessar(acesso, 'transparencia')) return NextResponse.json({ erro: 'Sem permissão.' }, { status: 403 });
 
   const form = await req.formData().catch(() => null);
   const origem = form?.get('origem');
@@ -31,8 +36,8 @@ export async function POST(req: Request) {
   if (arquivo.size > LIMITE_BYTES) return NextResponse.json({ erro: 'Arquivo acima de 50 MB. Exporte só as colunas necessárias.' }, { status: 413 });
 
   try {
-    const r = await gravarBase(origem, arquivo.name, decodificar(await arquivo.arrayBuffer()), session.user.email ?? null);
-    await registrarAuditoria(session.user, {
+    const r = await gravarBase(origem, arquivo.name, decodificar(await arquivo.arrayBuffer()), usuario.email ?? null);
+    await registrarAuditoria(usuario, {
       acao: 'Base de clientes importada',
       rota: '/transparencia',
       detalhes: `${origem} · ${arquivo.name} · ${r.linhas.length} linhas`,

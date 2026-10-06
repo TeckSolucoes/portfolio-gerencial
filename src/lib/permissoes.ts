@@ -9,7 +9,9 @@ export interface Acesso {
   perfil: Perfil;
   nome: string;
   empresas: Empresa[]; // já resolvido: superadmin recebe todas
-  escopoGerente: string | null; // primeiro nome do gerente; limita o usuário à turma dele
+  escopoGerente: string | null; // nome oficial; texto legado apenas durante a migração
+  gerenteComercialId: string | null;
+  gerenteComercialEmpresa: Empresa | null;
   funcionalidades: Record<Funcionalidade, boolean>;
 }
 
@@ -30,15 +32,25 @@ export function montarAcesso(u: {
   displayName: string;
   empresas: string;
   escopoGerente: string | null;
+  gerenteComercialId?: string | null;
+  gerenteComercial?: { nome: string; empresa: string; ativo: boolean } | null;
   permissoesPerfil?: RegraFuncionalidade[];
   permissoesUsuario?: RegraFuncionalidade[];
 }): Acesso {
+  const empresasCadastradas = u.role === 'superadmin' ? [...EMPRESAS] : lerEmpresas(u.empresas);
+  const nomeDoGerente = u.gerenteComercial?.nome ?? null;
+  const empresaDoGerente = u.gerenteComercial?.ativo && (EMPRESAS as readonly string[]).includes(u.gerenteComercial.empresa)
+    ? u.gerenteComercial.empresa as Empresa : null;
+  const gerenteOficialValido = u.role !== 'superadmin' && !!u.gerenteComercialId && !!empresaDoGerente && empresasCadastradas.includes(empresaDoGerente);
+  const vinculoOficialInvalido = u.role !== 'superadmin' && !!u.gerenteComercialId && !gerenteOficialValido;
   return {
     userId: u.id,
     perfil: u.role,
     nome: u.displayName,
-    empresas: u.role === 'superadmin' ? [...EMPRESAS] : lerEmpresas(u.empresas),
-    escopoGerente: u.escopoGerente?.trim() ? u.escopoGerente.trim() : null,
+    empresas: vinculoOficialInvalido ? [] : gerenteOficialValido ? [empresaDoGerente] : empresasCadastradas,
+    escopoGerente: gerenteOficialValido ? nomeDoGerente! : vinculoOficialInvalido ? null : u.escopoGerente?.trim() ? u.escopoGerente.trim() : null,
+    gerenteComercialId: gerenteOficialValido ? u.gerenteComercialId ?? null : null,
+    gerenteComercialEmpresa: gerenteOficialValido ? empresaDoGerente : null,
     funcionalidades: resolverFuncionalidades(u.permissoesPerfil ?? [], u.permissoesUsuario ?? []),
   };
 }
@@ -51,13 +63,19 @@ export function podeVerEmpresa(a: Acesso, empresa: Empresa | null): boolean {
   return empresa !== null && a.empresas.includes(empresa);
 }
 
-const primeiroNome = (s: string) =>
-  s.normalize('NFD').replace(/\p{Diacritic}/gu, '').trim().split(/\s+/)[0]?.toUpperCase() ?? '';
+const nomeNormalizado = (s: string) => s.normalize('NFD').replace(/\p{Diacritic}/gu, '').trim().replace(/\s+/g, ' ').toUpperCase();
 
 // "Geral" é a visão da empresa inteira: quem tem escopo de gerente não a vê.
-export function podeVerAba(a: Acesso, aba: string): boolean {
-  if (a.perfil === 'superadmin' || !a.escopoGerente) return true;
-  return aba !== 'Geral' && primeiroNome(aba) === primeiroNome(a.escopoGerente);
+export function podeVerAba(a: Acesso, aba: string, gerenteComercialId?: string): boolean {
+  if (a.perfil === 'superadmin') return true;
+  if (a.empresas.length === 0) return false;
+  if (a.gerenteComercialId) {
+    return aba !== 'Geral' && !!gerenteComercialId && a.gerenteComercialId === gerenteComercialId;
+  }
+  if (!a.escopoGerente) return a.perfil !== 'gerente';
+  // Um nome legado não identifica qual cadastro oficial pertence ao usuário.
+  if (gerenteComercialId) return false;
+  return aba !== 'Geral' && nomeNormalizado(aba) === nomeNormalizado(a.escopoGerente);
 }
 
 export const abasPermitidas = <T extends string>(a: Acesso, abas: readonly T[]): T[] => abas.filter((x) => podeVerAba(a, x));

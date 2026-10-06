@@ -4,10 +4,11 @@ import type { RowDataPacket } from 'mysql2/promise';
 import { consultarFrontV2, consultarFuncaoEmLotes } from '@/lib/bases/conexoes';
 import { criarCache } from '@/lib/cache/memoria';
 import type { Empresa } from '@/lib/empresas';
+import { listarRecortesGerenteNaFonte, listarValoresGerenteNaFonte, resolverHierarquiaNaData, resolverAliasesERegistrarPendencias, obterVersaoHierarquia } from '@/lib/hierarquia/servico';
 import { gravarCache, lerCache } from '@/lib/workers/cache';
 import { normalizarProduto } from './casos';
-import { escopoGerente, montarRelatorio } from './relatorio';
-import { mesclarPropostas, type SnapshotPropostas } from './snapshot';
+import { escopoGerente, escopoGerentePorId, montarRelatorio } from './relatorio';
+import { aplicarEstadosFuncao, mesclarPropostas, watermarkSql, type EstadoFuncaoAtual, type SnapshotPropostas } from './snapshot';
 import type { Proposta, Relatorio } from './types';
 
 interface LinhaDiaria extends RowDataPacket {
@@ -75,7 +76,7 @@ const cacheTotaisGerais = criarCache<{ vendas: { qtd: number; valor: number }; c
 
 const hojeSp = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(new Date());
 
-async function consultarPropostasDaFuncao(numeros: string[]): Promise<LinhaFuncao[]> {
+async function consultarPropostasDaFuncao(numeros: string[], ate: string): Promise<LinhaFuncao[]> {
   const unicos = [...new Set(numeros.map((numero) => numero.trim()).filter(Boolean))];
   const consultas = [];
   for (let i = 0; i < unicos.length; i += TAMANHO_LOTE_FUNCAO) {
@@ -85,27 +86,57 @@ async function consultarPropostasDaFuncao(numeros: string[]): Promise<LinhaFunca
       sql: `WITH liberacoes AS (
               SELECT NumeroProposta, SUM(Valor) AS valor_liberado, DATE(MIN(created_at)) AS data_integracao
               FROM releases
-              WHERE deleted_at IS NULL AND NumeroProposta IN (${marcadores})
+              WHERE deleted_at IS NULL AND created_at < DATE_ADD(?, INTERVAL 1 DAY) AND NumeroProposta IN (${marcadores})
               GROUP BY NumeroProposta
             )
             SELECT p.NumeroProposta,
               p.SituacaoPropostaEsteira AS status_funcao_raw,
               f.SituacaoEsteira AS status_funcao,
               COALESCE(NULLIF(f.last_activity_description, ''), NULLIF(f.Descricao, ''), f.SituacaoEsteira) AS esteira_funcao,
-              COALESCE(l.valor_liberado, 0) AS valor_liberado,
-              COALESCE(l.data_integracao, CASE WHEN p.SituacaoPropostaEsteira = 'INT' THEN DATE(p.updated_at) END) AS data_integracao
+              l.valor_liberado AS valor_liberado,
+              l.data_integracao AS data_integracao
             FROM proposals p
             LEFT JOIN function_mat_information f
-              ON f.NumeroProposta = p.NumeroProposta AND f.deleted_at IS NULL
+              ON f.id = (
+                SELECT f2.id
+                FROM function_mat_information f2
+                WHERE f2.NumeroProposta = p.NumeroProposta AND f2.deleted_at IS NULL
+                ORDER BY f2.updated_at DESC, f2.id DESC
+                LIMIT 1
+              )
             LEFT JOIN liberacoes l ON l.NumeroProposta = p.NumeroProposta
             WHERE p.deleted_at IS NULL AND p.NumeroProposta IN (${marcadores})`,
-      parametros: [...lote, ...lote],
+      parametros: [ate, ...lote, ...lote],
     });
   }
   return consultas.length ? consultarFuncaoEmLotes<LinhaFuncao>(consultas) : [];
 }
 
-async function buscarPropostasAoVivo(empresa: Empresa, ref: string, inicio = inicioDaJanela(ref)): Promise<Proposta[]> {
+async function consultarMudancasDaFuncao(numeros: string[], desde: string, ate: string) {
+  const sincronizadaEm = new Date().toISOString();
+  const consultas = [];
+  const unicos = [...new Set(numeros.filter(Boolean))];
+  const watermark = watermarkSql(desde);
+  const limite = watermarkSql(sincronizadaEm);
+  for (let i = 0; i < unicos.length; i += TAMANHO_LOTE_FUNCAO) {
+    const lote = unicos.slice(i, i + TAMANHO_LOTE_FUNCAO);
+    const marcadores = lote.map(() => '?').join(', ');
+    consultas.push({
+      sql: ['proposals', 'function_mat_information', 'releases'].map((tabela) =>
+        `SELECT NumeroProposta FROM ${tabela} WHERE NumeroProposta IN (${marcadores}) AND updated_at >= DATE_SUB(?, INTERVAL 5 MINUTE) AND updated_at <= ?`
+      ).join(' UNION '),
+      parametros: [ ...lote, watermark, limite, ...lote, watermark, limite, ...lote, watermark, limite ],
+    });
+  }
+  const alteradas = consultas.length ? await consultarFuncaoEmLotes<LinhaFuncao>(consultas) : [];
+  const ids = [...new Set(alteradas.map((linha) => String(linha.NumeroProposta)))];
+  const atuais = (await consultarPropostasDaFuncao(ids, ate)).map(estadoDaLinhaFuncao);
+  const presentes = new Set(atuais.map((estado) => estado.numero));
+  const removidas = ids.filter((id) => !presentes.has(id)).map((numero) => ({ numero, integrada: false, cancelada: false, esteiraReprovada: false }));
+  return { estados: [...atuais, ...removidas], sincronizadaEm };
+}
+
+async function buscarLinhasFront(empresa: Empresa, ref: string, inicio = inicioDaJanela(ref)): Promise<LinhaDiaria[]> {
   const prefixoEquipe = empresa === 'AKRK' ? 'AKRK - %' : empresa === 'DIG' ? 'DIG - %' : '__sem_acesso__';
   const linhas = await consultarFrontV2<LinhaDiaria[]>(
     `SELECT
@@ -141,23 +172,25 @@ async function buscarPropostasAoVivo(empresa: Empresa, ref: string, inicio = ini
     [inicio, ref, prefixoEquipe],
   );
   if (linhas.length > LIMITE) throw new Error('O recorte ultrapassou 50 mil propostas. Reduza a janela do relatório.');
+  return linhas;
+}
 
-  const numeros = [...new Set(linhas.map((linha) => String(linha.numero ?? '').trim()).filter(Boolean))];
-  const funcao = await consultarPropostasDaFuncao(numeros);
-  const porNumero = new Map(funcao.map((linha) => [String(linha.NumeroProposta ?? '').trim(), linha]));
+function montarPropostas(linhas: readonly LinhaDiaria[], estados: readonly EstadoFuncaoAtual[]): Proposta[] {
+  const porNumero = new Map(estados.map((estado) => [estado.numero, estado]));
   const propostas: Proposta[] = [];
 
   for (const linha of linhas) {
     const produto = normalizarProduto(String(linha.produto ?? ''));
     const numero = String(linha.numero ?? '').trim();
     const atual = porNumero.get(numero);
-    const statusFuncao = semAcento(atual?.status_funcao ?? linha.status_funcao_v2);
-    const statusRaw = semAcento(atual?.status_funcao_raw);
+    const statusFuncaoV2 = semAcento(linha.status_funcao_v2);
     const statusFront = String(linha.status_front ?? '').trim();
     const statusFrontNormal = semAcento(statusFront);
-    const esteira = String(atual?.esteira_funcao ?? linha.esteira_v2 ?? '').trim();
+    const esteira = String(atual?.esteira ?? linha.esteira_v2 ?? '').trim();
     const esteiraNormal = semAcento(esteira);
-    const cancelada = statusRaw === 'CAN' || statusFuncao.includes('CANCEL') || statusFrontNormal.includes('CANCEL');
+    const integrada = atual?.integrada === true || statusFuncaoV2.includes('INTEGRAD') || statusFrontNormal.includes('INTEGRAD');
+    const cancelada = atual?.cancelada === true || statusFuncaoV2.includes('CANCEL') || statusFrontNormal.includes('CANCEL');
+    const dataIntegracao = atual?.dataIntegracao;
     propostas.push({
       numero: numero || String(linha.id_front),
       cpf: String(linha.cpf ?? ''),
@@ -165,7 +198,8 @@ async function buscarPropostasAoVivo(empresa: Empresa, ref: string, inicio = ini
       produto,
       modalidade: String(linha.modalidade ?? ''),
       data: linha.data,
-      dataIntegracao: atual?.data_integracao ? String(atual.data_integracao).slice(0, 10) : undefined,
+      dataIntegracao,
+      valorLiberado: atual?.valorLiberado,
       hora: linha.hora,
       valor: numeroPtBr(linha.valor),
       gerente: String(linha.gerente ?? '(não informado)'),
@@ -175,11 +209,14 @@ async function buscarPropostasAoVivo(empresa: Empresa, ref: string, inicio = ini
       status: statusFront || '(não informado)',
       esteira,
       temCodigoFuncao: Boolean(numero),
-      integrada: statusRaw === 'INT' || statusFuncao.includes('INTEGRAD') || statusFrontNormal.includes('INTEGRAD'),
+      conciliadaFuncao: Boolean(atual),
+      estadoFuncao: atual ? { integrada: atual.integrada, cancelada: atual.cancelada, esteiraReprovada: atual.esteiraReprovada } : undefined,
+      hierarquiaInformada: [linha.gerente, linha.equipe, linha.operador].every((valor) => String(valor ?? '').trim() !== ''),
+      integrada,
       excecao: ['1', 'TRUE', 'SIM'].includes(semAcento(linha.excecao)),
       cancelada,
       frontReprovado: statusFrontNormal.includes('REPROV'),
-      esteiraReprovada: statusRaw === 'REP' || statusFuncao.includes('REPROV') || esteiraNormal.includes('REPROV'),
+      esteiraReprovada: atual?.esteiraReprovada === true || statusFuncaoV2.includes('REPROV') || esteiraNormal.includes('REPROV'),
       motivoCancFront: String(linha.motivo_funcao ?? ''),
       motivoCancelamento: String(linha.motivo_funcao ?? ''),
       dataCancelamento: cancelada ? String(linha.data_cancelamento ?? '') : '',
@@ -189,11 +226,60 @@ async function buscarPropostasAoVivo(empresa: Empresa, ref: string, inicio = ini
   return propostas;
 }
 
-const idSnapshot = (empresa: Empresa) => `relatorio-propostas-v2-${empresa.toLowerCase()}`;
+function estadoDaLinhaFuncao(atual: LinhaFuncao): EstadoFuncaoAtual {
+  const statusFuncao = semAcento(atual.status_funcao);
+  const statusRaw = semAcento(atual.status_funcao_raw);
+  const esteira = String(atual.esteira_funcao ?? '').trim();
+  const esteiraNormal = semAcento(esteira);
+  return {
+    numero: String(atual.NumeroProposta ?? '').trim(),
+    dataIntegracao: atual.data_integracao ? String(atual.data_integracao).slice(0, 10) : undefined,
+    valorLiberado: atual.valor_liberado == null ? undefined : numeroPtBr(atual.valor_liberado),
+    esteira: esteira || undefined,
+    integrada: statusRaw === 'INT' || statusFuncao.includes('INTEGRAD'),
+    cancelada: statusRaw === 'CAN' || statusFuncao.includes('CANCEL'),
+    esteiraReprovada: statusRaw === 'REP' || statusFuncao.includes('REPROV') || esteiraNormal.includes('REPROV'),
+  };
+}
 
-async function consultarTotaisGerais(empresa: Empresa, escopo: string) {
+function estadoDaProposta(proposta: Proposta): EstadoFuncaoAtual | null {
+  if (!proposta.temCodigoFuncao || proposta.conciliadaFuncao !== true) return null;
+  return {
+    numero: proposta.numero,
+    dataIntegracao: proposta.dataIntegracao,
+    valorLiberado: proposta.valorLiberado,
+    esteira: proposta.esteira || undefined,
+    integrada: proposta.estadoFuncao?.integrada ?? false,
+    cancelada: proposta.estadoFuncao?.cancelada ?? false,
+    esteiraReprovada: proposta.estadoFuncao?.esteiraReprovada ?? false,
+  };
+}
+
+async function buscarPropostasAoVivo(empresa: Empresa, ref: string, inicio = inicioDaJanela(ref)): Promise<Proposta[]> {
+  const linhas = await buscarLinhasFront(empresa, ref, inicio);
+  const numeros = [...new Set(linhas.map((linha) => String(linha.numero ?? '').trim()).filter(Boolean))];
+  const funcao = await consultarPropostasDaFuncao(numeros, ref);
+  return montarPropostas(linhas, funcao.map(estadoDaLinhaFuncao));
+}
+
+const idSnapshot = (empresa: Empresa) => `relatorio-propostas-v3-${empresa.toLowerCase()}`;
+
+type RecorteHistoricoGerente = { inicio: Date; fim: Date | null; equipes: string[] };
+
+async function consultarTotaisGerais(empresa: Empresa, escopo: string, recortes?: readonly RecorteHistoricoGerente[] | null) {
   const prefixoEquipe = empresa === 'AKRK' ? 'AKRK - %' : empresa === 'DIG' ? 'DIG - %' : '__sem_acesso__';
-  const gerente = escopo === 'Geral' ? null : `${escopo.trim().split(/\s+/)[0]}%`;
+  const parametrosEscopo: unknown[] = [];
+  let filtroEscopo = '';
+  if (recortes) {
+    const validos = recortes.filter((recorte) => recorte.equipes.length > 0);
+    filtroEscopo = validos.length === 0 ? ' AND 1 = 0' : ` AND (${validos.map((recorte) => {
+      parametrosEscopo.push(recorte.inicio, recorte.fim, recorte.fim, ...recorte.equipes);
+      return `(ap.created_at >= ? AND (? IS NULL OR ap.created_at <= ?) AND UPPER(TRIM(t.Equipe)) IN (${recorte.equipes.map(() => 'UPPER(?)').join(', ')}))`;
+    }).join(' OR ')})`;
+  } else if (escopo !== 'Geral') {
+    filtroEscopo = ' AND UPPER(TRIM(t.Gerente)) = UPPER(?)';
+    parametrosEscopo.push(escopo);
+  }
   const linhas = await consultarFrontV2<LinhaTotaisGerais[]>(
     `SELECT COUNT(*) AS qtd,
        COALESCE(SUM(base.valor), 0) AS valor,
@@ -207,17 +293,42 @@ async function consultarTotaisGerais(empresa: Empresa, escopo: string) {
                   THEN 1 ELSE 0 END) AS cancelada
        FROM \`db-atendimento\`.v_tab_atendimento t
        JOIN \`db-atendimento\`.atendimento_propostas ap ON ap.id = t.id_front
-       WHERE t.Equipe LIKE ? AND ap.deleted_at IS NULL
-         AND (? IS NULL OR t.Gerente LIKE ?)
+       WHERE t.Equipe LIKE ? AND ap.deleted_at IS NULL${filtroEscopo}
        GROUP BY ap.id
      ) base`,
-    [prefixoEquipe, gerente, gerente],
+    [prefixoEquipe, ...parametrosEscopo],
   );
   const linha = linhas[0];
   return {
     vendas: { qtd: Number(linha?.qtd ?? 0), valor: numeroPtBr(linha?.valor) },
     cancelados: { qtd: Number(linha?.cancelados_qtd ?? 0), valor: numeroPtBr(linha?.cancelados_valor) },
   };
+}
+
+async function aplicarHierarquiaVersionada(empresa: Empresa, propostas: Proposta[]) {
+  const entradas = propostas.map((proposta, indice) => ({
+    chave: `${indice}:${proposta.numero}`,
+    data: proposta.data,
+    origem: 'front_v2' as const,
+    gerente: proposta.gerente,
+    equipe: proposta.equipe,
+    vendedor: proposta.operador,
+  }));
+  const resolvidas = await resolverHierarquiaNaData(empresa, entradas);
+  return propostas.map((proposta, indice) => {
+    const resolvida = resolvidas.get(`${indice}:${proposta.numero}`);
+    if (!resolvida) return { ...proposta, hierarquiaInformada: false };
+    return {
+      ...proposta,
+      gerente: resolvida.gerenteNome ?? proposta.gerente,
+      equipe: resolvida.equipeNome ?? proposta.equipe,
+      operador: resolvida.vendedorNome ?? proposta.operador,
+      gerenteComercialId: resolvida.gerenteId ?? undefined,
+      equipeComercialId: resolvida.equipeId ?? undefined,
+      vendedorComercialId: resolvida.vendedorId ?? undefined,
+      hierarquiaInformada: resolvida.completa,
+    };
+  });
 }
 
 async function buscarPropostasIncrementais(empresa: Empresa, ref: string): Promise<Proposta[]> {
@@ -228,29 +339,67 @@ async function buscarPropostasIncrementais(empresa: Empresa, ref: string): Promi
   const id = idSnapshot(empresa);
   const salvo = await lerCache<SnapshotPropostas>(id);
   if (!salvo || salvo.dados.ref !== ref) {
+    const funcaoSincronizadaEm = new Date().toISOString();
     const propostas = await buscarPropostasAoVivo(empresa, ref);
-    await gravarCache(id, { ref, propostas } satisfies SnapshotPropostas);
+    await gravarCache(id, { ref, propostas, funcaoSincronizadaEm } satisfies SnapshotPropostas);
     return propostas;
   }
 
-  // Durante o dia, o Front e o Função recebem somente as propostas de hoje. Elas são
-  // inseridas ou substituídas no snapshot; a consolidação completa volta a ocorrer no
-  // primeiro acesso do dia seguinte.
-  const recentes = await buscarPropostasAoVivo(empresa, ref, ref);
-  const propostas = mesclarPropostas(salvo.dados.propostas, recentes);
-  await gravarCache(id, { ref, propostas } satisfies SnapshotPropostas);
+  const desde = salvo.dados.funcaoSincronizadaEm ?? salvo.geradoEm;
+  const [linhasDoDia, mudancas] = await Promise.all([
+    buscarLinhasFront(empresa, ref, ref),
+    consultarMudancasDaFuncao(salvo.dados.propostas.filter((proposta) => proposta.temCodigoFuncao).map((proposta) => proposta.numero), desde, ref),
+  ]);
+  const anterioresAtualizadas = aplicarEstadosFuncao(salvo.dados.propostas, mudancas.estados, { ausentes: 'preservar' });
+
+  const conhecidas = new Set(anterioresAtualizadas.map((proposta) => proposta.numero));
+  const numerosNovos = linhasDoDia
+    .map((linha) => String(linha.numero ?? '').trim())
+    .filter((numero) => numero && !conhecidas.has(numero));
+  const estadosNovos = (await consultarPropostasDaFuncao(numerosNovos, ref)).map(estadoDaLinhaFuncao);
+  const estadosAtuais = anterioresAtualizadas.map(estadoDaProposta).filter((estado): estado is EstadoFuncaoAtual => estado !== null);
+  const recentes = montarPropostas(linhasDoDia, [...estadosAtuais, ...estadosNovos]);
+  const propostas = mesclarPropostas(anterioresAtualizadas, recentes);
+  await gravarCache(id, { ref, propostas, funcaoSincronizadaEm: mudancas.sincronizadaEm } satisfies SnapshotPropostas);
   return propostas;
 }
 
-export async function carregarRelatorioAoVivo(empresa: Empresa, ref: string, escopo: string): Promise<Relatorio> {
+export async function carregarRelatorioAoVivo(empresa: Empresa, ref: string, escopo: string, gerenteComercialId?: string | null): Promise<Relatorio> {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(ref)) throw new Error('Data inválida.');
+  const [gerenteOficial, recortesGerente] = gerenteComercialId
+    ? await Promise.all([
+        listarValoresGerenteNaFonte(gerenteComercialId, empresa, 'front_v2'),
+        listarRecortesGerenteNaFonte(gerenteComercialId, empresa, 'front_v2'),
+      ])
+    : [null, null];
+  if (gerenteComercialId && !gerenteOficial) throw new Error('Gerente comercial inválido para esta empresa.');
   const ttl = ref === hojeSp() ? TTL_HOJE_MS : TTL_DIA_FECHADO_MS;
-  const [propostas, totaisGerais] = await Promise.all([
+  const versaoHierarquia = await obterVersaoHierarquia([empresa]);
+  const versaoRecortes = recortesGerente?.map((recorte) => `${recorte.inicio.toISOString()}:${recorte.fim?.toISOString() ?? ''}:${[...recorte.equipes].sort().join('|')}`).join(';') ?? '';
+  const [propostasBrutas, totaisGerais] = await Promise.all([
     cachePropostas.obter(`${empresa}:${ref}`, ttl, () => buscarPropostasIncrementais(empresa, ref)),
-    cacheTotaisGerais.obter(`${empresa}:${escopo}`, TTL_DIA_FECHADO_MS, () => consultarTotaisGerais(empresa, escopo)),
+    cacheTotaisGerais.obter(`${empresa}:${gerenteComercialId ?? escopo}:${versaoRecortes}:${versaoHierarquia}`, TTL_DIA_FECHADO_MS, () => consultarTotaisGerais(empresa, escopo, recortesGerente)),
   ]);
-  const relatorio = montarRelatorio(propostas, ref, escopo === 'Geral' ? null : escopoGerente(escopo));
+  const propostas = await aplicarHierarquiaVersionada(empresa, propostasBrutas);
+  const filtro = escopo === 'Geral'
+    ? null
+    : gerenteOficial
+      ? escopoGerentePorId(gerenteOficial.nome, gerenteComercialId!)
+      : escopoGerente(escopo);
+  const relatorio = montarRelatorio(propostas, ref, filtro);
   relatorio.kpis.vendasGeral = totaisGerais.vendas;
   relatorio.kpis.canceladosGeral = totaisGerais.cancelados;
   return relatorio;
+}
+
+export async function reconciliarHierarquiaDoSnapshot(empresa: Empresa): Promise<{ propostas: number; referencia: string | null }> {
+  const salvo = await lerCache<SnapshotPropostas>(idSnapshot(empresa));
+  if (!salvo) return { propostas: 0, referencia: null };
+  const itens = salvo.dados.propostas.flatMap((proposta) => [
+    { tipo: 'gerente' as const, origem: 'front_v2' as const, valor: proposta.gerente },
+    { tipo: 'equipe' as const, origem: 'front_v2' as const, valor: proposta.equipe },
+    { tipo: 'vendedor' as const, origem: 'front_v2' as const, valor: proposta.operador },
+  ]);
+  await resolverAliasesERegistrarPendencias(empresa, itens);
+  return { propostas: salvo.dados.propostas.length, referencia: salvo.dados.ref };
 }

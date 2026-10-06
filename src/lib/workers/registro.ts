@@ -7,6 +7,7 @@ import { coletarCadastros, coletarMencoes, coletarSancoes } from '../juridico';
 import { normalizarChavePortal } from '../portalTransparencia';
 import type { Worker } from './tipos';
 import { validarSaudeBases } from '../bases/saude';
+import { reconciliarHierarquiaDoSnapshot } from '../relatorio/aoVivo';
 import { dispararRelatorioAgendado, ID_WORKER_WHATSAPP, lerConfigWhatsapp } from '../whatsapp/envio';
 
 // Fonte que respondeu vazio = coleta ok com 0 itens; fonte que não respondeu (null) = erro.
@@ -187,13 +188,31 @@ const juridicoWorkers: Worker[] = [
   },
 ];
 
+const hierarquiaWorkers: Worker[] = [
+  {
+    id: 'hierarquia-conciliacao',
+    nome: 'Estrutura Comercial · Nomes sem vínculo',
+    grupo: 'Integrações',
+    descricao: 'Revisa os nomes dos snapshots locais de AKRK e DIG, sem consultar os bancos externos. Liga, desliga e agenda pela tela de Workers.',
+    ativoPadrao: false,
+    executar: async () => {
+      const resultados = [];
+      for (const empresa of ['AKRK', 'DIG'] as const) {
+        resultados.push({ empresa, ...await reconciliarHierarquiaDoSnapshot(empresa) });
+      }
+      const itens = resultados.reduce((total, item) => total + item.propostas, 0);
+      return { itens, mensagem: `${itens} propostas locais revisadas`, dados: resultados };
+    },
+  },
+];
+
 // Manda mensagem para fora (CEO): nasce desligado e só liga pela aba WhatsApp, depois de configurado.
 const whatsappWorkers: Worker[] = [
   {
     id: ID_WORKER_WHATSAPP,
     nome: 'WhatsApp · Relatório diário',
     grupo: 'WhatsApp',
-    descricao: 'Envia o resumo do dia pela W-API. Consolida 32 dias na primeira execução diária e, depois, consulta somente as propostas do dia.',
+    descricao: 'Envia o resumo do dia pela W-API. Usa janela de 32 dias e atualizações da Função para conciliar alterações operacionais.',
     ativoPadrao: false,
     janelaMs: 15 * 60_000,
     pendencia: async () => ((await lerConfigWhatsapp()) ? null : 'Configure a W-API e os destinatários na aba WhatsApp.'),
@@ -201,6 +220,6 @@ const whatsappWorkers: Worker[] = [
   },
 ];
 
-export const WORKERS: Worker[] = [...noticiasWorkers, ...mercadoWorkers, ...diarioWorkers, ...transparenciaWorkers, ...juridicoWorkers, ...integracaoWorkers, ...whatsappWorkers];
+export const WORKERS: Worker[] = [...noticiasWorkers, ...mercadoWorkers, ...diarioWorkers, ...transparenciaWorkers, ...juridicoWorkers, ...integracaoWorkers, ...hierarquiaWorkers, ...whatsappWorkers];
 
 export const workerPorId = (id: string) => WORKERS.find((w) => w.id === id);

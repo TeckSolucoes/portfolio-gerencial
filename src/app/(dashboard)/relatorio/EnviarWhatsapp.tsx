@@ -5,7 +5,7 @@ import { BolhaWhatsapp } from '@/components/BolhaWhatsapp';
 import { enviarRelatorioWhatsapp, previaWhatsapp } from './actions';
 
 // Abre a prévia da mensagem; só envia depois de o usuário ver o texto e confirmar.
-export function EnviarWhatsapp({ empresa, escopo, rotulo, data, destinatarios }: { empresa: string; escopo: string; rotulo: string; data: string; destinatarios: number }) {
+export function EnviarWhatsapp({ empresa, escopo, gerenteComercialId, rotulo, data, destinatarios }: { empresa: string; escopo: string; gerenteComercialId?: string | null; rotulo: string; data: string; destinatarios: number }) {
   const dialogo = useRef<HTMLDialogElement>(null);
   const [aberto, setAberto] = useState(false);
   const [previa, setPrevia] = useState<string[] | null>(null);
@@ -19,7 +19,7 @@ export function EnviarWhatsapp({ empresa, escopo, rotulo, data, destinatarios }:
     dialogo.current?.showModal();
     setAberto(true);
     startPrevia(async () => {
-      const r = await previaWhatsapp(empresa, escopo, data);
+      const r = await previaWhatsapp(empresa, escopo, data, gerenteComercialId);
       if (r.ok) setPrevia(r.mensagens);
       else setResultado({ ok: false, mensagem: r.mensagem });
     });
@@ -27,7 +27,7 @@ export function EnviarWhatsapp({ empresa, escopo, rotulo, data, destinatarios }:
 
   const enviar = () =>
     startEnvio(async () => {
-      const r = await enviarRelatorioWhatsapp(empresa, escopo, data);
+      const r = await enviarRelatorioWhatsapp(empresa, escopo, data, gerenteComercialId);
       setResultado(r);
       if (r.ok) dialogo.current?.close();
     });

@@ -1,11 +1,19 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { construirCasos, normalizarCpf, normalizarProduto, tipoDe } from './casos';
-import { escopoGerente, montarRelatorio } from './relatorio';
+import { escopoGerente, escopoGerentePorValores, montarRelatorio } from './relatorio';
 import type { Proposta } from './types';
 
 // Dados sintéticos: só existem pra provar as regras, não representam venda real.
 let seq = 1000;
+
+test('escopo oficial reconhece apenas nome completo ou alias cadastrado', () => {
+  const escopo = escopoGerentePorValores('Luana Cosme', ['Luana Cosme', 'LUANA C. MEDEIROS']);
+  assert.equal(escopo.corresponde('Luana Cosme'), true);
+  assert.equal(escopo.corresponde('Luana C. Medeiros'), true);
+  assert.equal(escopo.corresponde('Luana Silva'), false);
+});
+
 function p(over: Partial<Proposta> = {}): Proposta {
   seq += 1;
   return {
@@ -156,8 +164,73 @@ test('pagos e ranking seguem a data de integração, não a criação da propost
     '2026-10-02',
   );
   assert.deepEqual(r.kpis.pagosMes, { qtd: 1, valor: 300 });
+  assert.deepEqual(r.kpis.integradoContratadoMes, { qtd: 1, valor: 300 });
   assert.equal(r.rankingPagos.convenio?.nome, 'Convênio Outubro');
   assert.equal(r.rankingPagos.convenio?.pct, 1);
+});
+
+test('valor liberado soma releases já consolidadas e informa cobertura parcial', () => {
+  const r = montarRelatorio(
+    [
+      p({ cpf: '1', integrada: true, dataIntegracao: '2026-10-01', valor: 100, valorLiberado: 90 }),
+      p({ cpf: '2', integrada: true, dataIntegracao: '2026-10-02', valor: 200 }),
+      p({ cpf: '3', integrada: true, dataIntegracao: '2026-10-03', valor: 300, valorLiberado: 250 }),
+    ],
+    '2026-10-05',
+  );
+  assert.deepEqual(r.kpis.integradoContratadoMes, { qtd: 3, valor: 600 });
+  assert.deepEqual(r.kpis.valorLiberadoMes, { qtd: 2, valor: 340, totalIntegradas: 3, completo: false });
+});
+
+test('valor liberado fica indisponível quando nenhuma integrada possui release', () => {
+  const r = montarRelatorio([p({ integrada: true, dataIntegracao: '2026-10-01', valor: 100 })], '2026-10-05');
+  assert.equal(r.kpis.valorLiberadoMes, null);
+});
+
+test('qualidade resume conciliação e hierarquia sem expor dados pessoais', () => {
+  const r = montarRelatorio(
+    [
+      p({ cpf: '1', temCodigoFuncao: true, conciliadaFuncao: true, hierarquiaInformada: true }),
+      p({ cpf: '2', conciliadaFuncao: false, hierarquiaInformada: false, data: '2026-09-11' }),
+    ],
+    '2026-09-12',
+  );
+  assert.deepEqual(r.qualidade, {
+    totalPropostas: 2,
+    integradasSemData: 0,
+    comCodigoFuncao: 1,
+    semCodigoFuncao: 1,
+    conciliadasFuncao: 1,
+    codigosNaoEncontrados: 0,
+    semCorrespondenciaFuncao: 0,
+    hierarquiaInformada: 1,
+    hierarquiaNaoInformada: 1,
+    periodoInicio: '2026-09-10',
+    periodoFim: '2026-09-12',
+    fonte: 'Front V2 × Função',
+  });
+  assert.ok(!JSON.stringify(r.qualidade).includes('11111111111'));
+});
+
+test('qualidade separa proposta sem código de código não localizado na Função', () => {
+  const r = montarRelatorio([
+    p({ cpf: '1', temCodigoFuncao: false, conciliadaFuncao: false }),
+    p({ cpf: '2', temCodigoFuncao: true, conciliadaFuncao: false }),
+    p({ cpf: '3', temCodigoFuncao: true, conciliadaFuncao: true }),
+  ], '2026-09-12');
+  assert.equal(r.qualidade.semCodigoFuncao, 1);
+  assert.equal(r.qualidade.comCodigoFuncao, 2);
+  assert.equal(r.qualidade.codigosNaoEncontrados, 1);
+  assert.equal(r.qualidade.semCorrespondenciaFuncao, 1);
+});
+
+test('escopo por ID não aceita homônimo nem gerente sem vínculo oficial', () => {
+  const r = montarRelatorio([
+    p({ cpf: '1', gerente: 'Maria Silva', gerenteComercialId: 'g-1', valor: 100 }),
+    p({ cpf: '2', gerente: 'Maria Silva', gerenteComercialId: 'g-2', valor: 200 }),
+    p({ cpf: '3', gerente: 'Maria Silva', valor: 300 }),
+  ], '2026-09-10', { nome: 'Maria Silva', corresponde: (_nome, id) => id === 'g-1' });
+  assert.deepEqual(r.kpis.total, { qtd: 1, valor: 100 });
 });
 
 test('venda do dia: nova x reinserida, e Front x CCNET com etapas', () => {
@@ -219,7 +292,7 @@ test('gerente: venda do dia pelo gerente da proposta, caso pelo gerente do lote'
     p({ cpf: '1', data: '2026-09-05', gerente: 'LUANA COSME MEDEIROS', equipe: 'A' }),
     p({ cpf: '1', data: '2026-09-10', gerente: 'DANIEL MANSUR', equipe: 'B', valor: 80 }),
   ];
-  const luana = montarRelatorio(props, '2026-09-10', escopoGerente('Luana Cosme'));
+  const luana = montarRelatorio(props, '2026-09-10', escopoGerente('Luana Cosme Medeiros'));
   const daniel = montarRelatorio(props, '2026-09-10', escopoGerente('Daniel Mansur'));
   assert.equal(luana.kpis.total.qtd, 0);
   assert.equal(luana.resumoMes.inseriu, 1);
@@ -230,8 +303,9 @@ test('gerente: venda do dia pelo gerente da proposta, caso pelo gerente do lote'
 });
 
 test('escopo casa nome sem acento e em qualquer caixa', () => {
-  assert.ok(escopoGerente('Marcos Mota').corresponde('marcos mota de souza'));
+  assert.ok(escopoGerente('Marcos Mota').corresponde('marcos mota'));
   assert.ok(escopoGerente('José Lima').corresponde('JOSE LIMA'));
+  assert.ok(!escopoGerente('Marcos Mota').corresponde('marcos mota de souza'));
   assert.ok(!escopoGerente('Luana Cosme').corresponde('DANIEL MANSUR'));
 });
 

@@ -15,15 +15,22 @@ export interface Proposta {
   modalidade: string;
   data: string; // YYYY-MM-DD, data de referência da inserção
   dataIntegracao?: string; // YYYY-MM-DD, quando a proposta passou a Integrada/Paga
+  valorLiberado?: number; // soma das releases; ausente quando a Função não fornece liberação
   hora?: string; // HH:MM:SS quando a fonte traz; desempata propostas do mesmo dia
   valor: number;
   gerente: string;
   equipe: string;
   operador: string;
+  gerenteComercialId?: string;
+  equipeComercialId?: string;
+  vendedorComercialId?: string;
   convenio: string;
   status: string;
   esteira: string;
   temCodigoFuncao: boolean;
+  conciliadaFuncao?: boolean;
+  estadoFuncao?: { integrada: boolean; cancelada: boolean; esteiraReprovada: boolean };
+  hierarquiaInformada?: boolean;
   integrada: boolean;
   excecao: boolean; // Política de Despesa = FRONT EXCEÇÃO
   cancelada: boolean;
@@ -113,7 +120,7 @@ export interface CanceladaOntem {
 
 export interface Escopo {
   nome: string;
-  corresponde: (gerente: string) => boolean;
+  corresponde: (gerente: string, gerenteComercialId?: string | null) => boolean;
 }
 
 export interface Ranking {
@@ -146,8 +153,24 @@ export interface Relatorio {
     canceladosMesPct: number | null;
     canceladosGeral: Soma;
     pagosMes: Soma;
+    integradoContratadoMes: Soma;
+    valorLiberadoMes: (Soma & { totalIntegradas: number; completo: boolean }) | null;
     pagosExcecaoMes: Soma;
     excecaoMes: Soma;
+  };
+  qualidade: {
+    totalPropostas: number;
+    integradasSemData: number;
+    comCodigoFuncao: number;
+    semCodigoFuncao: number;
+    conciliadasFuncao: number;
+    codigosNaoEncontrados: number;
+    semCorrespondenciaFuncao: number;
+    hierarquiaInformada: number;
+    hierarquiaNaoInformada: number;
+    periodoInicio: string;
+    periodoFim: string;
+    fonte: string;
   };
   etapasFront: LinhaSoma[];
   etapasCcnet: LinhaSoma[];

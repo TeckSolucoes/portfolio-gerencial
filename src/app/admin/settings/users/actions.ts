@@ -12,7 +12,7 @@ import type { Funcionalidade } from '@/lib/funcionalidades';
 
 const ROLES: readonly Role[] = ['visualizador', 'gerente', 'superadmin'];
 
-type Acesso = { role: Role; empresas: string; escopoGerente: string | null };
+type Acesso = { role: Role; empresas: string; escopoGerente: null; gerenteComercialId: string | null };
 
 function lerPermissoes(formData: FormData): { funcionalidade: Funcionalidade; permitido: boolean }[] | { error: string } {
   const resultado: { funcionalidade: Funcionalidade; permitido: boolean }[] = [];
@@ -25,7 +25,7 @@ function lerPermissoes(formData: FormData): { funcionalidade: Funcionalidade; pe
   return resultado;
 }
 
-function lerAcesso(formData: FormData): Acesso | { error: string } {
+async function lerAcesso(formData: FormData): Promise<Acesso | { error: string }> {
   const role = String(formData.get('role') ?? 'visualizador') as Role;
   if (!ROLES.includes(role)) return { error: 'Papel inválido.' };
 
@@ -35,11 +35,16 @@ function lerAcesso(formData: FormData): Acesso | { error: string } {
   }
 
   // Superadmin vê tudo e não tem turma: guardar valores aqui só confundiria a lista depois.
-  if (role === 'superadmin') return { role, empresas: gravarEmpresas(EMPRESAS), escopoGerente: null };
+  if (role === 'superadmin') return { role, empresas: gravarEmpresas(EMPRESAS), escopoGerente: null, gerenteComercialId: null };
 
-  const escopo = String(formData.get('escopoGerente') ?? '').trim();
-  if (escopo.length > 60) return { error: 'Nome do gerente muito longo.' };
-  return { role, empresas: gravarEmpresas(pedidas), escopoGerente: escopo || null };
+  const gerenteComercialId = String(formData.get('gerenteComercialId') ?? '').trim() || null;
+  if (role === 'gerente' && !gerenteComercialId) return { error: 'Selecione o gerente comercial deste usuário.' };
+  if (gerenteComercialId) {
+    const gerente = await prisma.gerenteComercial.findUnique({ where: { id: gerenteComercialId }, select: { empresa: true, ativo: true } });
+    if (!gerente?.ativo) return { error: 'Selecione um gerente comercial ativo.' };
+    if (!pedidas.includes(gerente.empresa)) return { error: 'A empresa do gerente comercial deve estar liberada para o usuário.' };
+  }
+  return { role, empresas: gravarEmpresas(pedidas), escopoGerente: null, gerenteComercialId };
 }
 
 
@@ -67,7 +72,7 @@ export async function createUser(_prevState: UserFormState, formData: FormData):
   const password = String(formData.get('password') ?? '');
   const displayName = String(formData.get('displayName') ?? '').trim();
   const displayTitle = String(formData.get('displayTitle') ?? '').trim();
-  const acesso = lerAcesso(formData);
+  const acesso = await lerAcesso(formData);
   if ('error' in acesso) return acesso;
   const permissoes = lerPermissoes(formData);
   if ('error' in permissoes) return permissoes;
@@ -118,7 +123,7 @@ export async function updateUser(
 
   const displayName = String(formData.get('displayName') ?? '').trim();
   const displayTitle = String(formData.get('displayTitle') ?? '').trim();
-  const acesso = lerAcesso(formData);
+  const acesso = await lerAcesso(formData);
   if ('error' in acesso) return acesso;
   const permissoes = lerPermissoes(formData);
   if ('error' in permissoes) return permissoes;
@@ -149,6 +154,21 @@ export async function updateUser(
     detalhes: `${atualizado.email} · perfil ${atualizado.role}`,
   });
 
+  revalidatePath('/admin/settings/users');
+  return undefined;
+}
+
+export async function resetUserPassword(id: string, _prevState: UserFormState, formData: FormData): Promise<UserFormState> {
+  let session;
+  try {
+    session = await requireSuperadminForAction();
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : 'Sem permissão.' };
+  }
+  const newPassword = String(formData.get('newPassword') ?? '');
+  if (newPassword.length < 8) return { error: 'A nova senha precisa ter pelo menos 8 caracteres.' };
+  const atualizado = await prisma.user.update({ where: { id }, data: { passwordHash: bcrypt.hashSync(newPassword, BCRYPT_COST) }, select: { email: true } });
+  await registrarAuditoria(session.user, { acao: 'Senha do usuário atualizada', rota: '/admin/settings/users', detalhes: atualizado.email });
   revalidatePath('/admin/settings/users');
   return undefined;
 }

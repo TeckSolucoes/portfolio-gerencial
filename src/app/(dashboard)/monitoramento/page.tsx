@@ -17,7 +17,11 @@ export default async function MonitoramentoPage() {
 
   let dados;
   try {
-    dados = await carregarMonitoramentoAoVivo(acesso.empresas, acesso.perfil === 'superadmin' ? null : acesso.escopoGerente);
+    dados = await carregarMonitoramentoAoVivo(
+      acesso.empresas,
+      acesso.perfil === 'superadmin' ? null : acesso.escopoGerente,
+      acesso.perfil === 'superadmin' ? null : acesso.gerenteComercialId,
+    );
   } catch (erro) {
     console.error('Falha ao carregar monitoramento ao vivo:', erro);
     return <Aviso titulo="Em Atenção indisponível." texto="Não foi possível consultar o Front V2 agora. Tente novamente em alguns minutos." />;

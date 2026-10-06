@@ -31,6 +31,7 @@ export async function Header({ sidebar = false }: { sidebar?: boolean }) {
     if (acesso && podeAcessar(acesso, 'juridico')) items.push({ href: '/juridico', label: 'Jurídico', icon: 'legal' });
     if (acesso && podeAcessar(acesso, 'sistemas')) items.push({ href: '/sistemas', label: 'Sistemas', icon: 'apps' });
     if (user.role === 'superadmin') items.push({ href: '/admin/settings/users', label: 'Usuários', icon: 'users' });
+    if (acesso && podeAcessar(acesso, 'hierarquia')) items.push({ href: '/admin/hierarquia', label: 'Estrutura Comercial', icon: 'hierarchy' });
     if (acesso && podeAcessar(acesso, 'metas')) items.push({ href: '/admin/metas', label: 'Metas', icon: 'target' });
     if (acesso && podeAcessar(acesso, 'workers')) items.push({ href: '/admin/workers', label: 'Workers', icon: 'workers' });
     if (acesso && podeAcessar(acesso, 'whatsapp')) items.push({ href: '/admin/whatsapp', label: 'WhatsApp', icon: 'whatsapp' });

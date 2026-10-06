@@ -15,7 +15,8 @@ export const carregarAcesso = cache(async (): Promise<Acesso | null> => {
   const u = await prisma.user.findUnique({
     where: { id: session.user.id },
     select: {
-      id: true, role: true, displayName: true, empresas: true, escopoGerente: true,
+      id: true, role: true, displayName: true, empresas: true, escopoGerente: true, gerenteComercialId: true,
+      gerenteComercial: { select: { nome: true, empresa: true, ativo: true } },
       permissoes: { select: { funcionalidade: true, permitido: true } },
     },
   });

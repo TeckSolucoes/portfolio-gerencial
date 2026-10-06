@@ -7,7 +7,7 @@ import { EMPRESAS } from '@/lib/empresas';
 import type { Perfil } from '@/lib/permissoes';
 import { ConfirmDialog } from './Modal';
 import { PERFIS, ResetPasswordDialog, UserFormDrawer, rotuloPerfil } from './UserForms';
-import type { UserDTO } from './UserForms';
+import type { GerenteComercialOption, UserDTO } from './UserForms';
 import type { Funcionalidade } from '@/lib/funcionalidades';
 
 type SortKey = 'nome' | 'perfil';
@@ -132,7 +132,7 @@ function RowMenu({
   );
 }
 
-export function UsersManager({ users, currentUserId, permissoesPerfil }: { users: UserDTO[]; currentUserId: string; permissoesPerfil: Record<Perfil, Record<Funcionalidade, boolean>> }) {
+export function UsersManager({ users, currentUserId, permissoesPerfil, gerentesComerciais }: { users: UserDTO[]; currentUserId: string; permissoesPerfil: Record<Perfil, Record<Funcionalidade, boolean>>; gerentesComerciais: GerenteComercialOption[] }) {
   const [busca, setBusca] = useState('');
   const [fPerfil, setFPerfil] = useState<Perfil | 'todos'>('todos');
   const [fEmpresa, setFEmpresa] = useState<FiltroEmpresa>('todas');
@@ -356,7 +356,9 @@ export function UsersManager({ users, currentUserId, permissoesPerfil }: { users
                     </div>
                   </td>
                   <td data-label="Escopo" className="adm-scope">
-                    {u.role !== 'superadmin' && u.escopoGerente ? `Turma de ${u.escopoGerente}` : '—'}
+                    {u.role !== 'superadmin' && u.gerenteComercialNome
+                      ? `${u.gerenteComercialEmpresa} · ${u.gerenteComercialNome}`
+                      : u.role !== 'superadmin' && u.escopoGerente ? `Legado · ${u.escopoGerente}` : '—'}
                   </td>
                   <td data-label="Última localização" className="adm-location">
                     {u.ultimaLatitude !== null && u.ultimaLongitude !== null ? (
@@ -421,6 +423,7 @@ export function UsersManager({ users, currentUserId, permissoesPerfil }: { users
             })
           }
           permissoesPerfil={permissoesPerfil}
+          gerentesComerciais={gerentesComerciais}
         />
       )}
 

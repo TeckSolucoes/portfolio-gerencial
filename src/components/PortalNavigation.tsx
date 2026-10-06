@@ -8,7 +8,7 @@ import './PortalNavigation.css';
 export type NavigationItem = {
   href: string;
   label: string;
-  icon: 'home' | 'report' | 'radar' | 'guide' | 'news' | 'people' | 'info' | 'costs' | 'settings' | 'users' | 'target' | 'workers' | 'whatsapp' | 'noc' | 'legal' | 'apps';
+  icon: 'home' | 'report' | 'radar' | 'guide' | 'news' | 'people' | 'info' | 'costs' | 'settings' | 'users' | 'hierarchy' | 'target' | 'workers' | 'whatsapp' | 'noc' | 'legal' | 'apps';
   exact?: boolean;
   secondary?: boolean;
 };
@@ -25,6 +25,7 @@ function Icon({ name }: { name: NavigationItem['icon'] | 'menu' | 'close' | 'log
     costs: <><rect x="3" y="5" width="18" height="14" rx="2" /><path d="M3 10h18m-5 5h2" /></>,
     settings: <><path d="M4 6h16M4 12h16M4 18h16" /><circle cx="8" cy="6" r="2" /><circle cx="16" cy="12" r="2" /><circle cx="10" cy="18" r="2" /></>,
     users: <><circle cx="9" cy="8" r="3" /><path d="M3 20a6 6 0 0 1 12 0m2-14a3 3 0 0 1 0 6m1 3a5 5 0 0 1 3 5" /></>,
+    hierarchy: <><rect x="9" y="3" width="6" height="4" rx="1" /><rect x="3" y="17" width="6" height="4" rx="1" /><rect x="15" y="17" width="6" height="4" rx="1" /><path d="M12 7v5M6 17v-2a3 3 0 0 1 3-3h6a3 3 0 0 1 3 3v2" /></>,
     target: <><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="5" /><circle cx="12" cy="12" r="1" /></>,
     workers: <><rect x="4" y="4" width="16" height="16" rx="3" /><path d="M9 9h6v6H9zm3-8v3m0 16v3M1 12h3m16 0h3" /></>,
     whatsapp: <><path d="M4 20l1.3-3.9A8 8 0 1 1 8 19l-4 1Z" /><path d="M9 10c.5 2 2 3.5 4 4l1.2-1.2 2 .9-.4 1.6c-3.6.3-7.2-3.3-6.9-6.9l1.6-.4.9 2L9 10Z" /></>,

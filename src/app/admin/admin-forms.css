@@ -313,7 +313,7 @@ th[aria-sort="ascending"] .adm-sort,th[aria-sort="descending"] .adm-sort{color:v
   .adm-utable:not(.adm-ntable) td[data-label]::before{
     content:attr(data-label);font-family:var(--mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);
   }
-  .adm-utable:not(.adm-ntable) td[data-label="Usuário"]{grid-template-columns:1fr;padding-right:60px;}
+  .adm-utable:not(.adm-ntable) td[data-label="Usuário"]{grid-template-columns:1fr;padding-right:96px;}
   .adm-utable:not(.adm-ntable) td[data-label="Usuário"]::before{display:none;}
   .adm-utable:not(.adm-ntable) td.adm-col-actions{position:absolute;top:6px;right:8px;width:auto;padding:0;display:block;}
   .adm-mtable tbody th{padding-top:12px;}
