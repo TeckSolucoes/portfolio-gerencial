@@ -24,3 +24,13 @@
 - totais do KPI iguais ao drill-down;
 - acesso negativo por perfil, empresa e gerente;
 - desktop e celular.
+
+## Promotoras e Escritório — 07/10/2026
+| ID | Entrega | Responsável | Status | Dependência | Aceite |
+|---|---|---|---|---|---|
+| PROM-01 | Cadastro persistido, validação e histórico | Back-end | IN PROGRESS | — | Sem vínculo cruzado entre empresas; alterações rastreáveis |
+| PROM-02 | Tabela compacta, filtros e diálogo | Front-end/UX | IN PROGRESS | PROM-01 | Cadastro e edição com feedback; acessível em celular |
+| OFFICE-01 | Salas por equipe, presença e mensagens | Full-stack | IN PROGRESS | Hierarquia existente | Sessão determina autor; presença expira; mensagens por sala |
+| PROM-03 | Integração, testes e revisão independente | Orquestrador/QA | IN PROGRESS | anteriores | TypeScript, lint, testes relevantes e build |
+
+08/10/2026: PROM-01 e PROM-02 implementados e revisados; OFFICE-01 implementado; PROM-03 com testes, TypeScript e build aprovados. Homologação visual, teste multissessão e go-live pendentes.

@@ -30,3 +30,6 @@ Em 05/10/2026, TypeScript, ESLint, 158 testes da aplicação e 5 testes do backl
 Next.js 16.3.8 e override fast-uri 3.1.8 eliminam os apontamentos corrigíveis desta rodada. Restam quatro entradas HIGH propagadas pelo Prisma: deepmerge-ts 7.1.5 (processa configuração local) e mysql2 3.15.3 interno do CLI. O Prisma usa SQLite; as conexões MySQL da aplicação usam mysql2 3.24.4. A sugestão automática de downgrade para Prisma 6.19.3 é incompatível com o adapter e cliente atuais. Risco residual registrado, sem declarar auditoria limpa; revisar atualização compatível antes de homologar produção.
 
 Rodada final local de 06/10/2026: 199/199 testes, TypeScript, ESLint e build de produção aprovados. Homologação de dados reais permanece pendente.
+
+## 08/10/2026 — Promotoras e Escritório
+9 testes relevantes aprovados (domínio escritório/promotoras e integração SQLite promotoras). TypeScript e build aprovados; revisão independente de autorização/transações concluída. Teste visual e interação entre sessões ainda pendentes.

@@ -236,11 +236,46 @@ model GerenteComercial {
   vinculosEquipe VinculoEquipeGerente[]
   aliases        AliasHierarquia[]
   usuarios       User[]
+  promotoras     Promotora[]
 
   @@index([empresa, nomeNormalizado])
   @@unique([empresa, codigoExterno])
   @@index([empresa, ativo])
   @@map("gerentes_comerciais")
+}
+
+model Promotora {
+  id String @id @default(uuid())
+  empresa String
+  nome String
+  cnpj String?
+  codigo String?
+  origem String @default("manual")
+  ativo Boolean @default(true)
+  gerenteComercialId String? @map("gerente_comercial_id")
+  criadoPor String @map("criado_por")
+  atualizadoPor String @map("atualizado_por")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  gerente GerenteComercial? @relation(fields: [gerenteComercialId], references: [id], onDelete: Restrict)
+  historico HistoricoPromotora[]
+  @@unique([empresa, origem, codigo])
+  @@index([empresa, ativo])
+  @@index([gerenteComercialId])
+  @@map("promotoras")
+}
+
+model HistoricoPromotora {
+  id String @id @default(uuid())
+  promotoraId String @map("promotora_id")
+  autor String
+  resumo String
+  anterior Json?
+  posterior Json
+  createdAt DateTime @default(now()) @map("created_at")
+  promotora Promotora @relation(fields: [promotoraId], references: [id], onDelete: Restrict)
+  @@index([promotoraId, createdAt])
+  @@map("historico_promotoras")
 }
 
 model EquipeComercial {
@@ -650,4 +685,25 @@ model JuridicoFonteStatus {
 
   @@id([empresaId, fonte])
   @@map("juridico_fontes_status")
+}
+
+model EscritorioPresenca {
+  id String @id
+  userId String @map("user_id")
+  nome String
+  sala String
+  vistoEm DateTime @map("visto_em")
+  @@index([vistoEm])
+  @@map("escritorio_presencas")
+}
+
+model EscritorioMensagem {
+  id String @id @default(uuid())
+  userId String @map("user_id")
+  nome String
+  sala String
+  texto String
+  criadoEm DateTime @default(now()) @map("criado_em")
+  @@index([sala, criadoEm])
+  @@map("escritorio_mensagens")
 }

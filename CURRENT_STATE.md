@@ -1,45 +1,15 @@
 # Estado atual
 
-**Projeto:** Portal Teck
-**Etapa atual:** implementação do PRD-17
-**Status:** em andamento
-**Atualizado em:** 06/10/2026
+Projeto: Portal Teck.
+Atualizado: 08/10/2026.
+Etapa: Promotoras e Escritório Virtual — revisão local.
+Status: implementação concluída; homologação visual e publicação pendentes.
 
-## Última ação concluída
-
-Implementados cadastro comercial, vínculos, interface, associação do usuário por ID e distinção contratado/liberado. Gate UX aprovado após correções; autorização privilegiada consulta o papel atual no banco. Revisão de dados encontrou bloqueadores e as correções estão em execução.
-
-## Em andamento
-
-- conclusão da atribuição histórica e regressões do snapshot;
-- eliminação de datas de integração inferidas;
-- conciliação de nomes em rotina separada da leitura;
-- testes independentes de transações e isolamento.
-
-## Próximas ações
-
-- consolidar correções e repetir testes/build;
-- registrar limitações e plano de homologação;
-- abrir PR revisável sem promover a produção enquanto faltarem gates.
-
-## Bloqueios
-
-- deploy depende de confirmação do usuário e backup prévio do volume;
-- corte dos novos números depende de comparação com amostra real homologada.
-- ranking por integração pode omitir propostas criadas antes dos 32 dias; cobertura completa exige fonte temporal validada.
-
-## Decisões pendentes
-
-- fonte responsável pela manutenção da hierarquia;
-- regra definitiva de identificação da DIG;
-- uso financeiro do valor liberado após validação das releases;
-- limiar mínimo de cobertura para envio automático.
-
-## Agentes ativos
-
-- Orquestrador;
-- Back-end/Dados;
-- Front-end/UX;
-- QA/Segurança.
-
-**Próxima etapa:** concluir correções dos gates e abrir PR para revisão, com pendências de homologação explícitas.
+Última entrega em produção: PR #52 e pequena amostra comercial (1 gerente, 1 equipe, 2 vendedores).
+Entrega local: Organograma Promotoras no menu, cadastro/edição com busca, filtros, histórico e validações; Escritório Virtual com salas por equipe, presença com expiração em 90 segundos e mensagens por sala.
+Validações: nove testes aprovados, Prisma gerado, TypeScript e build aprovados. Revisão independente corrigiu corrida na troca de sala durante envio; campo de mensagem bloqueado durante envio para preservar rascunho.
+Limitações: primeira visão de promotoras é cadastral, ainda sem árvore visual multinível/importação. Escritório tem representação espacial leve, não replica o 3D do projeto Podman. Acesso permanece superadmin com permissão hierarquia. Sem áudio/vídeo. Validação visual em navegador e integração multissessão pendentes.
+Próximas ações: homologar interface e interação, revisar liberação para perfis dos times e retenção do chat, abrir PR quando solicitado, aplicar migrations aditivas após aprovação de implantação.
+Bloqueios de dados mantidos: validar origem oficial e cobertura do ranking de integrações; homologar números históricos. Cadastros de promotoras não alteram os relatórios automaticamente.
+Agentes ativos: nenhum após revisão.
+Último report: REPORTS/08-promotoras-escritorio.md.

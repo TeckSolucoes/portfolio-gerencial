@@ -21,3 +21,17 @@
 **Resultado:** nenhum merge ou deploy realizado; homologação real pendente.
 **Impacto funcional:** implementação local na branch feat/estrutura-comercial-confiabilidade.
 **Backlog gerado:** limitações de cobertura/integração e dependências registradas no PRD-17.
+
+## 2026-10-07 — Carga pequena PRD-17
+Agente: Orquestrador; revisão independente validar_amostra.
+Status: DONE (amostra; reprocessamento completo pendente).
+Executado: carga autorizada a partir do snapshot Front V2 AKRK de 06/10, sem nova consulta externa. Criados 1 gerente, 1 equipe, 2 vendedores, 4 aliases front_v2 e 3 vínculos. Transação imediata condicionada às tabelas vazias; FK ativada. Autor dos registros: carga-amostra-autorizada-2026-10-07. Vigência: 07/10/2026, sem retroatividade. Equipe selecionada com único gerente no snapshot e operadores presentes em uma só equipe.
+Validação: tela de produção confirmou contadores 1/1/2 e equipe AKRK - PRAIA DO FORTE vinculada. Revisão independente confirmou schema, datas e controles. Não houve mudança de usuários, snapshots ou regras financeiras.
+Limitação: amostra não homologa histórico, completude da hierarquia ou valores do relatório. Restante da base e reprocessamento dependem da próxima etapa.
+
+## 2026-10-08 — PROM-01 / PROM-02 / OFFICE-01
+Status: PARTIAL (implementação local concluída; homologação pendente).
+Execução em paralelo: backend promotoras, frontend promotoras e escritório virtual. Menu com Organograma Promotoras e Escritório Virtual; NOC permanece último. Promotoras têm histórico/auditoria transacionais, validação CNPJ, unicidade de código por empresa/origem e gerente da mesma empresa. Escritório usa equipes vigentes, autor autenticado, heartbeat e mensagens persistidas. Corrigidos troca de sala/rascunho durante envio e falso erro após mensagem já persistida.
+Validações: 9 testes aprovados pelo QA independente, Prisma generate, TypeScript e build aprovados.
+Impacto: migrations aditivas locais; nenhuma publicação ou mudança de produção nesta etapa.
+Limitações e próximos passos: REPORTS/08-promotoras-escritorio.md.
