@@ -35,3 +35,9 @@ Execução em paralelo: backend promotoras, frontend promotoras e escritório vi
 Validações: 9 testes aprovados pelo QA independente, Prisma generate, TypeScript e build aprovados.
 Impacto: migrations aditivas locais; nenhuma publicação ou mudança de produção nesta etapa.
 Limitações e próximos passos: REPORTS/08-promotoras-escritorio.md.
+
+## 2026-10-08 — Carga AKRK em produção
+Autorização explícita: usuário solicitou preencher os times com dados disponíveis e imagens.
+Resultado confirmado no navegador: 23 equipes no Escritório Virtual. Carga criou 3 gerentes, 22 equipes, 270 vendedores e 292 vínculos; preservados 1 gerente, 1 equipe e 2 vendedores existentes. Totais: 4 gerentes, 23 equipes, 272 vendedores. Fonte: snapshot Front V2 de 06/10/2026; quatro gerentes conferidos com a referência AKRK enviada. Itália excluída por gerente inconsistente. Não representa cadastro oficial de RH nem assegura atividade atual de todos os operadores do snapshot.
+Backup SQLite consistente e auditoria de IDs salvos em data/backups no volume de produção. Transação immediate, foreign_key_check sem erros; não alterados usuários/permissões ou vínculos preexistentes. Novos vínculos com vigência 08/10. Cadastros/aliases podem melhorar resolução nominal histórica, sem retroagir os novos vínculos.
+Promotoras externas e níveis de superintendência não importados: diferentes da hierarquia gerente/equipe/vendedor. Sem novo deploy.

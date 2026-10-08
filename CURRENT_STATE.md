@@ -13,3 +13,5 @@ Próximas ações: homologar interface e interação, revisar liberação para p
 Bloqueios de dados mantidos: validar origem oficial e cobertura do ranking de integrações; homologar números históricos. Cadastros de promotoras não alteram os relatórios automaticamente.
 Agentes ativos: nenhum após revisão.
 Último report: REPORTS/08-promotoras-escritorio.md.
+
+08/10/2026 — Carga AKRK em produção concluída: 4 gerentes, 23 equipes, 272 vendedores. Escritório confirmou 23 salas de equipe. Itália pendente por inconsistência de gerente; promotoras externas permanecem sem carga. Snapshot de origem 06/10/2026, não cadastro de RH atualizado.
