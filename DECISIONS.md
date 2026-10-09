@@ -37,3 +37,11 @@ Decisão do usuário: escopo somente promotoras comerciais; Roberto como CEO aci
 Implementação: reutilizar cadastro existente dentro de Estrutura Comercial, separar unidades e tratar sem vínculo explicitamente. Fotos privadas no volume persistente, sem nova dependência/schema. Referência Orion inspira apresentação; não traz automaticamente fotos ou cadastros do servidor.
 Motivo: preservar dados e controles, reduzir itens do menu e evitar hierarquia fictícia. Tabelas/migrations históricas do escritório preservadas para não perder dados.
 Status: implementada localmente; go-live pendente.
+
+## DEC-015 — Comparativo de empresas
+Data: 09/10/2026.
+Origem: usuário aprovou proposta de animação sutil da empresa que vende mais.
+Decisão: liderança por valor contratado, data de criação, quantidade e participação; Home hoje, relatório referência selecionada, Weeky sete dias. Usar snapshots existentes e manter integração/pagamento separados.
+Implementação: propostas elegíveis via construirCasos, como relatório diário. Transição CSS de largura sem animação contínua, com movimento reduzido. Apenas acesso Geral e ambas as empresas.
+Limite: comparativo semanal identifica propostas válidas; não altera KPIs anteriores do Weeky, que podem incluir entradas descartadas por CPF. Snapshot faltante ou incoerente não gera liderança.
+Status: implementada e revisada; publicação pendente.

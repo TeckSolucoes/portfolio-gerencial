@@ -45,3 +45,10 @@ Rodada final local de 06/10/2026: 199/199 testes, TypeScript, ESLint e build de 
 - Revisão independente UI/segurança e QA: filtro global e proxy corrigidos; sem bloqueadores restantes nos cenários testados.
 - Prévia local isolada do componente com fixtures: desktop e breakpoint móvel; filtro AKRK remove DIG; busca101 expande caminho; clique abre callback p1; sem overflow horizontal global. Não equivale a homologação em produção.
 - Upload integrado real em ambiente de produção, fotos Orion e dados reais ainda não homologados.
+
+## COMP-01 — evidências 09/10/2026
+- 60 testes aprovados: comparativo, relatório, Weeky, snapshot e permissões. Testes RED/GREEN para negativos, CPF inválido e datas impossíveis.
+- Lint aprovado; TypeScript e build aprovados.
+- Gates independentes de dados e integração/UI aprovados após correção de três HIGH; nenhum bloqueador restante nos cenários revisados.
+- Prévia isolada do componente real, CSS global/relatório e fixtures: desktop, troca de liderança 60/40 para 35/65, proporções e rótulos acessíveis conferidos. DOM móvel: scrollWidth = clientWidth = 434, sem overflow. Screenshot móvel falhou por timeout do navegador; sem homologação visual em 390 px efetivos.
+- Homologação com snapshots de produção e go-live não executados.
