@@ -41,3 +41,12 @@ Autorização explícita: usuário solicitou preencher os times com dados dispon
 Resultado confirmado no navegador: 23 equipes no Escritório Virtual. Carga criou 3 gerentes, 22 equipes, 270 vendedores e 292 vínculos; preservados 1 gerente, 1 equipe e 2 vendedores existentes. Totais: 4 gerentes, 23 equipes, 272 vendedores. Fonte: snapshot Front V2 de 06/10/2026; quatro gerentes conferidos com a referência AKRK enviada. Itália excluída por gerente inconsistente. Não representa cadastro oficial de RH nem assegura atividade atual de todos os operadores do snapshot.
 Backup SQLite consistente e auditoria de IDs salvos em data/backups no volume de produção. Transação immediate, foreign_key_check sem erros; não alterados usuários/permissões ou vínculos preexistentes. Novos vínculos com vigência 08/10. Cadastros/aliases podem melhorar resolução nominal histórica, sem retroagir os novos vínculos.
 Promotoras externas e níveis de superintendência não importados: diferentes da hierarquia gerente/equipe/vendedor. Sem novo deploy.
+
+## 09/10/2026 — WEEKY-01
+Agentes: Back-end, Front-end/UX, QA independente e orquestrador.
+Status: PARTIAL — implementação local concluída; homologação visual e publicação pendentes.
+Executado: nova rota /weeky e menu; últimos sete dias incluindo hoje em São Paulo; comparação anterior, evolução diária, mix, equipes, cancelamentos, integrações identificadas e qualidade. Usa snapshot v3 existente, sem consultas externas. Acesso exige relatório, empresa autorizada e visão Geral.
+Validações: 28 testes aprovados, revisão independente, build Next aprovado. Lint identificou Date.now na renderização; cálculo transferido ao loader para preservar pureza.
+Limitações: sem navegador/e2e e conciliação contra produção; integrações limitadas à extração disponível; agrupamento comercial da origem, sem aplicar novos vínculos oficiais. Rollback: reverter código, sem migrations.
+Arquivos: src/app/(dashboard)/weeky, src/lib/relatorio/weeky*, src/components/Header.tsx e documentação operacional.
+Próxima ação: homologação visual, PR mediante solicitação e aprovação de publicação.
