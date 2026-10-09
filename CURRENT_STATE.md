@@ -15,3 +15,5 @@ Agentes ativos: nenhum após revisão.
 Último report: REPORTS/08-promotoras-escritorio.md.
 
 08/10/2026 — Carga AKRK em produção concluída: 4 gerentes, 23 equipes, 272 vendedores. Escritório confirmou 23 salas de equipe. Itália pendente por inconsistência de gerente; promotoras externas permanecem sem carga. Snapshot de origem 06/10/2026, não cadastro de RH atualizado.
+
+09/10/2026 — Weeky implementado localmente em feat/weeky-executivo: dashboard estratégico dos últimos sete dias, comparação anterior, evolução, mix, equipes e pontos de atenção. 28 testes e build aprovados; QA independente sem bloqueadores. Integração usa snapshot persistido e não acrescenta consultas às fontes. Homologação visual, PR e go-live pendentes. Report atual: REPORTS/09-weeky.md. Ponytail full adotado nas orientações globais C:/Users/pflen/.codex/AGENTS.md, skill instalada e referência local preservada.

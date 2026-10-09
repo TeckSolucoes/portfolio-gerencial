@@ -13,3 +13,6 @@
 - Organograma Promotoras: cadastro, filtros, histórico e responsável comercial.
 - Escritório Virtual: salas por equipe, presença real e chat textual.
 - Novos itens no menu, acesso restrito à permissão de hierarquia e superadmin.
+
+## Weeky — 09/10/2026
+Nova visão executiva semanal com comparação de produção, evolução diária, equipes, produtos e pontos de atenção, baseada no snapshot existente. Preserva o relatório diário e as permissões por empresa.

@@ -34,3 +34,9 @@
 | PROM-03 | Integração, testes e revisão independente | Orquestrador/QA | IN PROGRESS | anteriores | TypeScript, lint, testes relevantes e build |
 
 08/10/2026: PROM-01 e PROM-02 implementados e revisados; OFFICE-01 implementado; PROM-03 com testes, TypeScript e build aprovados. Homologação visual, teste multissessão e go-live pendentes.
+
+## WEEKY-01 — 09/10/2026
+Solicitação aprovada: nova aba Weeky, dashboard estratégico para CEO e CTO, sempre últimos sete dias.
+Wave 1: dados e testes (Back-end), interface (Front-end/UX), navegação e integração (orquestrador) em paralelo, sem sobreposição de arquivos.
+Wave 2: revisão independente de QA, segurança de escopo e validação técnica.
+Status: REVIEW. Aceite: janela D-6 até hoje em São Paulo, comparação D-13 a D-7, leitura do snapshot, data real de atualização, isolamento por empresa e acesso à visão Geral, layout responsivo. Não altera regras do relatório diário.

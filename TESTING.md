@@ -33,3 +33,8 @@ Rodada final local de 06/10/2026: 199/199 testes, TypeScript, ESLint e build de 
 
 ## 08/10/2026 — Promotoras e Escritório
 9 testes relevantes aprovados (domínio escritório/promotoras e integração SQLite promotoras). TypeScript e build aprovados; revisão independente de autorização/transações concluída. Teste visual e interação entre sessões ainda pendentes.
+
+## Weeky — 09/10/2026
+- 28 testes aprovados: Weeky (4), snapshot (6), permissões (18).
+- QA independente aprovou regras e isolamento antes da leitura do snapshot; revisão de código de UI incluiu atualização defasada e valores grandes no celular.
+- Sem homologação visual em navegador, sem validação numérica contra produção e sem deploy nesta etapa.

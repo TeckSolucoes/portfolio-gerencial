@@ -5,7 +5,7 @@ import { BrandMark } from './BrandMark';
 import { NOME_PRODUTO } from '@/lib/marca';
 import { PortalNavigation, type NavigationItem } from './PortalNavigation';
 import { registrarAuditoria } from '@/lib/auditoria';
-import { podeAcessar } from '@/lib/permissoes';
+import { podeAcessar, podeVerAba } from '@/lib/permissoes';
 
 function initialsFrom(name: string): string {
   const parts = name.trim().split(/\s+/);
@@ -23,6 +23,7 @@ export async function Header({ sidebar = false }: { sidebar?: boolean }) {
   if (sidebar && user) {
     const items: NavigationItem[] = [{ href: '/', label: 'Início', icon: 'home', exact: true }];
     if (acesso && temEmpresa && podeAcessar(acesso, 'relatorio')) items.push({ href: '/relatorio', label: 'Relatório Gerencial', icon: 'report' });
+    if (acesso && temEmpresa && podeAcessar(acesso, 'relatorio') && podeVerAba(acesso, 'Geral')) items.push({ href: '/weeky', label: 'Weeky', icon: 'report' });
     if (acesso && temEmpresa && podeAcessar(acesso, 'monitoramento')) items.push({ href: '/monitoramento', label: 'Em Atenção', icon: 'radar' });
     if (acesso && podeAcessar(acesso, 'roteiros')) items.push({ href: '/roteiros', label: 'Roteiros', icon: 'guide' });
     if (acesso && podeAcessar(acesso, 'diario_oficial')) items.push({ href: '/diario-oficial', label: 'Diário Oficial', icon: 'news' });
