@@ -1,13 +1,19 @@
 import 'server-only';
 import { prisma } from '@/lib/prisma';
 import { ErroPromotora, resumirAlteracoes, type CadastroPromotora } from './dominio';
+import { fotoExiste } from './fotos';
 
 export async function listarPromotoras() {
   const [promotoras, gerentes] = await Promise.all([
     prisma.promotora.findMany({ orderBy: [{ empresa: 'asc' }, { nome: 'asc' }], include: { gerente: true, historico: { orderBy: { createdAt: 'desc' } } } }),
     prisma.gerenteComercial.findMany({ orderBy: [{ empresa: 'asc' }, { nome: 'asc' }], select: { id: true, nome: true, empresa: true, ativo: true } }),
   ]);
-  return { gerentes, promotoras: promotoras.map(p => ({ id: p.id, empresa: p.empresa, nome: p.nome, cnpj: p.cnpj, codigo: p.codigo, origem: p.origem, ativo: p.ativo, gerenteId: p.gerenteComercialId, gerenteNome: p.gerente?.nome ?? null, atualizadoEm: p.updatedAt.toISOString(), historico: p.historico.map(h => ({ id: h.id, data: h.createdAt.toISOString(), resumo: `${h.resumo} · ${h.autor}` })) })) };
+  const [fotoCeo, gerentesComFoto, promotorasComFoto] = await Promise.all([
+    fotoExiste('ceo-roberto'),
+    Promise.all(gerentes.map(async gerente => ({ ...gerente, foto: await fotoExiste(`gerente-${gerente.id}`) }))),
+    Promise.all(promotoras.map(async p => ({ id: p.id, empresa: p.empresa, nome: p.nome, cnpj: p.cnpj, codigo: p.codigo, origem: p.origem, ativo: p.ativo, gerenteId: p.gerenteComercialId, gerenteNome: p.gerente?.nome ?? null, foto: await fotoExiste(`promotora-${p.id}`), atualizadoEm: p.updatedAt.toISOString(), historico: p.historico.map(h => ({ id: h.id, data: h.createdAt.toISOString(), resumo: `${h.resumo} · ${h.autor}` })) }))),
+  ]);
+  return { fotoCeo, gerentes: gerentesComFoto, promotoras: promotorasComFoto };
 }
 
 export async function gravarPromotora(id: string | null, dados: CadastroPromotora, autor: string, usuario?: { id: string; email?: string | null; name?: string | null; displayName?: string | null }) {

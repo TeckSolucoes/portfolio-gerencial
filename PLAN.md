@@ -40,3 +40,8 @@ Solicitação aprovada: nova aba Weeky, dashboard estratégico para CEO e CTO, s
 Wave 1: dados e testes (Back-end), interface (Front-end/UX), navegação e integração (orquestrador) em paralelo, sem sobreposição de arquivos.
 Wave 2: revisão independente de QA, segurança de escopo e validação técnica.
 Status: REVIEW. Aceite: janela D-6 até hoje em São Paulo, comparação D-13 a D-7, leitura do snapshot, data real de atualização, isolamento por empresa e acesso à visão Geral, layout responsivo. Não altera regras do relatório diário.
+
+## ORG-01 — 09/10/2026
+Escopo aprovado: somente promotoras comerciais, Roberto como CEO acima de AKRK e DIG; remover Escritório Virtual e item antigo Organograma Promotoras.
+Wave1: UI (organograma), backend (fotos) e integração/menu separados. Wave2: revisão independente cruzada e QA HTTP.
+Estado: REVIEW. Critérios implementados: raiz CEO, unidades isoladas, gerente/promotora por vínculo, sem vínculo explícito, busca, expansão, upload autenticado e cadastro preservado. Testes38, lint, TypeScript e build aprovados; prévia local desktop/celular. Homologação com dados reais e publicação pendentes.

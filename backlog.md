@@ -13,3 +13,7 @@ O pacote atual é o **PRD-17 — Confiabilidade dos números e Estrutura Comerci
 ## Pendências Weeky — 09/10/2026
 - QA: homologar visualmente Weeky em desktop/celular e conferir números contra snapshot real antes de go-live.
 - DATA: cobertura de integrações antigas permanece limitada ao snapshot existente; esta entrega não cria nova extração nem presume total financeiro universal.
+
+## IMP-ORG-FOTOS — IMPROVEMENT
+Data:09/10/2026. Status: TODO.
+Importar fotos reais do Orion mediante acesso à aplicação/storage e associação explícita aos IDs comerciais do portal. Git contém código, não os uploads. Confirmar correspondência de pessoas e origem autorizada; não vincular automaticamente só por primeiro nome.

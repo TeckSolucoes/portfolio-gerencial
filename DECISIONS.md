@@ -30,3 +30,10 @@ Data: 09/10/2026.
 Origem: solicitação explícita do usuário para criar Weeky com últimos sete dias e foco CEO/CTO.
 Decisão: janela móvel incluindo hoje (parcial), comparação com sete dias anteriores; produção, integrações identificadas, cancelamentos da coorte, mix, equipes e qualidade da base. Reutilizar snapshot persistido sem consultas externas ao abrir página. Herda permissão Relatório Gerencial e exige visão Geral da empresa autorizada.
 Limite: cobertura das integrações depende das propostas já sincronizadas; valores são contratados, não receita ou valor liberado. Homologação e publicação pendentes.
+
+## DEC-014 — Organograma comercial
+Data:09/10/2026.
+Decisão do usuário: escopo somente promotoras comerciais; Roberto como CEO acima de AKRK e DIG. Retirar Escritório Virtual e antigo item Organograma Promotoras.
+Implementação: reutilizar cadastro existente dentro de Estrutura Comercial, separar unidades e tratar sem vínculo explicitamente. Fotos privadas no volume persistente, sem nova dependência/schema. Referência Orion inspira apresentação; não traz automaticamente fotos ou cadastros do servidor.
+Motivo: preservar dados e controles, reduzir itens do menu e evitar hierarquia fictícia. Tabelas/migrations históricas do escritório preservadas para não perder dados.
+Status: implementada localmente; go-live pendente.

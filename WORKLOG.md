@@ -50,3 +50,14 @@ Validações: 28 testes aprovados, revisão independente, build Next aprovado. L
 Limitações: sem navegador/e2e e conciliação contra produção; integrações limitadas à extração disponível; agrupamento comercial da origem, sem aplicar novos vínculos oficiais. Rollback: reverter código, sem migrations.
 Arquivos: src/app/(dashboard)/weeky, src/lib/relatorio/weeky*, src/components/Header.tsx e documentação operacional.
 Próxima ação: homologação visual, PR mediante solicitação e aprovação de publicação.
+
+## 09/10/2026 — Diagnóstico implantação Weeky
+Status: PARTIAL.
+PR #55 mergeado em master7ce7966. EasyPanel exibe warning; log de construção termina em npm ci sem conclusão/export. Consulta somente leitura ao container confirmou ausência de Weeky e do ID de Server Action reportado. Build ativo6dnMfUr8j8yaS4cLFKeRn. Origem da chamada incompatível ainda não identificada. Diagnóstico revisado independentemente; nenhuma evidência suficiente para patch/chave. Nenhuma configuração, dado ou deploy alterado. Próxima ação: implantação master mediante aprovação e validação do novo container.
+
+## 09/10/2026 — ORG-01
+Status: PARTIAL (implementação e gates locais concluídos; publicação pendente).
+Executado: organograma comercial inspirado na referência Orion; Roberto no topo, AKRK e DIG separados, cartões de gerentes e promotoras, busca/expansão, upload de fotos raster privadas até2MB. Integrado em Estrutura Comercial; CRUD e histórico preservados. Removidos interface, Server Actions, polling e serviços do Escritório Virtual e antigo item lateral; URLs redirecionam. Não apagados dados/tabelas/migrations.
+Gates: revisão independente encontrou filtro global contraditório e Origin interno atrás de proxy; corrigidos com filtro exclusivo da visão e origem pública configurada. QA independente testou endpoint real com acesso simulado e armazenamento temporário. 38 testes; lint/TypeScript/build. Prévia interativa isolada verificou filtro, busca, expansão, callback de detalhes e layout móvel sem overflow global.
+Limitações: dados da prévia são fixtures somente externas ao produto; nenhum cadastro ou foto fictício inserido no banco. Fotos e cadastros externos do Orion não importados. Nenhum deploy/infra alterado.
+Rollback: reverter commit de código; nenhum schema migrado.
