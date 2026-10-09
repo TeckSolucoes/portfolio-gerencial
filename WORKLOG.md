@@ -61,3 +61,14 @@ Executado: organograma comercial inspirado na referência Orion; Roberto no topo
 Gates: revisão independente encontrou filtro global contraditório e Origin interno atrás de proxy; corrigidos com filtro exclusivo da visão e origem pública configurada. QA independente testou endpoint real com acesso simulado e armazenamento temporário. 38 testes; lint/TypeScript/build. Prévia interativa isolada verificou filtro, busca, expansão, callback de detalhes e layout móvel sem overflow global.
 Limitações: dados da prévia são fixtures somente externas ao produto; nenhum cadastro ou foto fictício inserido no banco. Fotos e cadastros externos do Orion não importados. Nenhum deploy/infra alterado.
 Rollback: reverter commit de código; nenhum schema migrado.
+
+## 2026-10-09 — COMP-01
+Agente: Orquestrador, Dados e UI com revisão independente cruzada.
+Status: DONE (implementação e gates locais).
+Objetivo: comparação sutil da produção AKRK × DIG.
+Executado: agregador de snapshots com acesso antes da leitura; componente e integração Home/relatório/Weeky. Gates corrigiram contratado negativo, elegibilidade divergente do diário e referência impossível.
+Arquivos: comparativo-empresas.ts/test.ts, ComparativoEmpresas.tsx/CSS, três páginas e documentação operacional.
+Validações: 60 testes; lint; prévia desktop e liderança; DOM responsivo sem overflow; TypeScript e build aprovados.
+Resultado: revisão técnica aprovada; publicação/homologação real pendentes.
+Impacto funcional: novo comparativo de contratado; regras existentes preservadas.
+Backlog gerado: nenhum novo requisito; limites registrados em TESTING e CURRENT_STATE.

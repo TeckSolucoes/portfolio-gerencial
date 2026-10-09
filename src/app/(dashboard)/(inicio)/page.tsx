@@ -5,6 +5,8 @@ import { BLOCOS, Bolsa, BolsaSkeleton, BlocoNoticias, DiarioHome, DiarioHomeSkel
 import './home.css';
 import { carregarAcesso } from '@/lib/acesso';
 import { podeAcessar } from '@/lib/permissoes';
+import { carregarComparativoEmpresas } from '@/lib/relatorio/comparativo-empresas';
+import { ComparativoEmpresas } from '@/components/ComparativoEmpresas';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,6 +14,14 @@ async function Saudacao() {
   const session = await auth();
   const nome = session?.user?.displayName?.trim().split(/\s+/)[0];
   return <>Bem-vindo{nome ? `, ${nome}` : ''}</>;
+}
+
+async function VendasEmpresas() {
+  const acesso = await carregarAcesso();
+  if (!acesso) return null;
+  const hoje = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(new Date());
+  const dados = await carregarComparativoEmpresas(acesso, hoje, 1);
+  return dados && <ComparativoEmpresas dados={dados} />;
 }
 
 // Isolado num componente à parte, em Suspense próprio: assim a checagem de acesso (banco) não
@@ -42,6 +52,7 @@ export default function HomePage() {
         <p className="sub">Mercado, bancos, investimentos e consignado reunidos, com os relatórios da operação a um clique.</p>
       </section>
 
+      <Suspense fallback={null}><VendasEmpresas /></Suspense>
       <div className="topo">
         <Suspense fallback={<BolsaSkeleton />}>
           <Bolsa />

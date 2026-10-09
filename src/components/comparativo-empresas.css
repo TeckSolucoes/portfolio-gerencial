@@ -1,0 +1,65 @@
+.comparativo-empresas.comparativo-empresas {
+  margin: 16px 0;
+  padding: 16px 18px;
+  border: 1px solid var(--line, var(--hair));
+  border-radius: 14px;
+  background: var(--card, var(--panel));
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.comparativo-empresas .comparativo-empresas__cabecalho {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin-bottom: 14px;
+}
+.comparativo-empresas .comparativo-empresas__titulo {
+  margin: 0;
+  font-family: var(--body);
+  font-size: 14px;
+  font-weight: 750;
+  line-height: 1.4;
+}
+.comparativo-empresas .comparativo-empresas__conceito {
+  margin: 3px 0 0;
+  font-size: 11px;
+  color: var(--muted, var(--text-dim));
+}
+.comparativo-empresas .comparativo-empresas__linhas { display: grid; gap: 14px; }
+.comparativo-empresas .comparativo-empresas__linha {
+  --comparativo-cor: var(--blue, var(--sky));
+  display: grid;
+  grid-template-columns: minmax(150px, 1fr) auto;
+  gap: 6px 16px;
+  align-items: center;
+}
+.comparativo-empresas .comparativo-empresas__linha--dig { --comparativo-cor: var(--purple, var(--violet)); }
+.comparativo-empresas .comparativo-empresas__empresa { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 13px; }
+.comparativo-empresas .comparativo-empresas__empresa > strong { color: var(--comparativo-cor); }
+.comparativo-empresas .comparativo-empresas__lider {
+  padding: 3px 8px;
+  border: 1px solid var(--comparativo-cor);
+  border-radius: 999px;
+  color: var(--comparativo-cor);
+  font-size: 10px;
+  font-weight: 700;
+}
+.comparativo-empresas .comparativo-empresas__metricas { display: grid; gap: 2px; text-align: right; }
+.comparativo-empresas .comparativo-empresas__valor { font-size: 17px; font-weight: 750; }
+.comparativo-empresas .comparativo-empresas__metricas > span { color: var(--muted, var(--text-dim)); font-size: 11px; }
+.comparativo-empresas .comparativo-empresas__barra { grid-column: 1 / -1; height: 8px; border-radius: 999px; overflow: hidden; background: var(--inner, var(--panel-2)); }
+.comparativo-empresas .comparativo-empresas__barra > span { display: block; height: 100%; border-radius: inherit; background: var(--comparativo-cor); transition: width 600ms ease; }
+.comparativo-empresas .comparativo-empresas__atualizacao { grid-column: 1 / -1; margin: 0; font-size: 10px; color: var(--muted, var(--text-dim)); }
+.comparativo-empresas .comparativo-empresas__situacao { font-size: 11px; color: var(--muted, var(--text-dim)); }
+.comparativo-empresas .comparativo-empresas__aviso { margin: 12px 0 0; font-size: 12px; line-height: 1.5; color: var(--muted, var(--text-dim)); }
+@media (max-width: 520px) {
+  .comparativo-empresas.comparativo-empresas { padding: 14px; }
+  .comparativo-empresas .comparativo-empresas__linha { grid-template-columns: 1fr; gap: 6px; }
+  .comparativo-empresas .comparativo-empresas__metricas { text-align: left; }
+  .comparativo-empresas .comparativo-empresas__valor { font-size: 18px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .comparativo-empresas .comparativo-empresas__barra > span { transition: none; }
+}

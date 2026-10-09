@@ -20,3 +20,7 @@ Nova visão executiva semanal com comparação de produção, evolução diária
 ## 09/10/2026
 - Organograma comercial na Estrutura Comercial: Roberto como CEO, unidades AKRK e DIG, gerentes e promotoras pelos cadastros existentes. Busca, expansão e fotos privadas.
 - Removidos Escritório Virtual e item antigo Organograma Promotoras; cadastros, histórico e dados preservados.
+
+## COMP-01 — 09/10/2026
+- Comparativo de contratado AKRK × DIG na Home, relatório Geral e Weeky, com barras proporcionais, líder e atualização de cada empresa.
+- Reutiliza snapshots; não acrescenta consulta aos bancos nem polling. Respeita visão Geral e acesso às duas empresas.

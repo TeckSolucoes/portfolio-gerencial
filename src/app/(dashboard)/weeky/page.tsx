@@ -5,6 +5,8 @@ import { carregarAcesso } from '@/lib/acesso';
 import { escolherEmpresa, podeVerAba } from '@/lib/permissoes';
 import { carregarWeeky } from '@/lib/relatorio/weeky';
 import './weeky.css';
+import { ComparativoEmpresas } from '@/components/ComparativoEmpresas';
+import { carregarComparativoEmpresas } from '@/lib/relatorio/comparativo-empresas';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,6 +34,7 @@ export default async function WeekyPage({ searchParams }: { searchParams: Promis
   }
   if (!resultado) return <section className="weeky">{cabecalho}<p className="wk-aviso" role="status">Ainda não há uma atualização disponível para esta empresa. Os indicadores aparecerão após a sincronização dos dados.</p></section>;
   const { dados: d, geradoEm } = resultado;
+  const vendasEmpresas = await carregarComparativoEmpresas(acesso, d.fim, 7);
   const desatualizado = resultado.desatualizado;
   const atualizado = new Date(geradoEm).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', dateStyle: 'short', timeStyle: 'short' });
   const variacao = d.anteriores.valor > 0 ? ((d.vendas.valor - d.anteriores.valor) / d.anteriores.valor * 100) : null;
@@ -42,6 +45,7 @@ export default async function WeekyPage({ searchParams }: { searchParams: Promis
   return <section className="weeky">
     {cabecalho}
     <div className="wk-contexto"><span><strong>{dataCurta(d.inicio)} — {dataCurta(d.fim)}</strong> · hoje parcial</span><span className={desatualizado ? 'wk-antigo' : 'wk-atualizado'}><i aria-hidden="true" />Atualizado em {atualizado}</span></div>
+    {vendasEmpresas && <ComparativoEmpresas dados={vendasEmpresas} />}
     {desatualizado && <p className="wk-aviso" role="status">A base tem mais de 24 horas ou sua referência ainda não inclui hoje. Os valores abaixo podem não refletir os movimentos mais recentes.</p>}
     <div className="wk-kpis">
       <article className="wk-kpi wk-destaque"><h2>Vendas contratadas</h2><strong>{dinheiro(d.vendas.valor)}</strong><span>{numero(d.vendas.qtd)} propostas criadas</span><small>{comparativo}</small></article>

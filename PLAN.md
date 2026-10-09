@@ -45,3 +45,8 @@ Status: REVIEW. Aceite: janela D-6 até hoje em São Paulo, comparação D-13 a 
 Escopo aprovado: somente promotoras comerciais, Roberto como CEO acima de AKRK e DIG; remover Escritório Virtual e item antigo Organograma Promotoras.
 Wave1: UI (organograma), backend (fotos) e integração/menu separados. Wave2: revisão independente cruzada e QA HTTP.
 Estado: REVIEW. Critérios implementados: raiz CEO, unidades isoladas, gerente/promotora por vínculo, sem vínculo explícito, busca, expansão, upload autenticado e cadastro preservado. Testes38, lint, TypeScript e build aprovados; prévia local desktop/celular. Homologação com dados reais e publicação pendentes.
+
+## COMP-01 — 09/10/2026
+Escopo aprovado: comparação sutil AKRK × DIG na Home, relatório e Weeky, com liderança por contratado, quantidade, participação e atualização. Usar snapshots existentes sem consultas adicionais.
+Wave1: agregação/testes (dados), componente/CSS (UI), integração de rotas (orquestrador), sem sobreposição. Wave2: gates independentes cruzados e prévia visual.
+Estado: REVIEW. Implementação e 60 testes aprovados; lint aprovado. Regressões: negativos, CPF inválido, data impossível, ACL, cobertura, deduplicação e arredondamento monetário. Build aprovado; PR em finalização; homologação real e go-live pendentes.

@@ -15,6 +15,8 @@ import { RelatorioNav } from './RelatorioNav';
 import { EnviarWhatsapp } from './EnviarWhatsapp';
 import { lerConfigWhatsapp } from '@/lib/whatsapp/envio';
 import './relatorio.css';
+import { ComparativoEmpresas } from '@/components/ComparativoEmpresas';
+import { carregarComparativoEmpresas } from '@/lib/relatorio/comparativo-empresas';
 
 const MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
 const NAO = '—';
@@ -96,6 +98,7 @@ export default async function RelatorioPage({ searchParams }: { searchParams: Pr
     return <Aviso titulo="Nenhuma visão do relatório está liberada para você." texto="Peça ao administrador." seletor={<SeletorEmpresa empresas={acesso.empresas} atual={empresa} data={ref} escopo={pedido} gerenteComercialId={gerentePedido} />} />;
   }
   const escopo = aba.escopo;
+  const vendasEmpresas = escopo === 'Geral' ? await carregarComparativoEmpresas(acesso, ref, 1) : null;
   const seletor = <SeletorEmpresa empresas={acesso.empresas} atual={empresa} data={ref} escopo={escopo} gerenteComercialId={aba.gerenteComercialId} />;
 
   let r: Partial<Relatorio> & Pick<Relatorio, 'kpis'>;
@@ -201,6 +204,7 @@ export default async function RelatorioPage({ searchParams }: { searchParams: Pr
         {whats && <EnviarWhatsapp empresa={empresa} escopo={escopo} gerenteComercialId={aba.gerenteComercialId} rotulo={aba.rotulo} data={ref} destinatarios={whats.destinatarios.length} />}
       </div>
 
+      {vendasEmpresas && <ComparativoEmpresas dados={vendasEmpresas} />}
       <RelatorioNav />
 
       {faltando.length > 0 && (
