@@ -38,3 +38,10 @@ Rodada final local de 06/10/2026: 199/199 testes, TypeScript, ESLint e build de 
 - 28 testes aprovados: Weeky (4), snapshot (6), permissões (18).
 - QA independente aprovou regras e isolamento antes da leitura do snapshot; revisão de código de UI incluiu atualização defasada e valores grandes no celular.
 - Sem homologação visual em navegador, sem validação numérica contra produção e sem deploy nesta etapa.
+
+## ORG-01 — evidências09/10/2026
+- 38 testes aprovados: promotoras domínio/SQLite, fotos formato/stream/persistência/origem, endpoint HTTP real com sessão/permissão/Prisma simulados, regressão permissões.
+- TypeScript, ESLint e build Next aprovados.
+- Revisão independente UI/segurança e QA: filtro global e proxy corrigidos; sem bloqueadores restantes nos cenários testados.
+- Prévia local isolada do componente com fixtures: desktop e breakpoint móvel; filtro AKRK remove DIG; busca101 expande caminho; clique abre callback p1; sem overflow horizontal global. Não equivale a homologação em produção.
+- Upload integrado real em ambiente de produção, fotos Orion e dados reais ainda não homologados.

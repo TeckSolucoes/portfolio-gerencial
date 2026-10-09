@@ -27,11 +27,12 @@ export type DadosEstrutura = {
   resumo: { gerentesAtivos: number; equipesAtivas: number; vendedoresAtivos: number; vinculosAtivos: number; pendencias: number };
 };
 
-type Aba = 'estrutura' | 'sem-vinculo' | 'qualidade' | 'historico';
+type Aba = 'estrutura' | 'organograma' | 'sem-vinculo' | 'qualidade' | 'historico';
 type Retorno = { ok: true } | { ok: false; erro: string };
 
 const abas: { id: Aba; nome: string }[] = [
   { id: 'estrutura', nome: 'Estrutura atual' },
+  { id: 'organograma', nome: 'Organograma' },
   { id: 'sem-vinculo', nome: 'Sem vínculo' },
   { id: 'qualidade', nome: 'Qualidade dos dados' },
   { id: 'historico', nome: 'Histórico' },
@@ -130,7 +131,7 @@ function Empty({ titulo, texto }: { titulo: string; texto: string }) {
   return <div className="hier-empty"><span aria-hidden="true">◇</span><strong>{titulo}</strong><p>{texto}</p></div>;
 }
 
-export function EstruturaComercialClient({ dados }: { dados: DadosEstrutura }) {
+export function EstruturaComercialClient({ dados, organograma }: { dados: DadosEstrutura; organograma: ReactNode }) {
   const [aba, setAba] = useState<Aba>('estrutura');
   const [empresa, setEmpresa] = useState('TODAS');
   const [cadastroAberto, setCadastroAberto] = useState(false);
@@ -210,24 +211,26 @@ export function EstruturaComercialClient({ dados }: { dados: DadosEstrutura }) {
   return <div className="hierarquia" aria-busy={pendente}>
     <header className="hier-head">
       <div><p className="hier-kicker">Administração · Consignado</p><h1>Estrutura Comercial</h1><p>Organize a responsabilidade comercial sem perder o histórico de cada proposta.</p></div>
-      <div className="hier-head-actions">
+      {aba !== 'organograma' && <div className="hier-head-actions">
         <label className="hier-company"><span>Empresa</span><select value={empresa} onChange={(e) => setEmpresa(e.target.value)}><option value="TODAS">Todas</option><option value="AKRK">AKRK</option><option value="DIG">DIG</option></select></label>
         <button type="button" className="hier-primary" onClick={() => { setMensagem(null); setCadastroAberto(true); }}>+ Cadastrar</button>
-      </div>
+      </div>}
     </header>
 
-    <section className="hier-summary" aria-label="Resumo da estrutura">
+    {aba !== 'organograma' && <section className="hier-summary" aria-label="Resumo da estrutura">
       <article><span>Gerentes</span><strong>{resumoFiltrado.gerentesAtivos}</strong><small>ativos</small></article>
       <article><span>Equipes</span><strong>{resumoFiltrado.equipesAtivas}</strong><small>ativas</small></article>
       <article><span>Vendedores</span><strong>{resumoFiltrado.vendedoresAtivos}</strong><small>ativos</small></article>
       <article className={pendenciasEstrutura ? 'attention' : 'success'}><span>Pendências</span><strong>{pendenciasEstrutura}</strong><small>{pendenciasEstrutura ? 'nomes ou cadastros para tratar' : 'estrutura organizada'}</small></article>
-    </section>
+    </section>}
 
     <nav className="hier-tabs" aria-label="Áreas da Estrutura Comercial" role="tablist">
       {abas.map((item, indice) => <button id={`aba-${item.id}`} key={item.id} type="button" role="tab" tabIndex={aba === item.id ? 0 : -1} aria-selected={aba === item.id} aria-controls={aba === item.id ? `painel-${item.id}` : undefined} onKeyDown={(evento) => navegarAbas(evento, indice)} onClick={() => setAba(item.id)}>{item.nome}{item.id === 'sem-vinculo' && resumoFiltrado.pendencias > 0 && <span>{resumoFiltrado.pendencias}</span>}</button>)}
     </nav>
 
     {!cadastroAberto && !vinculoAberto && <Feedback mensagem={mensagem} pendente={pendente} />}
+
+    {aba === 'organograma' && <section id="painel-organograma" role="tabpanel" aria-labelledby="aba-organograma">{organograma}</section>}
 
     {aba === 'estrutura' && <section id="painel-estrutura" role="tabpanel" aria-labelledby="aba-estrutura" className="hier-panel">
       <div className="hier-panel-head"><div><h2>Hierarquia vigente</h2><p>Empresa, gerente, equipes e vendedores com vínculo ativo.</p></div><button type="button" className="hier-secondary" onClick={() => { setMensagem(null); setVinculoAberto(true); }}>Criar vínculo</button></div>

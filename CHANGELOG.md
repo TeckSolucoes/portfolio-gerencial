@@ -16,3 +16,7 @@
 
 ## Weeky — 09/10/2026
 Nova visão executiva semanal com comparação de produção, evolução diária, equipes, produtos e pontos de atenção, baseada no snapshot existente. Preserva o relatório diário e as permissões por empresa.
+
+## 09/10/2026
+- Organograma comercial na Estrutura Comercial: Roberto como CEO, unidades AKRK e DIG, gerentes e promotoras pelos cadastros existentes. Busca, expansão e fotos privadas.
+- Removidos Escritório Virtual e item antigo Organograma Promotoras; cadastros, histórico e dados preservados.
